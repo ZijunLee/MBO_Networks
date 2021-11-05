@@ -1,15 +1,7 @@
 import numpy as np
-#import util
-#from util import Parameters
-#from util import misc
-#from util import build_graph
-import importlib
 import random
-#importlib.reload(misc)
-#importlib.reload(util)
 
 
-#class LaplacianClustering(Parameters):
 """ Parameters
     -----------
     N : scalar,
@@ -30,6 +22,7 @@ import random
 
 def mbo_modularity_eig(N,K,m,dt,laplacian_matrix_, tol = .5,inner_step_count = 5): # inner stepcount is actually important! and can't be set to 1...
     
+    # Initialize parameters
     EigVal, EigVec = np.linalg.eig(laplacian_matrix_)
     Val_m = EigVal[m]
     Vec_m = EigVec[m]
@@ -54,21 +47,22 @@ def mbo_modularity_eig(N,K,m,dt,laplacian_matrix_, tol = .5,inner_step_count = 5
         # Store the data list determined node to this cluster
         U_init[K_row[j],K_force[j]] = 1
 
-    # perform MBO scheme
+    # Perform MBO scheme
     n = 0
     U_old = U_init.copy()
     stop_criterion = 0
-    while (stop_criterion > tol | n == 200):
+    while (stop_criterion > tol | n == 200):  # Diffusion
         for s in range(inner_step_count):
             U_half_new = np.matmul(B_m, U_old)
             U_old = U_half_new
             s = s + 1 
 
             U_new = np.zeros((N,K))
-            for i in range(N):
+            for i in range(N):   # Thresholding
                 k = np.max(U_half_new[i,:])
                 U_new[i,k] = 1
             
+            # Stop criterion
             Ui_diff = []
             Ui_max = []
             for i in range(N):    
