@@ -1,15 +1,8 @@
 import numpy as np
-import sklearn
-import scipy.sparse as spa
-from sklearn.metrics.pairwise import pairwise_kernels 
-from sklearn.neighbors import kneighbors_graph
 import numpy as np
 import util
 from util import Parameters
-from util.build_graph import _graph_params_default_values
 from util import misc
-from util import BuildGraph
-from sklearn.cluster import KMeans
 import importlib
 importlib.reload(misc)
 importlib.reload(util)
@@ -21,7 +14,7 @@ class LaplacianClustering(Parameters):
         N : scalar,
             the number of nodes
         K : scalar,
-            the number of clusters
+            the number of clusters (note: N >> K)
         m : scalar,
             the number of eigenvectors and eigenvalues 
         inner_step_count : int
@@ -40,14 +33,15 @@ class LaplacianClustering(Parameters):
         Val_m = EigVal[m-1]
         Vec_m = EigVec[m-1]
         B_m = np.dot(Vec_m, np.divide(1+dt*Val_m), Vec_m.T)
-        U_O = np.zeros((N,K))
+        U_0 = np.zeros((N,K))
         for i in range(1,N):
-            k = 1/(K-1)*np.ones((K,1))
-            u_init = 
+            k = np.random.random_integers(K)
+            U_0[i-1,k-1] = 1
+            U_init = U_0
         
         # perform MBO scheme
         n = 0
-        U_old = u_init.copy()
+        U_old = U_init.copy()
         stop_criterion = 0
         while (stop_criterion > tol | n == 200):
             for s in range(inner_step_count):
@@ -57,14 +51,14 @@ class LaplacianClustering(Parameters):
 
                 U_new = np.zeros((N,K))
                 for i in range(1,N):
-                    k = np.max(U_half_new[i,:])
-                    U_new[i,k] = 1
+                    k = np.max(U_half_new[i-1,:])
+                    U_new[i-1,k-1] = 1
                 
                 Ui_diff = []
                 Ui_max = []
                 for i in range(1,N):    
-                    Ui_diff.append((np.linalg.norm(U_new[i,:] - U_old[i,:]))^2)
-                    Ui_max.append((np.linalg.norm(U_new[i,:]))^2)
+                    Ui_diff.append((np.linalg.norm(U_new[i-1,:] - U_old[i-1,:]))^2)
+                    Ui_max.append((np.linalg.norm(U_new[i-1,:]))^2)
 
                 max_diff = max(Ui_diff)
                 max_new = max(Ui_max)
@@ -74,6 +68,6 @@ class LaplacianClustering(Parameters):
 
         V_output = []
         for i in range(1,N):
-            V_output.append(max(U_new[i,:]))
+            V_output.append(max(U_new[i-1,:]))
 
         return V_output
