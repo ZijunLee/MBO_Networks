@@ -35,7 +35,7 @@ def mbo_modularity_eig(N,K,m,dt,laplacian_matrix_, tol ,inner_step_count): # inn
         X_m = EigVec[0:m,:]
         Val_m = np.diag(EigVal[0:m])
         identity_matrix_m = np.diag(np.full(m,1))
-        B_m = (X_m.T).dot(np.linalg.inv(identity_matrix_m+dt/inner_step_count*Val_m)).dot(X_m)
+        B_m = (X_m.T).dot(np.linalg.inv(identity_matrix_m + dt*Val_m)).dot(X_m)
         U_init = np.zeros((N,K))
         for i in range(N):
             k = randrange(K-1)
@@ -67,8 +67,10 @@ def mbo_modularity_eig(N,K,m,dt,laplacian_matrix_, tol ,inner_step_count): # inn
                 U_half_new = np.dot(B_m, U_half_old)
                 U_half_old = U_half_new
                 s = s + 1
+            
+            #U_half_new = np.dot(np.linalg.matrix_power((X_m.T).dot(np.linalg.inv(identity_matrix_m + (dt/inner_step_count)*Val_m)).dot(X_m), inner_step_count), U_half_old)
             #print(U_half_new)
-
+                       
             U_new = np.zeros((N,K))
             for i in range(N):   # Thresholding
                 k = np.argmax(U_half_new[i,:])
@@ -80,12 +82,12 @@ def mbo_modularity_eig(N,K,m,dt,laplacian_matrix_, tol ,inner_step_count): # inn
             for i in range(N):    
                 Ui_diff.append((np.linalg.norm(U_new[i,:] - U_old[i,:]))**2)
                 Ui_max.append((np.linalg.norm(U_new[i,:]))**2)
-
-            #print(U_new)
+                
             max_diff = max(Ui_diff)
             max_new = max(Ui_max)
             stop_criterion = max_diff/max_new
 
+            #print(U_new)
             U_old = U_new
 
             n = n + 1
@@ -101,24 +103,27 @@ def mbo_modularity_eig(N,K,m,dt,laplacian_matrix_, tol ,inner_step_count): # inn
     #ARI = adjusted_rand_score(V_output)
     #print(ARI)
 
-# test example
+# test example: signed stochastic block model
 # W is a matrix whose diagonal elements are 1 and the others are -1
-diag_matrix = np.diag(np.full(4,2))
-one_matrix = np.ones((4,4))
+diag_matrix = np.diag(np.full(20,2))
+one_matrix = np.ones((20,20))
 W_matrix = diag_matrix - one_matrix
+#print(W_matrix)
 # The degree matrix is a diagonal matrix whose entries are the sum of the rows of W_matrix
-degree_matirx = -2*np.diag(np.full(4,1))
-# Compute the Laplacian matrix
+degree_matirx = np.diag(np.full(20,20))
+#print(degree_matirx)
+# Compute the positive parts of Laplacian matrix
 laplacian_matrix = degree_matirx - W_matrix
+#print(laplacian_matrix)
 
 # Compute V*
 N = laplacian_matrix.shape[0]
 K = laplacian_matrix.shape[0]
 m = K
-V_star = mbo_modularity_eig(N, K, 2, 0.1, laplacian_matrix, 10**(-7), 3)
+V_star = mbo_modularity_eig(N, K, m, 0.1, laplacian_matrix, 10**(-7), 2)
 print(V_star)
 
 # Calculate ARI
-ground_truth = [0,1,2,3]
+ground_truth = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
 ARI = adjusted_rand_score(V_star, ground_truth)
 print(ARI)
