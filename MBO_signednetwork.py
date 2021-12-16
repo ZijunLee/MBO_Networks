@@ -6,7 +6,6 @@ from random import randrange
 import os
 import sys
 
-from Function_test import A_matrix
 sys.path.append('/'.join(os.getcwd().split('/')[:-1]))
 import scipy.sparse as ss
 import numpy.random as rnd
@@ -164,30 +163,82 @@ def data_generator(s_matrix, noise, sparsity):
                 A_init_matrix[i][j] = np.random.choice(elements, 1, p=probabilities)
     A_matrix = A_init_matrix + A_init_matrix.T - np.diag(np.diag(A_init_matrix))
 
-    # calculate the signed laplacian matrix / symmetric normalized laplacian
+    # calculate the signed laplacian matrix
     A_absolute_matrix = np.abs(A_matrix)
     sum_row = np.sum(A_absolute_matrix,axis=1).tolist()
     deg_diag_m = np.diag(sum_row)
-    deg_inverse_m = sqrtm(deg_diag_m)
     laplacian_m = deg_diag_m - A_matrix
-    Dbar_half = np.sqrt(deg_inverse_m)
-    laplacian_sym = np.diag(np.full(N,1)) - (Dbar_half).dot(A_matrix).dot(Dbar_half)
+
+    # calculate Dbar^(-1/2)
+    sum_list = []
+    for element in sum_row:
+        if element == 0:
+            sum_list.append(element)
+        else:
+            sum_list.append(1.0/(np.sqrt(element)))
+    
+    deg_inverse_m = np.diag(sum_list)
+    #pseudo_inv_deg_m = np.linalg.pinv(deg_diag_m)
+    #Dbar_half = np.sqrt(pseudo_inv_deg_m)
+    
+    # calculate the symmeytic normalized laplacian
+    laplacian_sym = (deg_inverse_m).dot(laplacian_m).dot(deg_inverse_m)
+    #laplacian_sym_pseu_inv = (Dbar_half).dot(laplacian_m).dot(Dbar_half)
 
     return laplacian_sym
         
+def adjacancy_to_laplacian(A_matrix):
+    # calculate the signed laplacian matrix
+    A_absolute_matrix = np.abs(A_matrix)
+    sum_row = np.sum(A_absolute_matrix,axis=1).tolist()
+    deg_diag_m = np.diag(sum_row)
+    laplacian_m = deg_diag_m - A_matrix
+
+    # calculate Dbar^(-1/2)
+    #sum_list = []
+    #for element in sum_row:
+    #    if element == 0:
+    #        sum_list.append(element)
+    #    else:
+    #        sum_list.append(1.0/(np.sqrt(element)))
+    
+    #deg_inverse_m = np.diag(sum_list)
+    #pseudo_inv_deg_m = np.linalg.pinv(deg_diag_m)
+    #Dbar_half = np.sqrt(pseudo_inv_deg_m)
+    
+    # calculate the symmeytic normalized laplacian
+    #laplacian_sym = (deg_inverse_m).dot(laplacian_m).dot(deg_inverse_m)
+    #laplacian_sym_pseu_inv = (Dbar_half).dot(laplacian_m).dot(Dbar_half)
+
+    return laplacian_m
 
 # Parameter setting
-N = 1200
+N = 34
 K = 2
-noise = 0.05
+noise = 0.18
 sparsity = 0.02
 m = K
 dt = 0.1
 tol = 10**(-7)
 inner_step_count = 3
 
-s_matrix, ground_truth = SSBM(N,K)
-laplacian_matrix = data_generator(s_matrix, noise, sparsity)
+#s_matrix, ground_truth = SSBM(N,K)
+#print(ground_truth)
+#laplacian_matrix = data_generator(s_matrix, noise, sparsity)
+G = nx.karate_club_graph()
+gt_membership = [G.nodes[v]['club'] for v in G.nodes()]
+gt_number = []
+for i in gt_membership:
+    if i == "Mr. Hi":
+        gt_number.append(1)
+    elif i =="Officer":
+        gt_number.append(0)    
+#gt_number = np.array(gt_number)
+
+adj_mat = nx.convert_matrix.to_numpy_matrix(G)
+laplacian_matrix = adjacancy_to_laplacian(adj_mat)
 V_output = mbo_modularity_eig(N, K, m, dt, laplacian_matrix, tol, inner_step_count)
-ARI = adjusted_rand_score(V_output,ground_truth)
+ARI = adjusted_rand_score(V_output,gt_number)
+print('V_output: ', V_output)
+print('gt_number: ', gt_number)
 print(ARI)
