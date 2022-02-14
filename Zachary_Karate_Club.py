@@ -8,7 +8,7 @@ import random
 import numba as nb
 from torch import sign
 
-from graph_mbo.utils import apply_threshold, get_fidelity_term, get_initial_state,labels_to_vector,to_standard_labels,_diffusion_step_eig,_mbo_forward_step_multiclass,get_initial_state_1
+from graph_mbo.utils import apply_threshold, get_fidelity_term, get_initial_state,labels_to_vector,to_standard_labels,_diffusion_step_eig,_mbo_forward_step_multiclass,get_initial_state_1,ProjectToSimplex
 
 
 
@@ -92,7 +92,11 @@ def mbo_modularity_1(num_communities, m, adj_matrix, tol, eta,eps=1,
     #print('V_sign shape: ', V_sign.shape)
 
     # initialized u 
-    u = get_initial_state_1(num_nodes, num_communities)
+    u = get_initial_state_1(num_nodes, num_communities,target_size)
+
+    #Random initial labeling
+    #u = np.random.rand(num_nodes,num_communities)
+    #u = ProjectToSimplex(u)
 
 
     # Perform MBO scheme
@@ -183,7 +187,7 @@ def mbo_modularity_1_normalized_lf(num_communities, m, adj_matrix, tol, eta,eps=
     #print('V_sign shape: ', V_sign.shape)
 
     # initialized u 
-    u = get_initial_state_1(num_nodes, num_communities)
+    u = get_initial_state_1(num_nodes, num_communities,target_size)
 
     # Perform MBO scheme
     n = 0
@@ -275,7 +279,7 @@ def mbo_modularity_1_normalized_Qh(num_communities, m, adj_matrix, tol, eta,eps=
     #print('V_sign shape: ', V_sign.shape)
 
     # initialized u 
-    u = get_initial_state_1(num_nodes, num_communities)
+    u = get_initial_state_1(num_nodes, num_communities,target_size)
 
 
     # Perform MBO scheme
@@ -342,7 +346,7 @@ def mbo_modularity_1_normalized_Lf_Qh(num_communities, m, adj_matrix, tol, eta,e
 
     for i in range(len(degree)):
         for j in range(len(degree)):
-            null_model[i][j] = 1 * ((degree[i] * degree[j]) / total_degree)
+            null_model[i][j] = (degree[i] * degree[j]) / total_degree
     
     #print('null model: ',null_model)
     
@@ -369,7 +373,7 @@ def mbo_modularity_1_normalized_Lf_Qh(num_communities, m, adj_matrix, tol, eta,e
     #print('V_sign shape: ', V_sign.shape)
 
     # initialized u 
-    u = get_initial_state_1(num_nodes, num_communities)
+    u = get_initial_state_1(num_nodes, num_communities,target_size)
 
     # Perform MBO scheme
     n = 0
