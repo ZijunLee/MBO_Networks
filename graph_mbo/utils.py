@@ -5,6 +5,8 @@ import random
 from networkx.algorithms.community import modularity
 from scipy.sparse.linalg import eigsh
 from itertools import product
+from random import randrange
+from numpy.random import permutation
 
 
 def get_initial_state(
@@ -37,24 +39,28 @@ def get_initial_state(
     return u
 
 
-def get_initial_state_1(num_nodes,num_communities):
-    u_init = np.zeros((num_nodes, num_communities))   
+def get_initial_state_1(num_nodes,num_communities,target_size):
+    u = np.zeros((num_nodes, num_communities))   
     # if type is binary (e.g. karate club)
-    u = np.zeros(u_init.shape)
-    u[0, 0] = 1 - u_init[0, 0]
-    u[0, 1] = -u_init[0, 1]
-    u[-1, -1] = 1 - u_init[-1, -1]
-    u[-1, 0] = -u_init[-1, 0]
+    #u = np.zeros(u_init.shape)
+    #u[0, 0] = 1 - u_init[0, 0]
+    #u[0, 1] = -u_init[0, 1]
+    #u[-1, -1] = 1 - u_init[-1, -1]
+    #u[-1, 0] = -u_init[-1, 0]
 
-    #for i in range(num_communities - 1):
-    #    count = 0
-    #    while count < target_size[i]:
-    #        rand_index = np.random.randint(0, num_nodes - 1)
-    #        if u[rand_index, i] == 0:
-    #            u[rand_index, i] = 1
-    #            count += 1
-    #u[np.sum(u, axis=1) < 1, -1] = 1
+    for i in range(num_communities - 1):
+        count = 0
+        while count < target_size[i]:
+            rand_index = np.random.randint(0, num_nodes - 1)
+            if u[rand_index, i] == 0:
+                u[rand_index, i] = 1
+                count += 1
+    u[np.sum(u, axis=1) < 1, -1] = 1
 
+
+    #for i in range(num_nodes):
+    #    k = randrange(num_communities-1)
+    #    u[i,k] = 1
     # Ensure each cluster has at least one node
     # Generate data list that store one node for each cluster
     #K_force = random.sample(range(num_communities),num_communities)
@@ -288,3 +294,21 @@ def label_to_dict(u_label):
         len_label.append(i)
     u_dict = dict(zip(len_label, u_label))
     return u_dict
+
+
+
+#Projects all columns of (kxn) matrix X onto k-simplex
+def ProjectToSimplex(X):
+   
+    n = X.shape[1]
+    k = X.shape[0]
+
+    Xs = -np.sort(-X,axis=0)  #Sort descending
+    A = np.tril(np.ones((k,k)))
+    Sum = A@Xs
+    Max = np.transpose((np.transpose(Sum) - 1)/(np.arange(k)+1))
+    Xs[:-1,:] = Xs[1:,:]
+    Xs[-1,:] = (Sum[k-1,:]-1)/k
+    I = np.argmax(Max >= Xs,axis=0)
+    X = np.maximum(X-Max[I,range(n)],0)
+    return X
