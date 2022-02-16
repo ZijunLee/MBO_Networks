@@ -41,6 +41,7 @@ def get_initial_state(
 
 def get_initial_state_1(num_nodes,num_communities,target_size):
     u = np.zeros((num_nodes, num_communities))   
+    #u_init = np.zeros((num_nodes, num_communities))   
     # if type is binary (e.g. karate club)
     #u = np.zeros(u_init.shape)
     #u[0, 0] = 1 - u_init[0, 0]
