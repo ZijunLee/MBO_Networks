@@ -93,15 +93,16 @@ def adj_to_laplacian_signless_laplacian(adj_matrix,num_communities,m,gamma, targ
 
     #print('null model shape: ', null_model_eta.shape)
     
-    degree_null_model = np.array(np.sum(null_model_eta, axis=1)).flatten()
+    degree_null_model = np.array(np.sum(null_model, axis=1)).flatten()
     num_nodes_null_model = len(degree_null_model)
     degree_diag_null_model = sp.sparse.spdiags([degree_null_model], [0], num_nodes_null_model, num_nodes_null_model)   
     signless_laplacian_null_model = degree_diag_null_model + null_model  # Q_P = D + P(null model)
     signless_degree_inv = sp.sparse.spdiags([1.0 / degree_null_model], [0], num_nodes_null_model, num_nodes_null_model)   # obtain D^{-1}
     #print('D^{-1}: ', degree_inv.shape)
-    nor_signless_laplacian = np.sqrt(signless_degree_inv) @ signless_laplacian_null_model @ np.sqrt(signless_degree_inv) 
+    nor_signless_laplacian = np.sqrt(signless_degree_inv) @ signless_laplacian_null_model @ np.sqrt(signless_degree_inv)
+    rw_signless_lapclacian =  signless_degree_inv @ signless_laplacian_null_model
 
-    return num_nodes,m, degree, target_size,null_model_eta,graph_laplacian, nor_graph_laplacian,random_walk_nor_lap, signless_laplacian_null_model, nor_signless_laplacian
+    return num_nodes,m, degree, target_size,null_model_eta,graph_laplacian, nor_graph_laplacian,random_walk_nor_lap, signless_laplacian_null_model, nor_signless_laplacian, rw_signless_lapclacian
     
 
 #@nb.jit()
