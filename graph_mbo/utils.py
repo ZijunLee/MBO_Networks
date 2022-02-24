@@ -50,32 +50,32 @@ def get_initial_state_1(num_nodes,num_communities,target_size):
     #u[-1, -1] = 1 - u_init[-1, -1]
     #u[-1, 0] = -u_init[-1, 0]
 
-    #for i in range(num_communities - 1):
-    #    count = 0
-    #    while count < target_size[i]:
-    #        rand_index = np.random.randint(0, num_nodes - 1)
-    #        if u[rand_index, i] == 0:
-    #            u[rand_index, i] = 1
-    #            count += 1
-    #u[np.sum(u, axis=1) < 1, -1] = 1
+    for i in range(num_communities - 1):
+        count = 0
+        while count < target_size[i]:
+            rand_index = np.random.randint(0, num_nodes - 1)
+            if u[rand_index, i] == 0:
+                u[rand_index, i] = 1
+                count += 1
+    u[np.sum(u, axis=1) < 1, -1] = 1
 
 
-    for i in range(num_nodes):
-        k = randrange(num_communities-1)
-        u[i,k] = 1
+    #for i in range(num_nodes):
+    #    k = randrange(num_communities-1)
+    #    u[i,k] = 1
     # Ensure each cluster has at least one node
     # Generate data list that store one node for each cluster
-    K_force = random.sample(range(num_communities),num_communities)
+    #K_force = random.sample(range(num_communities),num_communities)
     
     # Random select rows with the amount of clusters
-    K_row = random.sample(range(num_nodes),num_communities)
-    for j in range(num_communities):
+    #K_row = random.sample(range(num_nodes),num_communities)
+    #for j in range(num_communities):
 
         # Force the selected row to be zero vector
-        u[K_row[j],:] = np.zeros(num_communities)
+    #    u[K_row[j],:] = np.zeros(num_communities)
 
         # Store the data list determined node to this cluster
-        u[K_row[j],K_force[j]] = 1
+    #    u[K_row[j],K_force[j]] = 1
 
     return u
 
@@ -316,7 +316,14 @@ def ProjectToSimplex(X):
     return X
 
 
+"""Purity score
+        Args:
+            y_true(np.ndarray): n*1 matrix Ground truth labels
+            y_pred(np.ndarray): n*1 matrix Predicted clusters
 
+        Returns:
+            float: Purity score
+    """
 def purity_score(y_true, y_pred):
     # compute contingency matrix (also called confusion matrix)
     contingency_matrix = metrics.cluster.contingency_matrix(y_true, y_pred)
