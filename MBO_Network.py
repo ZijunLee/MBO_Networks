@@ -121,19 +121,19 @@ def mbo_modularity_1(num_nodes,num_communities, m,degree, graph_laplacian,signle
     #print('D_sign shape: ', D_sign.shape)
     #print('V_sign shape: ', V_sign.shape)
 
-    if fidelity_type == "spectral":
-        fidelity_D, fidelity_V = eigsh(
-            laplacian_mix,
-            k=num_communities + 1,
-            v0=np.ones((laplacian_mix.shape[0], 1)),
-            which="SA",
-        )
-        fidelity_V = fidelity_V[:, 1:]  # Remove the constant eigenvector
-        fidelity_D = fidelity_D[1:]
-        # apply_threshold(fidelity_V, target_size, "max")
-        # return fidelity_V
-    else:
-        fidelity_V = None
+    #if fidelity_type == "spectral":
+    #    fidelity_D, fidelity_V = eigsh(
+    #        laplacian_mix,
+    #        k=num_communities + 1,
+    #        v0=np.ones((laplacian_mix.shape[0], 1)),
+    #        which="SA",
+    #    )
+    #    fidelity_V = fidelity_V[:, 1:]  # Remove the constant eigenvector
+    #    fidelity_D = fidelity_D[1:]
+    #    # apply_threshold(fidelity_V, target_size, "max")
+    #    # return fidelity_V
+    #else:
+    #    fidelity_V = None
 
 
     # Initialize parameters
@@ -161,35 +161,19 @@ def mbo_modularity_1(num_nodes,num_communities, m,degree, graph_laplacian,signle
     while (n < max_iter) and (stop_criterion > tol):
         u_old = u_new.copy()
 
-        #dti = dt / (2 * inner_step_count)
-
         #if pseudospectral:
 
         #a = V_sign.transpose() @ u_old
 
         #demon = sp.sparse.spdiags([1 / (1 + dt * D)], [0], m, m)
         demon = sp.sparse.spdiags([np.exp(- 0.5 * D_sign * dti)],[0],m,m) @ V_sign.transpose()
-        #print('demon shape: ', demon.shape)
-        #a = demon @ a
-        #demon = sp.sparse.spdiags([1.0 / (1.0 + dti * D_sign)], [0], m, m) @ V_sign.transpose()
-        #    P = sp.sparse.spdiags([np.exp(-D_sign*dti)],[0],m,m) @ V_sign.T
         
         #for j in range(inner_step_count):
             
             # Solve system (apply CG or pseudospectral)
 
         u_half = V_sign @ (demon @ u_old)  # Project back into normal space
-        #print('u_half: ',u_half)
-            #    u = V_sign @ (P @ u)
-            #fidelity_term = get_fidelity_term(u, type=fidelity_type, V=fidelity_V)
-                
-                # Project fidelity term into Hilbert space
-                #if normalized:
-                #    d = V_sign.transpose() @ (degree_inv @ fidelity_term)
-                #    d = V_sign.transpose() @ (eigenvalue_mat @ fidelity_term)
-                #else:
-                #d = V_sign.transpose() @ fidelity_term
-                
+
         # Apply thresholding 
         u_new = apply_threshold(u_half, target_size, thresh_type)
         #u_new = _mbo_forward_step_multiclass(u_half)
@@ -359,18 +343,18 @@ def mbo_modularity_2(num_communities, m, adj_matrix, tol,gamma,eps=1,
         which= "SA",)
 
 
-    if fidelity_type == "spectral":
-        fidelity_D, fidelity_V = eigsh(
-            sym_graph_laplacian,
-            k=num_communities + 1,
-            v0=np.ones((sym_graph_laplacian.shape[0], 1)),
-            which="SA",)
-        fidelity_V = fidelity_V[:, 1:]  # Remove the constant eigenvector
-        fidelity_D = fidelity_D[1:]
-        # apply_threshold(fidelity_V, target_size, "max")
-        # return fidelity_V
-    else:
-        fidelity_V = None
+    #if fidelity_type == "spectral":
+    #    fidelity_D, fidelity_V = eigsh(
+    #        sym_graph_laplacian,
+    #        k=num_communities + 1,
+    #        v0=np.ones((sym_graph_laplacian.shape[0], 1)),
+    #        which="SA",)
+    #    fidelity_V = fidelity_V[:, 1:]  # Remove the constant eigenvector
+    #    fidelity_D = fidelity_D[1:]
+    #    # apply_threshold(fidelity_V, target_size, "max")
+    #    # return fidelity_V
+    #else:
+    #    fidelity_V = None
 
 
     # Initialize parameters
@@ -407,9 +391,7 @@ def mbo_modularity_2(num_communities, m, adj_matrix, tol,gamma,eps=1,
         #    if pseudospectral:
             #    a = demon @ (a + fidelity_coeff * dti * d)
         #a = demon @ a
-        u_half = V_sign @ (demon @ u_old)  # Project back into normal space
-
-            
+        u_half = V_sign @ (demon @ u_old)  # Project back into normal space      
 
         # Apply thresholding 
         u_new = apply_threshold(u_half, target_size, thresh_type)
@@ -575,8 +557,8 @@ def mbo_modularity_given_eig(eigval,eigvec, u_init,k_weights,tol=0.5, gamma=0.5,
 
 
 
-def mbo_modularity_inner_step(num_nodes, num_communities, m, graph_laplacian, signless_laplacian_null_model,dt, tol,inner_step_count,
-                       target_size=None, fidelity_type="karate", max_iter=10000,
+def mbo_modularity_inner_step(num_nodes, num_communities, m, graph_laplacian, signless_laplacian_null_model,dt, tol,target_size,inner_step_count,
+                       fidelity_type="karate", max_iter=10000,
                        fidelity_coeff=10, initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     
@@ -665,19 +647,19 @@ def mbo_modularity_1_normalized_lf(num_nodes,num_communities, m, degree,nor_grap
     #print('D_sign shape: ', D_sign.shape)
     #print('V_sign shape: ', V_sign.shape)
 
-    if fidelity_type == "spectral":
-        fidelity_D, fidelity_V = eigsh(
-            laplacian_mix,
-            k=num_communities + 1,
-            v0=np.ones((laplacian_mix.shape[0], 1)),
-            which="SA",
-        )
-        fidelity_V = fidelity_V[:, 1:]  # Remove the constant eigenvector
-        fidelity_D = fidelity_D[1:]
-        # apply_threshold(fidelity_V, target_size, "max")
-        # return fidelity_V
-    else:
-        fidelity_V = None
+    #if fidelity_type == "spectral":
+    #    fidelity_D, fidelity_V = eigsh(
+    #        laplacian_mix,
+    #        k=num_communities + 1,
+    #        v0=np.ones((laplacian_mix.shape[0], 1)),
+    #        which="SA",
+    #    )
+    #    fidelity_V = fidelity_V[:, 1:]  # Remove the constant eigenvector
+    #    fidelity_D = fidelity_D[1:]
+    #    # apply_threshold(fidelity_V, target_size, "max")
+    #    # return fidelity_V
+    #else:
+    #    fidelity_V = None
 
 
     # Initialize parameters
@@ -757,19 +739,19 @@ def mbo_modularity_1_normalized_Qh(num_nodes,num_communities, m,degree, graph_la
     #print('D_sign shape: ', D_sign.shape)
     #print('V_sign shape: ', V_sign.shape)
 
-    if fidelity_type == "spectral":
-        fidelity_D, fidelity_V = eigsh(
-            laplacian_mix,
-            k=num_communities + 1,
-            v0=np.ones((laplacian_mix.shape[0], 1)),
-            which="SA",
-        )
-        fidelity_V = fidelity_V[:, 1:]  # Remove the constant eigenvector
-        fidelity_D = fidelity_D[1:]
-        # apply_threshold(fidelity_V, target_size, "max")
-        # return fidelity_V
-    else:
-        fidelity_V = None
+    #if fidelity_type == "spectral":
+    #    fidelity_D, fidelity_V = eigsh(
+    #        laplacian_mix,
+    #        k=num_communities + 1,
+    #        v0=np.ones((laplacian_mix.shape[0], 1)),
+    #        which="SA",
+    #    )
+    #    fidelity_V = fidelity_V[:, 1:]  # Remove the constant eigenvector
+    #    fidelity_D = fidelity_D[1:]
+    #    # apply_threshold(fidelity_V, target_size, "max")
+    #    # return fidelity_V
+    #else:
+    #    fidelity_V = None
 
 
     # Initialize parameters
@@ -848,19 +830,19 @@ def mbo_modularity_1_normalized_Lf_Qh(num_nodes,num_communities, m,degree, nor_g
     #print('D_sign shape: ', D_sign.shape)
     #print('V_sign shape: ', V_sign.shape)
 
-    if fidelity_type == "spectral":
-        fidelity_D, fidelity_V = eigsh(
-            laplacian_mix,
-            k=num_communities + 1,
-            v0=np.ones((laplacian_mix.shape[0], 1)),
-            which="SA",
-        )
-        fidelity_V = fidelity_V[:, 1:]  # Remove the constant eigenvector
-        fidelity_D = fidelity_D[1:]
-        # apply_threshold(fidelity_V, target_size, "max")
-        # return fidelity_V
-    else:
-        fidelity_V = None
+    #if fidelity_type == "spectral":
+    #    fidelity_D, fidelity_V = eigsh(
+    #        laplacian_mix,
+    #        k=num_communities + 1,
+    #        v0=np.ones((laplacian_mix.shape[0], 1)),
+    #        which="SA",
+    #    )
+    #    fidelity_V = fidelity_V[:, 1:]  # Remove the constant eigenvector
+    #    fidelity_D = fidelity_D[1:]
+    #    # apply_threshold(fidelity_V, target_size, "max")
+    #    # return fidelity_V
+    #else:
+    #    fidelity_V = None
 
 
     # Initialize parameters
@@ -871,7 +853,6 @@ def mbo_modularity_1_normalized_Lf_Qh(num_nodes,num_communities, m,degree, nor_g
     #    type=initial_state_type,
     #    fidelity_type=fidelity_type,
     #    fidelity_V=fidelity_V,)
-
 
     u = get_initial_state_1(num_nodes, num_communities, target_size)
 
@@ -898,10 +879,6 @@ def mbo_modularity_1_normalized_Lf_Qh(num_nodes,num_communities, m,degree, nor_g
 
         #demon = sp.sparse.spdiags([1 / (1 + dt * D)], [0], m, m)
         demon = sp.sparse.spdiags([np.exp(- 0.5 * D_sign * dti)],[0],m,m) @ V_sign.transpose()
-        #print('demon shape: ', demon.shape)
-        #a = demon @ a
-        #demon = sp.sparse.spdiags([1.0 / (1.0 + dti * D_sign)], [0], m, m) @ V_sign.transpose()
-        #    P = sp.sparse.spdiags([np.exp(-D_sign*dti)],[0],m,m) @ V_sign.T
 
         u_half = V_sign @ (demon @ u_old)  # Project back into normal space
         #print('u_half: ',u_half)
