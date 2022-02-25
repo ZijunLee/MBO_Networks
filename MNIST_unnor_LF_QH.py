@@ -12,7 +12,6 @@ from sklearn.metrics import adjusted_rand_score
 from sklearn.cluster import KMeans, SpectralClustering
 from scipy.sparse.linalg import eigsh,eigs
 import community as co
-from community import modularity
 import time
 import csv
 
