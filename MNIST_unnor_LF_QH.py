@@ -63,47 +63,51 @@ inverse_purify_1_unnor_lf_accumulator_1 =0
 NMI_1_unnor_lf_accumulator_1 =0
 AMI_1_unnor_lf_accumulator_1 =0
 
-for _ in range(30):
-    u_1_unnor_individual,num_repeat_1_unnor = mbo_modularity_1(num_nodes_1,num_communities, m_1,degree_1, graph_laplacian_1,signless_laplacian_null_model_1, 
-                                                            tol, target_size_1,eta_1, eps=1)   
-    u_1_unnor_individual_label = vector_to_labels(u_1_unnor_individual)
-    u_1_unnor_individual_label_dict = label_to_dict(u_1_unnor_individual_label)
+#for _ in range(30):
+u_1_unnor_individual,num_repeat_1_unnor = mbo_modularity_1(num_nodes_1,num_communities, m_1,degree_1, graph_laplacian_1,signless_laplacian_null_model_1, 
+                                                        tol, target_size_1,eta_1, eps=1)   
+u_1_unnor_individual_label = vector_to_labels(u_1_unnor_individual)
+u_1_unnor_individual_label_dict = label_to_dict(u_1_unnor_individual_label)
 
-    modularity_1_unnor_individual = co.modularity(u_1_unnor_individual_label_dict,G)
-    ARI_mbo_1_unnor_lf = adjusted_rand_score(u_1_unnor_individual_label, gt_list)
-    purify_mbo_1_unnor_lf_1 = purity_score(gt_list, u_1_unnor_individual_label)
-    inverse_purify_mbo_1_unnor_lf_1 = inverse_purity_score(gt_list, u_1_unnor_individual_label)
-    NMI_mbo_1_unnor_lf_1 = normalized_mutual_info_score(gt_list, u_1_unnor_individual_label)
-    AMI_mbo_1_unnor_lf_1 = adjusted_mutual_info_score(gt_list, u_1_unnor_individual_label)
+modularity_1_unnor_individual = co.modularity(u_1_unnor_individual_label_dict,G)
+ARI_mbo_1_unnor_lf = adjusted_rand_score(u_1_unnor_individual_label, gt_list)
+purify_mbo_1_unnor_lf_1 = purity_score(gt_list, u_1_unnor_individual_label)
+inverse_purify_mbo_1_unnor_lf_1 = inverse_purity_score(gt_list, u_1_unnor_individual_label)
+NMI_mbo_1_unnor_lf_1 = normalized_mutual_info_score(gt_list, u_1_unnor_individual_label)
+AMI_mbo_1_unnor_lf_1 = adjusted_mutual_info_score(gt_list, u_1_unnor_individual_label)
 
-    mbo_accumulator_1_unnor_individual += modularity_1_unnor_individual
-    ARI_1_unnor_lf_accumulator += ARI_mbo_1_unnor_lf
-    purify_1_unnor_lf_accumulator_1 += purify_mbo_1_unnor_lf_1
-    inverse_purify_1_unnor_lf_accumulator_1 += inverse_purify_mbo_1_unnor_lf_1
-    NMI_1_unnor_lf_accumulator_1 += NMI_mbo_1_unnor_lf_1
-    AMI_1_unnor_lf_accumulator_1 += AMI_mbo_1_unnor_lf_1
+    #mbo_accumulator_1_unnor_individual += modularity_1_unnor_individual
+    #ARI_1_unnor_lf_accumulator += ARI_mbo_1_unnor_lf
+    #purify_1_unnor_lf_accumulator_1 += purify_mbo_1_unnor_lf_1
+    #inverse_purify_1_unnor_lf_accumulator_1 += inverse_purify_mbo_1_unnor_lf_1
+    #NMI_1_unnor_lf_accumulator_1 += NMI_mbo_1_unnor_lf_1
+    #AMI_1_unnor_lf_accumulator_1 += AMI_mbo_1_unnor_lf_1
 
-average_mbo_1_unnor = mbo_accumulator_1_unnor_individual / 30
-average_ARI_1_unnor = ARI_1_unnor_lf_accumulator / 30
-average_purify_1_unnor_1 = purify_1_unnor_lf_accumulator_1 / 30
-average_inverse_purify_1_unnor_1 = inverse_purify_1_unnor_lf_accumulator_1 / 30
-average_NMI_1_unnor_1 = NMI_1_unnor_lf_accumulator_1 / 30
-average_AMI_1_unnor_1 = NMI_1_unnor_lf_accumulator_1 / 30
+#average_mbo_1_unnor = mbo_accumulator_1_unnor_individual / 30
+#average_ARI_1_unnor = ARI_1_unnor_lf_accumulator / 30
+#average_purify_1_unnor_1 = purify_1_unnor_lf_accumulator_1 / 30
+#average_inverse_purify_1_unnor_1 = inverse_purify_1_unnor_lf_accumulator_1 / 30
+#average_NMI_1_unnor_1 = NMI_1_unnor_lf_accumulator_1 / 30
+#average_AMI_1_unnor_1 = AMI_1_unnor_lf_accumulator_1 / 30
 
-print('average modularity_1 unnormalized L_F & Q_H score: ', average_mbo_1_unnor)
-print('average ARI_1 unnormalized L_F & Q_H score: ', average_ARI_1_unnor)
-print('average purify for MMBO1 unnormalized L_F with \eta =1 : ', average_purify_1_unnor_1)
-print('average inverse purify for MMBO1 unnormalized L_F with \eta =1 : ', average_inverse_purify_1_unnor_1)
-print('average NMI for MMBO1 unnormalized L_F with \eta =1 : ', average_NMI_1_unnor_1)
-print('average AMI for MMBO1 unnormalized L_F with \eta =1 : ', average_AMI_1_unnor_1)
+print('average modularity_1 unnormalized L_F & Q_H score: ', modularity_1_unnor_individual)
+print('average ARI_1 unnormalized L_F & Q_H score: ', ARI_mbo_1_unnor_lf)
+print('average purify for MMBO1 unnormalized L_F with \eta =1 : ', purify_mbo_1_unnor_lf_1)
+print('average inverse purify for MMBO1 unnormalized L_F with \eta =1 : ', inverse_purify_mbo_1_unnor_lf_1)
+print('average NMI for MMBO1 unnormalized L_F with \eta =1 : ', NMI_mbo_1_unnor_lf_1)
+print('average AMI for MMBO1 unnormalized L_F with \eta =1 : ', AMI_mbo_1_unnor_lf_1)
 
 testarray = ["average modularity_1 unnormalized L_F & Q_H score", "average ARI_1 unnormalized L_F & Q_H score",
              "average purify for MMBO1 unnormalized L_F", "average inverse purify for MMBO1 unnormalized L_F",
              "average NMI for MMBO1 unnormalized L_F", "average AMI for MMBO1 unnormalized L_F"]
 
-resultarray = [average_mbo_1_unnor, average_ARI_1_unnor,
-               average_purify_1_unnor_1, average_inverse_purify_1_unnor_1,
-               average_NMI_1_unnor_1, average_AMI_1_unnor_1]
+#resultarray = [average_mbo_1_unnor, average_ARI_1_unnor,
+#               average_purify_1_unnor_1, average_inverse_purify_1_unnor_1,
+#               average_NMI_1_unnor_1, average_AMI_1_unnor_1]
+
+resultarray = [modularity_1_unnor_individual, ARI_mbo_1_unnor_lf,
+               purify_mbo_1_unnor_lf_1, inverse_purify_mbo_1_unnor_lf_1,
+               NMI_mbo_1_unnor_lf_1, AMI_mbo_1_unnor_lf_1]
 
 with open('MNIST_unnor_LF_QH.csv', 'w', newline='') as csvfile:
     wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
