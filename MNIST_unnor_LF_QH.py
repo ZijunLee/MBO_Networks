@@ -18,7 +18,9 @@ import csv
 
 #Load labels, knndata, and build 10-nearest neighbor weight matrix
 W = gl.weightmatrix.knn('mnist', 10, metric='vae')
-#print(type(W))
+W_dense = W.toarray()
+print(W_dense.shape)
+print(type(W_dense))
 
 gt_labels = gl.datasets.load('mnist', labels_only=True)
 gt_list = gt_labels.tolist()  
@@ -34,8 +36,8 @@ for e in range(len(gt_list)):
 gt_label_dict = dict(zip(len_gt_label, gt_list))     # gt_label_dict is a dict
 
 
-G = nx.convert_matrix.from_scipy_sparse_matrix(W)
-#print(type(G))
+G = nx.convert_matrix.from_numpy_array(W_dense)
+print(type(G))
 
 ## parameter setting
 dt_inner = 0.5
@@ -53,7 +55,7 @@ eta_05 = 0.5
 eta_03 = 1.3
 inner_step_count =3
 
-num_nodes_1,m_1, degree_1, target_size_1,null_model_eta_1,graph_laplacian_1, nor_graph_laplacian_1,random_walk_nor_lap_1, signless_laplacian_null_model_1, nor_signless_laplacian_1, rw_signless_laplacian_1 = adj_to_laplacian_signless_laplacian(W,num_communities,m,eta_1,target_size=None)
+num_nodes_1,m_1, degree_1, target_size_1,null_model_eta_1,graph_laplacian_1, nor_graph_laplacian_1,random_walk_nor_lap_1, signless_laplacian_null_model_1, nor_signless_laplacian_1, rw_signless_laplacian_1 = adj_to_laplacian_signless_laplacian(W_dense,num_communities,m,eta_1,target_size=None)
 
 # MMBO 1 with unnormalized L_F and gamma=1
 mbo_accumulator_1_unnor_individual = 0
