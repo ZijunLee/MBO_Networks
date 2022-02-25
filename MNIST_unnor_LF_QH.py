@@ -72,8 +72,8 @@ u_1_unnor_individual,num_repeat_1_unnor = mbo_modularity_1(num_nodes_1,num_commu
 u_1_unnor_individual_label = vector_to_labels(u_1_unnor_individual)
 u_1_unnor_individual_label_dict = label_to_dict(u_1_unnor_individual_label)
 
-modularity_1_unnor_individual = modularity(u_1_unnor_individual_label_dict,G)
-#modularity_1_unnor_individual = nx_comm.modularity(G,u_1_unnor_individual_label)
+#modularity_1_unnor_individual = modularity(u_1_unnor_individual_label_dict,G)
+modularity_1_unnor_individual = get_modularity(G,u_1_unnor_individual_label_dict)
 ARI_mbo_1_unnor_lf = adjusted_rand_score(u_1_unnor_individual_label, gt_list)
 purify_mbo_1_unnor_lf_1 = purity_score(gt_list, u_1_unnor_individual_label)
 inverse_purify_mbo_1_unnor_lf_1 = inverse_purity_score(gt_list, u_1_unnor_individual_label)
