@@ -89,7 +89,7 @@ def adj_to_laplacian_signless_laplacian(adj_matrix,num_communities,m,gamma, targ
 
     #null_model = (np.dot(np.transpose(degree), degree))/total_degree
     null_model = (dergee_di_null @ dergee_di_null.transpose())/ total_degree
-    null_model_eta = gamma * null_model
+    #null_model_eta = gamma * null_model
 
     #print('null model shape: ', null_model_eta.shape)
     
@@ -102,7 +102,7 @@ def adj_to_laplacian_signless_laplacian(adj_matrix,num_communities,m,gamma, targ
     nor_signless_laplacian = np.sqrt(signless_degree_inv) @ signless_laplacian_null_model @ np.sqrt(signless_degree_inv)
     rw_signless_lapclacian =  signless_degree_inv @ signless_laplacian_null_model
 
-    return num_nodes,m, degree, target_size,null_model_eta,graph_laplacian, nor_graph_laplacian,random_walk_nor_lap, signless_laplacian_null_model, nor_signless_laplacian, rw_signless_lapclacian
+    return num_nodes,m, degree, target_size,null_model,graph_laplacian, nor_graph_laplacian,random_walk_nor_lap, signless_laplacian_null_model, nor_signless_laplacian, rw_signless_lapclacian
     
 
 #@nb.jit()

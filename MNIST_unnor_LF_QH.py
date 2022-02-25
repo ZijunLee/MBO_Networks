@@ -18,7 +18,7 @@ import csv
 
 #Load labels, knndata, and build 10-nearest neighbor weight matrix
 W = gl.weightmatrix.knn('mnist', 10, metric='vae')
-W_dense = W.toarray()
+W_dense = W.todense()
 print(W_dense.shape)
 print(type(W_dense))
 
@@ -36,7 +36,7 @@ for e in range(len(gt_list)):
 gt_label_dict = dict(zip(len_gt_label, gt_list))     # gt_label_dict is a dict
 
 
-G = nx.convert_matrix.from_numpy_array(W_dense)
+G = nx.convert_matrix.from_numpy_matrix(W_dense)
 print(type(G))
 
 ## parameter setting
