@@ -1,7 +1,7 @@
 import numpy as np
 import graphlearning as gl
 from MBO_Network import mbo_modularity_1, adj_to_laplacian_signless_laplacian, mbo_modularity_inner_step
-from graph_mbo.utils import spectral_clustering,vector_to_labels, get_modularity_original,get_modularity,labels_to_vector,label_to_dict, purity_score,inverse_purity_score
+from graph_mbo.utils import vector_to_labels, labels_to_vector,label_to_dict, purity_score,inverse_purity_score, dict_to_list_set
 from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_mutual_info_score, adjusted_rand_score
 from matplotlib import pyplot as plt
 import networkx as nx
@@ -70,9 +70,10 @@ u_1_unnor_individual,num_repeat_1_unnor = mbo_modularity_1(num_nodes_1,num_commu
                                                         tol, target_size_1,eta_1, eps=1)   
 u_1_unnor_individual_label = vector_to_labels(u_1_unnor_individual)
 u_1_unnor_individual_label_dict = label_to_dict(u_1_unnor_individual_label)
+u_1_unnor_label_set = dict_to_list_set(u_1_unnor_individual_label_dict)
 
-#modularity_1_unnor_individual = modularity(u_1_unnor_individual_label_dict,G)
-modularity_1_unnor_individual = get_modularity(G,u_1_unnor_individual_label_dict)
+#modularity_1_unnor_individual = co.modularity(u_1_unnor_individual_label_dict,G)
+modularity_1_unnor_lf_qh = nx_comm.modularity(G,u_1_unnor_label_set)
 ARI_mbo_1_unnor_lf = adjusted_rand_score(u_1_unnor_individual_label, gt_list)
 purify_mbo_1_unnor_lf_1 = purity_score(gt_list, u_1_unnor_individual_label)
 inverse_purify_mbo_1_unnor_lf_1 = inverse_purity_score(gt_list, u_1_unnor_individual_label)
@@ -93,7 +94,7 @@ AMI_mbo_1_unnor_lf_1 = adjusted_mutual_info_score(gt_list, u_1_unnor_individual_
 #average_NMI_1_unnor_1 = NMI_1_unnor_lf_accumulator_1 / 30
 #average_AMI_1_unnor_1 = AMI_1_unnor_lf_accumulator_1 / 30
 
-print('average modularity_1 unnormalized L_F & Q_H score: ', modularity_1_unnor_individual)
+print('average modularity_1 unnormalized L_F & Q_H score: ', modularity_1_unnor_lf_qh)
 print('average ARI_1 unnormalized L_F & Q_H score: ', ARI_mbo_1_unnor_lf)
 print('average purify for MMBO1 unnormalized L_F with \eta =1 : ', purify_mbo_1_unnor_lf_1)
 print('average inverse purify for MMBO1 unnormalized L_F with \eta =1 : ', inverse_purify_mbo_1_unnor_lf_1)
@@ -108,7 +109,7 @@ testarray = ["average modularity_1 unnormalized L_F & Q_H score", "average ARI_1
 #               average_purify_1_unnor_1, average_inverse_purify_1_unnor_1,
 #               average_NMI_1_unnor_1, average_AMI_1_unnor_1]
 
-resultarray = [modularity_1_unnor_individual, ARI_mbo_1_unnor_lf,
+resultarray = [modularity_1_unnor_lf_qh, ARI_mbo_1_unnor_lf,
                purify_mbo_1_unnor_lf_1, inverse_purify_mbo_1_unnor_lf_1,
                NMI_mbo_1_unnor_lf_1, AMI_mbo_1_unnor_lf_1]
 
