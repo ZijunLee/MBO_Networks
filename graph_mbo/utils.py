@@ -290,6 +290,8 @@ def _diffusion_step_eig(v,V,E,dt):
 def _mbo_forward_step_multiclass(u): #thresholding
     return labels_to_vector(vector_to_labels(u),vec_dim = u.shape[1])
 
+
+
 def label_to_dict(u_label):
     len_label = []
     for i in range(len(u_label)):
@@ -336,3 +338,19 @@ def inverse_purity_score(y_true, y_pred):
     contingency_matrix = metrics.cluster.contingency_matrix(y_true, y_pred)
     # return purity
     return np.sum(np.amax(contingency_matrix, axis=1)) / np.sum(contingency_matrix) 
+
+
+def dict_to_list_set(dictionary):
+    dict_value_list = list(dict.values(dictionary))   #convert a dict value to list
+    dict_keys_list = list(dict.keys(dictionary))
+    num_cluster = list(set(dict_value_list))
+
+    num_clustering_list = []
+    for x in range(len(num_cluster)):
+        innerlist = []
+        for i in range(len(dict_keys_list)):
+            if dict_value_list[i] == num_cluster[x]:
+                innerlist.append(dict_keys_list[i])
+        num_clustering_list.append(innerlist)
+
+    return num_clustering_list
