@@ -60,6 +60,8 @@ inner_step_count =3
 num_nodes_1,m_1, degree_1, target_size_1,null_model_eta_1,graph_laplacian_1, nor_graph_laplacian_1,random_walk_nor_lap_1, signless_laplacian_null_model_1, nor_signless_laplacian_1, rw_signless_laplacian_1 = adj_to_laplacian_signless_laplacian(W_dense,num_communities,m,eta_1,target_size=None)
 
 
+start_time_1_unnor_1 = time.time()
+
 # MMBO 1 with unnormalized L_F and gamma=1
 
 u_1_unnor_individual,num_repeat_1_unnor = mbo_modularity_1(num_nodes_1,num_communities, m_1,degree_1, graph_laplacian_1,signless_laplacian_null_model_1, 
@@ -77,6 +79,7 @@ inverse_purify_mbo_1_unnor_lf_1 = inverse_purity_score(gt_list, u_1_unnor_indivi
 NMI_mbo_1_unnor_lf_1 = normalized_mutual_info_score(gt_list, u_1_unnor_individual_label)
 AMI_mbo_1_unnor_lf_1 = adjusted_mutual_info_score(gt_list, u_1_unnor_individual_label)
 
+print("mmbo 1 with unnormalized L_F and gamma=1:-- %.3f seconds --" % (time.time() - start_time_1_unnor_1))
 
 print('average modularity_1 unnormalized L_F & Q_H score: ', modularity_1_unnor_lf_qh)
 print('average ARI_1 unnormalized L_F & Q_H score: ', ARI_mbo_1_unnor_lf)
@@ -103,6 +106,8 @@ with open('MNIST_unnor_LF_QH.csv', 'w', newline='') as csvfile:
     wr.writerow(resultarray_unnor_Lf_Qh)
 
 
+start_time_1_nor_Lf_Qh_1 = time.time()
+
 # MMBO1 with normalized L_F & Q_H and gamma=1
 
 u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1 = mbo_modularity_1(num_nodes_1,num_communities, m_1,degree_1, nor_graph_laplacian_1,nor_signless_laplacian_1, 
@@ -120,6 +125,7 @@ inverse_purify_mbo_1_nor_Lf_Qh_1 = inverse_purity_score(gt_list, u_1_nor_Lf_Qh_i
 NMI_mbo_1_nor_Lf_Qh_1 = normalized_mutual_info_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
 AMI_mbo_1_nor_Lf_Qh_1 = adjusted_mutual_info_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
 
+print("MMBO1 with normalized L_F and gamma=1:-- %.3f seconds --" % (time.time() - start_time_1_nor_Lf_Qh_1))
 
 print('average modularity_1 normalized L_F & Q_H score: ', modularity_1_nor_lf_qh)
 print('average ARI_1 normalized L_F & Q_H score: ', ARI_mbo_1_nor_Lf_Qh_1)
@@ -143,6 +149,7 @@ with open('MNIST_nor_LF_QH.csv', 'w', newline='') as csvfile:
     wr.writerow(resultarray_nor_Lf_Qh)
 
 
+start_time_1_inner_nor_1 = time.time()
 
 # MMBO1 with inner step & normalized L_F and gamma=1
 
@@ -159,6 +166,8 @@ purify_mbo_1_inner_1 = purity_score(gt_list, u_inner_individual_label_1)
 inverse_purify_mbo_1_inner_1 = inverse_purity_score(gt_list, u_inner_individual_label_1)
 NMI_mbo_1_inner_1 = normalized_mutual_info_score(gt_list, u_inner_individual_label_1)
 AMI_mbo_1_inner_1 = adjusted_mutual_info_score(gt_list, u_inner_individual_label_1)
+
+print("MMBO1 with inner step & normalized L_F and gamma=1:-- %.3f seconds --" % (time.time() - start_time_1_inner_nor_1))
 
 print('average modularity_1 inner step score: ', modularity_1_inner_1)
 print('average ARI_1 inner step score: ', ARI_mbo_1_inner_1)
@@ -182,6 +191,8 @@ with open('MNIST_inner_1.csv', 'w', newline='') as csvfile:
     wr.writerow(resultarray_inner_1)
 
 
+start_time_louvain = time.time()
+
 # Louvain algorithm (can setting resolution gamma)
 partition_Louvain = community_louvain.best_partition(G, resolution=1)    # returns a dict
 louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
@@ -193,6 +204,8 @@ purify_louvain = purity_score(gt_list, louvain_list)
 inverse_purify_louvain = inverse_purity_score(gt_list, louvain_list)
 NMI_louvain = normalized_mutual_info_score(gt_list, louvain_list)
 AMI_louvain = adjusted_mutual_info_score(gt_list, louvain_list)
+
+print("Louvain algorithm:-- %.3f seconds --" % (time.time() - start_time_louvain))
 
 print('average modularity Louvain score: ', modularity_louvain)
 print('average ARI Louvain  score: ', ARI_louvain)
@@ -216,7 +229,7 @@ with open('MNIST_Louvain.csv', 'w', newline='') as csvfile:
     wr.writerow(resultarray_Louvain)
 
 
-
+start_time_CNM = time.time()
 
 # CNM algorithm (can setting resolution gamma)
 partition_CNM = nx_comm.greedy_modularity_communities(G)
@@ -245,6 +258,8 @@ inverse_purify_CNM = inverse_purity_score(gt_list, CNM_list)
 NMI_CNM = normalized_mutual_info_score(gt_list, CNM_list)
 AMI_CNM = adjusted_mutual_info_score(gt_list, CNM_list)
 
+print("CNM algorithm:-- %.3f seconds --" % (time.time() - start_time_CNM))
+
 print('average modularity CNM score: ', modularity_CNM)
 print('average ARI CNM  score: ', ARI_CNM)
 print('average purify for CNM : ', purify_CNM)
@@ -267,6 +282,8 @@ with open('MNIST_CNM.csv', 'w', newline='') as csvfile:
     wr.writerow(resultarray_CNM)
 
 
+start_time_spectral_clustering = time.time()
+
 # Spectral clustering with k-means
 sc = SpectralClustering(n_clusters=10, affinity='precomputed')
 assignment = sc.fit_predict(W_dense)
@@ -280,6 +297,8 @@ purify_spectral_clustering = purity_score(gt_list, assignment)
 inverse_purify_spectral_clustering = inverse_purity_score(gt_list, assignment)
 NMI_spectral_clustering = normalized_mutual_info_score(gt_list, assignment)
 AMI_spectral_clustering = adjusted_mutual_info_score(gt_list, assignment)
+
+print("spectral clustering algorithm:-- %.3f seconds --" % (time.time() - start_time_spectral_clustering))
 
 print('average modularity Spectral clustering score: ', modularity_spectral_clustering)
 print('average ARI Spectral clustering  score: ', ARI_spectral_clustering)
