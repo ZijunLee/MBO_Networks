@@ -12,6 +12,7 @@ from sklearn.metrics import adjusted_rand_score
 from sklearn.cluster import KMeans, SpectralClustering
 from scipy.sparse.linalg import eigsh,eigs
 import community as co
+from community import community_louvain
 import time
 import csv
 
@@ -182,7 +183,7 @@ with open('MNIST_inner_1.csv', 'w', newline='') as csvfile:
 
 
 # Louvain algorithm (can setting resolution gamma)
-partition_Louvain = co.best_partition(G, resolution=1)    # returns a dict
+partition_Louvain = community_louvain.best_partition(G, resolution=1)    # returns a dict
 louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
 louvain_label_set = dict_to_list_set(partition_Louvain)
 
