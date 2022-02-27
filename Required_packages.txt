@@ -7,4 +7,5 @@ kymatio
 matplotlib
 NetworkX
 community
+python-louvain
 graphlearning
