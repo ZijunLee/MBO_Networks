@@ -354,3 +354,4 @@ def dict_to_list_set(dictionary):
         num_clustering_list.append(innerlist)
 
     return num_clustering_list
+
