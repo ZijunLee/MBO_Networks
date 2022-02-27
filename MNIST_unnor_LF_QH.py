@@ -40,8 +40,9 @@ G = nx.convert_matrix.from_numpy_matrix(W_dense)
 print(type(G))
 
 ## parameter setting
-dt_inner = 0.5
-num_communities = 11
+dt_inner = 0.1
+num_communities = 10
+#num_communities_10 = 11
 m = 1 * num_communities
 #m_1 = 2 * num_communities
 #m = 3
@@ -57,17 +58,12 @@ inner_step_count =3
 
 num_nodes_1,m_1, degree_1, target_size_1,null_model_eta_1,graph_laplacian_1, nor_graph_laplacian_1,random_walk_nor_lap_1, signless_laplacian_null_model_1, nor_signless_laplacian_1, rw_signless_laplacian_1 = adj_to_laplacian_signless_laplacian(W_dense,num_communities,m,eta_1,target_size=None)
 
-# MMBO 1 with unnormalized L_F and gamma=1
-mbo_accumulator_1_unnor_individual = 0
-ARI_1_unnor_lf_accumulator =0
-purify_1_unnor_lf_accumulator_1 =0
-inverse_purify_1_unnor_lf_accumulator_1 =0
-NMI_1_unnor_lf_accumulator_1 =0
-AMI_1_unnor_lf_accumulator_1 =0
 
-#for _ in range(30):
+# MMBO 1 with unnormalized L_F and gamma=1
+
 u_1_unnor_individual,num_repeat_1_unnor = mbo_modularity_1(num_nodes_1,num_communities, m_1,degree_1, graph_laplacian_1,signless_laplacian_null_model_1, 
                                                         tol, target_size_1,eta_1, eps=1)   
+print('u_1 unnor L_F & Q_H number of iteration: ', num_repeat_1_unnor)
 u_1_unnor_individual_label = vector_to_labels(u_1_unnor_individual)
 u_1_unnor_individual_label_dict = label_to_dict(u_1_unnor_individual_label)
 u_1_unnor_label_set = dict_to_list_set(u_1_unnor_individual_label_dict)
@@ -80,19 +76,6 @@ inverse_purify_mbo_1_unnor_lf_1 = inverse_purity_score(gt_list, u_1_unnor_indivi
 NMI_mbo_1_unnor_lf_1 = normalized_mutual_info_score(gt_list, u_1_unnor_individual_label)
 AMI_mbo_1_unnor_lf_1 = adjusted_mutual_info_score(gt_list, u_1_unnor_individual_label)
 
-    #mbo_accumulator_1_unnor_individual += modularity_1_unnor_individual
-    #ARI_1_unnor_lf_accumulator += ARI_mbo_1_unnor_lf
-    #purify_1_unnor_lf_accumulator_1 += purify_mbo_1_unnor_lf_1
-    #inverse_purify_1_unnor_lf_accumulator_1 += inverse_purify_mbo_1_unnor_lf_1
-    #NMI_1_unnor_lf_accumulator_1 += NMI_mbo_1_unnor_lf_1
-    #AMI_1_unnor_lf_accumulator_1 += AMI_mbo_1_unnor_lf_1
-
-#average_mbo_1_unnor = mbo_accumulator_1_unnor_individual / 30
-#average_ARI_1_unnor = ARI_1_unnor_lf_accumulator / 30
-#average_purify_1_unnor_1 = purify_1_unnor_lf_accumulator_1 / 30
-#average_inverse_purify_1_unnor_1 = inverse_purify_1_unnor_lf_accumulator_1 / 30
-#average_NMI_1_unnor_1 = NMI_1_unnor_lf_accumulator_1 / 30
-#average_AMI_1_unnor_1 = AMI_1_unnor_lf_accumulator_1 / 30
 
 print('average modularity_1 unnormalized L_F & Q_H score: ', modularity_1_unnor_lf_qh)
 print('average ARI_1 unnormalized L_F & Q_H score: ', ARI_mbo_1_unnor_lf)
@@ -101,7 +84,7 @@ print('average inverse purify for MMBO1 unnormalized L_F with \eta =1 : ', inver
 print('average NMI for MMBO1 unnormalized L_F with \eta =1 : ', NMI_mbo_1_unnor_lf_1)
 print('average AMI for MMBO1 unnormalized L_F with \eta =1 : ', AMI_mbo_1_unnor_lf_1)
 
-testarray = ["average modularity_1 unnormalized L_F & Q_H score", "average ARI_1 unnormalized L_F & Q_H score",
+testarray_unnor_Lf_Qh = ["average modularity_1 unnormalized L_F & Q_H score", "average ARI_1 unnormalized L_F & Q_H score",
              "average purify for MMBO1 unnormalized L_F", "average inverse purify for MMBO1 unnormalized L_F",
              "average NMI for MMBO1 unnormalized L_F", "average AMI for MMBO1 unnormalized L_F"]
 
@@ -109,11 +92,211 @@ testarray = ["average modularity_1 unnormalized L_F & Q_H score", "average ARI_1
 #               average_purify_1_unnor_1, average_inverse_purify_1_unnor_1,
 #               average_NMI_1_unnor_1, average_AMI_1_unnor_1]
 
-resultarray = [modularity_1_unnor_lf_qh, ARI_mbo_1_unnor_lf,
+resultarray_unnor_Lf_Qh = [modularity_1_unnor_lf_qh, ARI_mbo_1_unnor_lf,
                purify_mbo_1_unnor_lf_1, inverse_purify_mbo_1_unnor_lf_1,
                NMI_mbo_1_unnor_lf_1, AMI_mbo_1_unnor_lf_1]
 
 with open('MNIST_unnor_LF_QH.csv', 'w', newline='') as csvfile:
     wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
-    wr.writerow(testarray)
-    wr.writerow(resultarray)
+    wr.writerow(testarray_unnor_Lf_Qh)
+    wr.writerow(resultarray_unnor_Lf_Qh)
+
+
+# MMBO1 with normalized L_F & Q_H and gamma=1
+
+u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1 = mbo_modularity_1(num_nodes_1,num_communities, m_1,degree_1, nor_graph_laplacian_1,nor_signless_laplacian_1, 
+                                                tol, target_size_1,eta_1, eps=1)     
+print('u_1 nor L_F & Q_H number of iteration: ', num_repeat_1_nor_Lf_Qh_1)
+u_1_nor_Lf_Qh_individual_label_1 = vector_to_labels(u_1_nor_Lf_Qh_individual_1)
+u_1_nor_Lf_Qh_individual_label_dict_1 = label_to_dict(u_1_nor_Lf_Qh_individual_label_1)
+u_1_nor_Lf_Qh_label_set = dict_to_list_set(u_1_nor_Lf_Qh_individual_label_dict_1)
+
+#modularity_1_nor_Lf_Qh_individual_1 = co.modularity(u_1_nor_Lf_Qh_individual_label_dict_1,G)
+modularity_1_nor_lf_qh = nx_comm.modularity(G,u_1_nor_Lf_Qh_label_set)
+ARI_mbo_1_nor_Lf_Qh_1 = adjusted_rand_score(u_1_nor_Lf_Qh_individual_label_1, gt_list)
+purify_mbo_1_nor_Lf_Qh_1 = purity_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
+inverse_purify_mbo_1_nor_Lf_Qh_1 = inverse_purity_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
+NMI_mbo_1_nor_Lf_Qh_1 = normalized_mutual_info_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
+AMI_mbo_1_nor_Lf_Qh_1 = adjusted_mutual_info_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
+
+
+print('average modularity_1 normalized L_F & Q_H score: ', modularity_1_nor_lf_qh)
+print('average ARI_1 normalized L_F & Q_H score: ', ARI_mbo_1_nor_Lf_Qh_1)
+print('average purify for MMBO1 normalized L_F & Q_H with \eta =1 : ', purify_mbo_1_nor_Lf_Qh_1)
+print('average inverse purify for MMBO1 normalized L_F & Q_H with \eta =1 : ', inverse_purify_mbo_1_nor_Lf_Qh_1)
+print('average NMI for MMBO1 normalized L_F & Q_H with \eta =1 : ', NMI_mbo_1_nor_Lf_Qh_1)
+print('average AMI for MMBO1 normalized L_F & Q_H with \eta =1 : ', AMI_mbo_1_nor_Lf_Qh_1)
+
+testarray_nor_Lf_Qh = ["modularity_1 normalized L_F & Q_H", "ARI_1 normalized L_F & Q_H",
+             "purify for MMBO1 normalized L_F & Q_H", "inverse purify for MMBO1 normalized L_F & Q_H",
+             "NMI for MMBO1 normalized L_F & Q_H ", "AMI for MMBO1 normalized L_F & Q_H"]
+
+
+resultarray_nor_Lf_Qh = [modularity_1_nor_lf_qh, ARI_mbo_1_nor_Lf_Qh_1,
+               purify_mbo_1_nor_Lf_Qh_1, inverse_purify_mbo_1_nor_Lf_Qh_1,
+               NMI_mbo_1_nor_Lf_Qh_1, AMI_mbo_1_nor_Lf_Qh_1]
+
+with open('MNIST_nor_LF_QH.csv', 'w', newline='') as csvfile:
+    wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
+    wr.writerow(testarray_nor_Lf_Qh)
+    wr.writerow(resultarray_nor_Lf_Qh)
+
+
+
+# MMBO1 with inner step & normalized L_F and gamma=1
+
+u_inner_individual_1,num_repeat_inner = mbo_modularity_inner_step(num_nodes_1, num_communities, m_1, nor_graph_laplacian_1, nor_signless_laplacian_1,dt_inner, tol,target_size_1, inner_step_count)
+print('u_inner number of iteration: ', num_repeat_inner)
+u_inner_individual_label_1 = vector_to_labels(u_inner_individual_1)
+u_inner_individual_label_dict_1 = label_to_dict(u_inner_individual_label_1)
+u_inner_label_set = dict_to_list_set(u_inner_individual_label_dict_1)
+
+#modularity_1_inner_individual_1 = co.modularity(u_inner_individual_label_dict_1,G)
+modularity_1_inner_1 = nx_comm.modularity(G,u_inner_label_set)
+ARI_mbo_1_inner_1 = adjusted_rand_score(u_inner_individual_label_1, gt_list)
+purify_mbo_1_inner_1 = purity_score(gt_list, u_inner_individual_label_1)
+inverse_purify_mbo_1_inner_1 = inverse_purity_score(gt_list, u_inner_individual_label_1)
+NMI_mbo_1_inner_1 = normalized_mutual_info_score(gt_list, u_inner_individual_label_1)
+AMI_mbo_1_inner_1 = adjusted_mutual_info_score(gt_list, u_inner_individual_label_1)
+
+print('average modularity_1 inner step score: ', modularity_1_inner_1)
+print('average ARI_1 inner step score: ', ARI_mbo_1_inner_1)
+print('average purify for MMBO1 inner step with \eta =1 : ', purify_mbo_1_inner_1)
+print('average inverse purify for MMBO1 inner step with \eta =1 : ', inverse_purify_mbo_1_inner_1)
+print('average NMI for MMBO1 inner step with \eta =1 : ', NMI_mbo_1_inner_1)
+print('average AMI for MMBO1 inner step with \eta =1 : ', AMI_mbo_1_inner_1)
+
+testarray_inner_1 = ["modularity_1 inner step", "ARI_1 inner step",
+             "purify for MMBO1 inner step", "inverse purify for MMBO1 inner step",
+             "NMI for MMBO1 inner step ", "AMI for MMBO1 inner step"]
+
+
+resultarray_inner_1 = [modularity_1_inner_1, ARI_mbo_1_inner_1,
+               purify_mbo_1_inner_1, inverse_purify_mbo_1_inner_1,
+               NMI_mbo_1_inner_1, AMI_mbo_1_inner_1]
+
+with open('MNIST_inner_1.csv', 'w', newline='') as csvfile:
+    wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
+    wr.writerow(testarray_inner_1)
+    wr.writerow(resultarray_inner_1)
+
+
+# Louvain algorithm (can setting resolution gamma)
+partition_Louvain = co.best_partition(G, resolution=1)    # returns a dict
+louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
+louvain_label_set = dict_to_list_set(partition_Louvain)
+
+modularity_louvain = nx_comm.modularity(G,louvain_label_set)
+ARI_louvain = adjusted_rand_score(louvain_list, gt_list)
+purify_louvain = purity_score(gt_list, louvain_list)
+inverse_purify_louvain = inverse_purity_score(gt_list, louvain_list)
+NMI_louvain = normalized_mutual_info_score(gt_list, louvain_list)
+AMI_louvain = adjusted_mutual_info_score(gt_list, louvain_list)
+
+print('average modularity Louvain score: ', modularity_louvain)
+print('average ARI Louvain  score: ', ARI_louvain)
+print('average purify for Louvain : ', purify_louvain)
+print('average inverse purify for Louvain : ', inverse_purify_louvain)
+print('average NMI for Louvain with \eta =1 : ', NMI_louvain)
+print('average AMI for Louvain: ', AMI_louvain)
+
+testarray_Louvain = ["modularity Louvain", "ARI Louvain",
+             "purify for Louvain", "inverse purify for Louvain",
+             "NMI for Louvain", "AMI for Louvain"]
+
+
+resultarray_Louvain = [modularity_louvain, ARI_louvain,
+               purify_louvain, inverse_purify_louvain,
+               NMI_louvain, AMI_louvain]
+
+with open('MNIST_Louvain.csv', 'w', newline='') as csvfile:
+    wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
+    wr.writerow(testarray_Louvain)
+    wr.writerow(resultarray_Louvain)
+
+
+
+
+# CNM algorithm (can setting resolution gamma)
+partition_CNM = nx_comm.greedy_modularity_communities(G)
+
+partition_CNM_list = [list(x) for x in partition_CNM]
+#print(type(partition_CNM_list))
+
+partition_CNM_expand = sum(partition_CNM_list, [])
+
+num_cluster_CNM = []
+for cluster in range(len(partition_CNM_list)):
+    for number_CNM in range(len(partition_CNM_list[cluster])):
+        num_cluster_CNM.append(cluster)
+
+#print(partition_CNM_list)
+CNM_dict = dict(zip(partition_CNM_expand, num_cluster_CNM))
+#print('CNM: ',CNM_dict)
+
+CNM_list = list(dict.values(CNM_dict))    #convert a dict to list
+
+
+modularity_CNM = nx_comm.modularity(G,partition_CNM_list)
+ARI_CNM = adjusted_rand_score(CNM_list, gt_list)
+purify_CNM = purity_score(gt_list, CNM_list)
+inverse_purify_CNM = inverse_purity_score(gt_list, CNM_list)
+NMI_CNM = normalized_mutual_info_score(gt_list, CNM_list)
+AMI_CNM = adjusted_mutual_info_score(gt_list, CNM_list)
+
+print('average modularity CNM score: ', modularity_CNM)
+print('average ARI CNM  score: ', ARI_CNM)
+print('average purify for CNM : ', purify_CNM)
+print('average inverse purify for CNM : ', inverse_purify_CNM)
+print('average NMI for CNM with \eta =1 : ', NMI_CNM)
+print('average AMI for CNM: ', AMI_CNM)
+
+testarray_CNM = ["modularity Louvain", "ARI Louvain",
+             "purify for Louvain", "inverse purify for Louvain",
+             "NMI for Louvain", "AMI for Louvain"]
+
+
+resultarray_CNM = [modularity_CNM, ARI_CNM,
+               purify_CNM, inverse_purify_CNM,
+               NMI_CNM, AMI_CNM]
+
+with open('MNIST_CNM.csv', 'w', newline='') as csvfile:
+    wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
+    wr.writerow(testarray_CNM)
+    wr.writerow(resultarray_CNM)
+
+
+# Spectral clustering with k-means
+sc = SpectralClustering(n_clusters=10, affinity='precomputed')
+assignment = sc.fit_predict(W_dense)
+
+ass_dict = label_to_dict (assignment)
+sc_label_set = dict_to_list_set(ass_dict)
+
+modularity_spectral_clustering = nx_comm.modularity(G,sc_label_set)
+ARI_spectral_clustering = adjusted_rand_score(assignment, gt_list)
+purify_spectral_clustering = purity_score(gt_list, assignment)
+inverse_purify_spectral_clustering = inverse_purity_score(gt_list, assignment)
+NMI_spectral_clustering = normalized_mutual_info_score(gt_list, assignment)
+AMI_spectral_clustering = adjusted_mutual_info_score(gt_list, assignment)
+
+print('average modularity Spectral clustering score: ', modularity_spectral_clustering)
+print('average ARI Spectral clustering  score: ', ARI_spectral_clustering)
+print('average purify for Spectral clustering : ', purify_spectral_clustering)
+print('average inverse purify for Spectral clustering : ', inverse_purify_spectral_clustering)
+print('average NMI for Spectral clustering with \eta =1 : ', NMI_spectral_clustering)
+print('average AMI for Spectral clustering: ', AMI_spectral_clustering)
+
+testarray_sc = ["modularity Spectral clustering", "ARI Spectral clustering",
+             "purify for Spectral clustering", "inverse purify for Spectral clustering",
+             "NMI for Spectral clustering", "AMI for Spectral clustering"]
+
+
+resultarray_sc = [modularity_spectral_clustering, ARI_spectral_clustering,
+               purify_spectral_clustering, inverse_purify_spectral_clustering,
+               NMI_spectral_clustering, AMI_spectral_clustering]
+
+with open('MNIST_spectral_clustering.csv', 'w', newline='') as csvfile:
+    wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
+    wr.writerow(testarray_sc)
+    wr.writerow(resultarray_sc)
