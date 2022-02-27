@@ -15,6 +15,7 @@ import community as co
 from community import community_louvain
 import time
 import csv
+import sknetwork as skn
 
 #Load labels, knndata, and build 10-nearest neighbor weight matrix
 W = gl.weightmatrix.knn('mnist', 10, metric='vae')
@@ -65,10 +66,11 @@ start_time_2_nor_1 = time.time()
 u_2_individual_1, num_repeat_2_1 = mbo_modularity_2(num_communities, m, W_dense, tol,eta_1,eps=1) 
 u_2_individual_label_1 = vector_to_labels(u_2_individual_1)
 u_2_individual_label_dict_1 = label_to_dict(u_2_individual_label_1)
-u_2_nor_label_set = dict_to_list_set(u_2_individual_label_dict_1)
+#u_2_nor_label_set = dict_to_list_set(u_2_individual_label_dict_1)
 
 #modularity_2_nor_individual_1 = co.modularity(u_2_individual_label_dict_1,G)
-modularity_2_nor_lf_qh = nx_comm.modularity(G,u_2_nor_label_set)
+#modularity_2_nor_lf_qh = nx_comm.modularity(G,u_2_nor_label_set)
+modularity_2_nor_lf_qh = skn.clustering.modularity(W,u_2_individual_label_1,resolution=0.5)
 ARI_mbo_2_nor_1 = adjusted_rand_score(u_2_individual_label_1, gt_list)
 purify_mbo_2_nor_1 = purity_score(gt_list, u_2_individual_label_1)
 inverse_purify_mbo_2_nor_1 = inverse_purity_score(gt_list, u_2_individual_label_1)
