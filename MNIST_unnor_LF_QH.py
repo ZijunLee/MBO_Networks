@@ -15,13 +15,13 @@ import community as co
 from community import community_louvain
 import time
 import csv
-
+import sknetwork as skn
 
 #Load labels, knndata, and build 10-nearest neighbor weight matrix
 W = gl.weightmatrix.knn('mnist', 10, metric='vae')
-W_dense = W.todense()
-print(W_dense.shape)
-print(type(W_dense))
+#W_dense = W.todense()
+#print(W_dense.shape)
+#print(type(W_dense))
 
 gt_labels = gl.datasets.load('mnist', labels_only=True)
 gt_list = gt_labels.tolist()  
@@ -37,12 +37,16 @@ for e in range(len(gt_list)):
 gt_label_dict = dict(zip(len_gt_label, gt_list))     # gt_label_dict is a dict
 
 
-G = nx.convert_matrix.from_numpy_matrix(W_dense)
+#G = nx.convert_matrix.from_numpy_matrix(W_dense)
+G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 print(type(G))
+
+adj_mat = nx.convert_matrix.to_numpy_matrix(G)
+print('adj_mat type: ', type(adj_mat))
 
 ## parameter setting
 dt_inner = 0.1
-num_communities = 10
+num_communities = 11
 #num_communities_10 = 11
 m = 1 * num_communities
 #m_1 = 2 * num_communities
@@ -57,7 +61,7 @@ eta_05 = 0.5
 eta_03 = 1.3
 inner_step_count =3
 
-num_nodes_1,m_1, degree_1, target_size_1,null_model_eta_1,graph_laplacian_1, nor_graph_laplacian_1,random_walk_nor_lap_1, signless_laplacian_null_model_1, nor_signless_laplacian_1, rw_signless_laplacian_1 = adj_to_laplacian_signless_laplacian(W_dense,num_communities,m,eta_1,target_size=None)
+num_nodes_1,m_1, degree_1, target_size_1,null_model_eta_1,graph_laplacian_1, nor_graph_laplacian_1,random_walk_nor_lap_1, signless_laplacian_null_model_1, nor_signless_laplacian_1, rw_signless_laplacian_1 = adj_to_laplacian_signless_laplacian(adj_mat,num_communities,m,eta_1,target_size=None)
 
 
 start_time_1_unnor_1 = time.time()
@@ -68,20 +72,21 @@ u_1_unnor_individual,num_repeat_1_unnor = mbo_modularity_1(num_nodes_1,num_commu
                                                         tol, target_size_1,eta_1, eps=1)   
 print('u_1 unnor L_F & Q_H number of iteration: ', num_repeat_1_unnor)
 u_1_unnor_individual_label = vector_to_labels(u_1_unnor_individual)
-u_1_unnor_individual_label_dict = label_to_dict(u_1_unnor_individual_label)
-u_1_unnor_label_set = dict_to_list_set(u_1_unnor_individual_label_dict)
+#u_1_unnor_individual_label_dict = label_to_dict(u_1_unnor_individual_label)
+#u_1_unnor_label_set = dict_to_list_set(u_1_unnor_individual_label_dict)
+
+print("mmbo 1 with unnormalized L_F and gamma=1:-- %.3f seconds --" % (time.time() - start_time_1_unnor_1))
 
 #modularity_1_unnor_individual = co.modularity(u_1_unnor_individual_label_dict,G)
-modularity_1_unnor_lf_qh = nx_comm.modularity(G,u_1_unnor_label_set)
+#modularity_1_unnor_lf_qh = nx_comm.modularity(G,u_1_unnor_label_set)
+modu_1_unnor_Lf_Qh = skn.clustering.modularity(W,u_1_unnor_individual_label,resolution=0.5)
 ARI_mbo_1_unnor_lf = adjusted_rand_score(u_1_unnor_individual_label, gt_list)
 purify_mbo_1_unnor_lf_1 = purity_score(gt_list, u_1_unnor_individual_label)
 inverse_purify_mbo_1_unnor_lf_1 = inverse_purity_score(gt_list, u_1_unnor_individual_label)
 NMI_mbo_1_unnor_lf_1 = normalized_mutual_info_score(gt_list, u_1_unnor_individual_label)
 AMI_mbo_1_unnor_lf_1 = adjusted_mutual_info_score(gt_list, u_1_unnor_individual_label)
 
-print("mmbo 1 with unnormalized L_F and gamma=1:-- %.3f seconds --" % (time.time() - start_time_1_unnor_1))
-
-print('average modularity_1 unnormalized L_F & Q_H score: ', modularity_1_unnor_lf_qh)
+print('average modularity_1 unnormalized L_F & Q_H score: ', modu_1_unnor_Lf_Qh)
 print('average ARI_1 unnormalized L_F & Q_H score: ', ARI_mbo_1_unnor_lf)
 print('average purify for MMBO1 unnormalized L_F with \eta =1 : ', purify_mbo_1_unnor_lf_1)
 print('average inverse purify for MMBO1 unnormalized L_F with \eta =1 : ', inverse_purify_mbo_1_unnor_lf_1)
@@ -96,7 +101,7 @@ testarray_unnor_Lf_Qh = ["average modularity_1 unnormalized L_F & Q_H score", "a
 #               average_purify_1_unnor_1, average_inverse_purify_1_unnor_1,
 #               average_NMI_1_unnor_1, average_AMI_1_unnor_1]
 
-resultarray_unnor_Lf_Qh = [modularity_1_unnor_lf_qh, ARI_mbo_1_unnor_lf,
+resultarray_unnor_Lf_Qh = [modu_1_unnor_Lf_Qh, ARI_mbo_1_unnor_lf,
                purify_mbo_1_unnor_lf_1, inverse_purify_mbo_1_unnor_lf_1,
                NMI_mbo_1_unnor_lf_1, AMI_mbo_1_unnor_lf_1]
 
@@ -114,18 +119,19 @@ u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1 = mbo_modularity_1(num_nodes
                                                 tol, target_size_1,eta_1, eps=1)     
 print('u_1 nor L_F & Q_H number of iteration: ', num_repeat_1_nor_Lf_Qh_1)
 u_1_nor_Lf_Qh_individual_label_1 = vector_to_labels(u_1_nor_Lf_Qh_individual_1)
-u_1_nor_Lf_Qh_individual_label_dict_1 = label_to_dict(u_1_nor_Lf_Qh_individual_label_1)
-u_1_nor_Lf_Qh_label_set = dict_to_list_set(u_1_nor_Lf_Qh_individual_label_dict_1)
+#u_1_nor_Lf_Qh_individual_label_dict_1 = label_to_dict(u_1_nor_Lf_Qh_individual_label_1)
+#u_1_nor_Lf_Qh_label_set = dict_to_list_set(u_1_nor_Lf_Qh_individual_label_dict_1)
+
+print("MMBO1 with normalized L_F and gamma=1:-- %.3f seconds --" % (time.time() - start_time_1_nor_Lf_Qh_1))
 
 #modularity_1_nor_Lf_Qh_individual_1 = co.modularity(u_1_nor_Lf_Qh_individual_label_dict_1,G)
-modularity_1_nor_lf_qh = nx_comm.modularity(G,u_1_nor_Lf_Qh_label_set)
+#modularity_1_nor_lf_qh = nx_comm.modularity(G,u_1_nor_Lf_Qh_label_set)
+modularity_1_nor_lf_qh = skn.clustering.modularity(W,u_1_nor_Lf_Qh_individual_label_1,resolution=0.5)
 ARI_mbo_1_nor_Lf_Qh_1 = adjusted_rand_score(u_1_nor_Lf_Qh_individual_label_1, gt_list)
 purify_mbo_1_nor_Lf_Qh_1 = purity_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
 inverse_purify_mbo_1_nor_Lf_Qh_1 = inverse_purity_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
 NMI_mbo_1_nor_Lf_Qh_1 = normalized_mutual_info_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
 AMI_mbo_1_nor_Lf_Qh_1 = adjusted_mutual_info_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
-
-print("MMBO1 with normalized L_F and gamma=1:-- %.3f seconds --" % (time.time() - start_time_1_nor_Lf_Qh_1))
 
 print('average modularity_1 normalized L_F & Q_H score: ', modularity_1_nor_lf_qh)
 print('average ARI_1 normalized L_F & Q_H score: ', ARI_mbo_1_nor_Lf_Qh_1)
@@ -156,18 +162,19 @@ start_time_1_inner_nor_1 = time.time()
 u_inner_individual_1,num_repeat_inner = mbo_modularity_inner_step(num_nodes_1, num_communities, m_1, nor_graph_laplacian_1, nor_signless_laplacian_1,dt_inner, tol,target_size_1, inner_step_count)
 print('u_inner number of iteration: ', num_repeat_inner)
 u_inner_individual_label_1 = vector_to_labels(u_inner_individual_1)
-u_inner_individual_label_dict_1 = label_to_dict(u_inner_individual_label_1)
-u_inner_label_set = dict_to_list_set(u_inner_individual_label_dict_1)
+#u_inner_individual_label_dict_1 = label_to_dict(u_inner_individual_label_1)
+#u_inner_label_set = dict_to_list_set(u_inner_individual_label_dict_1)
+
+print("MMBO1 with inner step & normalized L_F and gamma=1:-- %.3f seconds --" % (time.time() - start_time_1_inner_nor_1))
 
 #modularity_1_inner_individual_1 = co.modularity(u_inner_individual_label_dict_1,G)
-modularity_1_inner_1 = nx_comm.modularity(G,u_inner_label_set)
+#modularity_1_inner_1 = nx_comm.modularity(G,u_inner_label_set)
+modularity_1_inner_1 = skn.clustering.modularity(W,u_inner_individual_label_1,resolution=0.5)
 ARI_mbo_1_inner_1 = adjusted_rand_score(u_inner_individual_label_1, gt_list)
 purify_mbo_1_inner_1 = purity_score(gt_list, u_inner_individual_label_1)
 inverse_purify_mbo_1_inner_1 = inverse_purity_score(gt_list, u_inner_individual_label_1)
 NMI_mbo_1_inner_1 = normalized_mutual_info_score(gt_list, u_inner_individual_label_1)
 AMI_mbo_1_inner_1 = adjusted_mutual_info_score(gt_list, u_inner_individual_label_1)
-
-print("MMBO1 with inner step & normalized L_F and gamma=1:-- %.3f seconds --" % (time.time() - start_time_1_inner_nor_1))
 
 print('average modularity_1 inner step score: ', modularity_1_inner_1)
 print('average ARI_1 inner step score: ', ARI_mbo_1_inner_1)
@@ -194,18 +201,24 @@ with open('MNIST_inner_1.csv', 'w', newline='') as csvfile:
 start_time_louvain = time.time()
 
 # Louvain algorithm (can setting resolution gamma)
-partition_Louvain = community_louvain.best_partition(G, resolution=1)    # returns a dict
-louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
-louvain_label_set = dict_to_list_set(partition_Louvain)
+louvain = skn.clustering.Louvain(resolution=1,modularity='newman')
+louvain_labels = louvain.fit_transform(W)
 
-modularity_louvain = nx_comm.modularity(G,louvain_label_set)
-ARI_louvain = adjusted_rand_score(louvain_list, gt_list)
-purify_louvain = purity_score(gt_list, louvain_list)
-inverse_purify_louvain = inverse_purity_score(gt_list, louvain_list)
-NMI_louvain = normalized_mutual_info_score(gt_list, louvain_list)
-AMI_louvain = adjusted_mutual_info_score(gt_list, louvain_list)
+#partition_Louvain = community_louvain.best_partition(G)    # returns a dict
+#louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
+#louvain_label_set = dict_to_list_set(partition_Louvain)
+#louvain_array = np.asarray(louvain_list)
 
 print("Louvain algorithm:-- %.3f seconds --" % (time.time() - start_time_louvain))
+
+
+#modularity_louvain = nx_comm.modularity(G,louvain_label_set)
+modularity_louvain = skn.clustering.modularity(W,louvain_labels,resolution=0.5)
+ARI_louvain = adjusted_rand_score(louvain_labels, gt_list)
+purify_louvain = purity_score(gt_list, louvain_labels)
+inverse_purify_louvain = inverse_purity_score(gt_list, louvain_labels)
+NMI_louvain = normalized_mutual_info_score(gt_list, louvain_labels)
+AMI_louvain = adjusted_mutual_info_score(gt_list, louvain_labels)
 
 print('average modularity Louvain score: ', modularity_louvain)
 print('average ARI Louvain  score: ', ARI_louvain)
@@ -249,16 +262,19 @@ CNM_dict = dict(zip(partition_CNM_expand, num_cluster_CNM))
 #print('CNM: ',CNM_dict)
 
 CNM_list = list(dict.values(CNM_dict))    #convert a dict to list
+CNM_array = np.asarray(CNM_list)
 
 
-modularity_CNM = nx_comm.modularity(G,partition_CNM_list)
+print("CNM algorithm:-- %.3f seconds --" % (time.time() - start_time_CNM))
+
+
+#modularity_CNM = nx_comm.modularity(G,partition_CNM_list)
+modularity_CNM = skn.clustering.modularity(W,CNM_array,resolution=0.5)
 ARI_CNM = adjusted_rand_score(CNM_list, gt_list)
 purify_CNM = purity_score(gt_list, CNM_list)
 inverse_purify_CNM = inverse_purity_score(gt_list, CNM_list)
 NMI_CNM = normalized_mutual_info_score(gt_list, CNM_list)
 AMI_CNM = adjusted_mutual_info_score(gt_list, CNM_list)
-
-print("CNM algorithm:-- %.3f seconds --" % (time.time() - start_time_CNM))
 
 print('average modularity CNM score: ', modularity_CNM)
 print('average ARI CNM  score: ', ARI_CNM)
@@ -285,20 +301,22 @@ with open('MNIST_CNM.csv', 'w', newline='') as csvfile:
 start_time_spectral_clustering = time.time()
 
 # Spectral clustering with k-means
-sc = SpectralClustering(n_clusters=10, affinity='precomputed')
-assignment = sc.fit_predict(W_dense)
+sc = SpectralClustering(n_clusters=11, affinity='precomputed')
+assignment = sc.fit_predict(adj_mat)
 
-ass_dict = label_to_dict (assignment)
-sc_label_set = dict_to_list_set(ass_dict)
+#ass_dict = label_to_dict (assignment)
+#sc_label_set = dict_to_list_set(ass_dict)
 
-modularity_spectral_clustering = nx_comm.modularity(G,sc_label_set)
+print("spectral clustering algorithm:-- %.3f seconds --" % (time.time() - start_time_spectral_clustering))
+
+#modularity_spectral_clustering = nx_comm.modularity(G,sc_label_set)
+modularity_spectral_clustering = skn.clustering.modularity(W,assignment,resolution=0.5)
 ARI_spectral_clustering = adjusted_rand_score(assignment, gt_list)
 purify_spectral_clustering = purity_score(gt_list, assignment)
 inverse_purify_spectral_clustering = inverse_purity_score(gt_list, assignment)
 NMI_spectral_clustering = normalized_mutual_info_score(gt_list, assignment)
 AMI_spectral_clustering = adjusted_mutual_info_score(gt_list, assignment)
 
-print("spectral clustering algorithm:-- %.3f seconds --" % (time.time() - start_time_spectral_clustering))
 
 print('average modularity Spectral clustering score: ', modularity_spectral_clustering)
 print('average ARI Spectral clustering  score: ', ARI_spectral_clustering)

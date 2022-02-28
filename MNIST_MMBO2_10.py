@@ -19,9 +19,9 @@ import sknetwork as skn
 
 #Load labels, knndata, and build 10-nearest neighbor weight matrix
 W = gl.weightmatrix.knn('mnist', 10, metric='vae')
-W_dense = W.todense()
-print(W_dense.shape)
-print(type(W_dense))
+#W_dense = W.todense()
+#print(W_dense.shape)
+#print(type(W_dense))
 
 gt_labels = gl.datasets.load('mnist', labels_only=True)
 gt_list = gt_labels.tolist()  
@@ -37,8 +37,10 @@ for e in range(len(gt_list)):
 gt_label_dict = dict(zip(len_gt_label, gt_list))     # gt_label_dict is a dict
 
 
-G = nx.convert_matrix.from_numpy_matrix(W_dense)
+G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 print(type(G))
+
+adj_mat = nx.convert_matrix.to_numpy_matrix(G)
 
 
 ## parameter setting
@@ -63,7 +65,7 @@ start_time_2_nor_1 = time.time()
 
 # mmbo 2 with normalized & gamma = 1
 
-u_2_individual_1, num_repeat_2_1 = mbo_modularity_2(num_communities, m, W_dense, tol,eta_1,eps=1) 
+u_2_individual_1, num_repeat_2_1 = mbo_modularity_2(num_communities, m, adj_mat, tol,eta_1,eps=1) 
 u_2_individual_label_1 = vector_to_labels(u_2_individual_1)
 u_2_individual_label_dict_1 = label_to_dict(u_2_individual_label_1)
 #u_2_nor_label_set = dict_to_list_set(u_2_individual_label_dict_1)
