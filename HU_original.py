@@ -1,104 +1,77 @@
-from joblib import PrintTime
 import numpy as np
+import graphlearning as gl
+from MBO_Network import mbo_modularity_1, adj_to_laplacian_signless_laplacian, mbo_modularity_inner_step, mbo_modularity_hu_original
+from graph_mbo.utils import vector_to_labels, labels_to_vector,label_to_dict, purity_score,inverse_purity_score, dict_to_list_set
+from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_mutual_info_score, adjusted_rand_score
+from matplotlib import pyplot as plt
+import networkx as nx
+import networkx.algorithms.community as nx_comm
+from networkx.algorithms.community import greedy_modularity_communities,girvan_newman
 import scipy as sp
-from scipy.linalg import lu_factor, lu_solve
-from scipy.sparse.linalg import eigs, eigsh
-from random import randrange
-import random
-#import numba as nb
-from torch import sign
+from sklearn.metrics import adjusted_rand_score
+from sklearn.cluster import KMeans, SpectralClustering
+from scipy.sparse.linalg import eigsh,eigs
+import community as co
+from community import community_louvain
+import time
+import csv
+import sknetwork as skn
 
-from graph_mbo.utils import apply_threshold, get_fidelity_term, get_initial_state,labels_to_vector,to_standard_labels,_diffusion_step_eig,_mbo_forward_step_multiclass,get_initial_state_1,ProjectToSimplex
+#Load labels, knndata, and build 10-nearest neighbor weight matrix
+W = gl.weightmatrix.knn('mnist', 10, metric='vae')
+#W_dense = W.todense()
+#print(W_dense.shape)
+#print(type(W_dense))
 
+gt_labels = gl.datasets.load('mnist', labels_only=True)
+gt_list = gt_labels.tolist()  
+#print('gt shape: ', type(gt_list))
 
+# convert a list to a dict
+gt_label_dict = []
+len_gt_label = []
 
+for e in range(len(gt_list)):
+    len_gt_label.append(e)
 
-def mbo_modularity_hu_original(num_communities, m, dt, adj_matrix, tol ,inner_step_count, 
-                               target_size=None, max_iter=10000, thresh_type="max", modularity=False): # inner stepcount is actually important! and can't be set to 1...
-    
-    degree = np.array(np.sum(adj_matrix, axis=1)).flatten()
-    num_nodes = len(degree)
-
-    m = min(num_nodes - 2, m)  # Number of eigenvalues to use for pseudospectral
-
-    if target_size is None:
-        target_size = [num_nodes // num_communities for i in range(num_communities)]
-        target_size[-1] = num_nodes - sum(target_size[:-1])
-
-    #graph_laplacian, degree = sp.sparse.csgraph.laplacian(A_absolute_matrix, return_diag=True)
-    degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)
-    graph_laplacian = degree_diag - adj_matrix
-
-    degree_inv = sp.sparse.spdiags([1.0 / degree], [0], num_nodes, num_nodes)
-    graph_laplacian = np.sqrt(degree_inv) @ graph_laplacian @ np.sqrt(degree_inv)    # obtain L_{sym}
-    # degree = np.ones(num_nodes)
-    # degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)
-
-    D, V = eigsh(
-        graph_laplacian,
-        k=m,
-        v0=np.ones((graph_laplacian.shape[0], 1)),
-        which="SA")
+gt_label_dict = dict(zip(len_gt_label, gt_list))     # gt_label_dict is a dict
 
 
-    # Initialize parameters
-    #u = get_initial_state(
-    #    num_nodes,
-    #    num_communities,
-    #    target_size,
-    #    type=initial_state_type,
-    #    fidelity_type=fidelity_type,
-    #    fidelity_V=fidelity_V,)
+#G = nx.convert_matrix.from_numpy_matrix(W_dense)
+G = nx.convert_matrix.from_scipy_sparse_matrix(W)
+print(type(G))
 
-    u = get_initial_state_1(num_nodes, num_communities, target_size)
+adj_mat = nx.convert_matrix.to_numpy_matrix(G)
+print('adj_mat type: ', type(adj_mat))
 
-    last_last_index = u == 1
-    last_index = u == 1
-    last_dt = 0
-    #stop_criterion = 10
-    #u_new = u.copy()        
-    # Perform MBO scheme
+## parameter setting
+dt_inner = 0.1
+num_communities = 10
+m = 1 * num_communities
+dt = 0.5
+tol = 1e-5
+inner_step_count =3
 
-    for n in range(max_iter):
-        #u_old = u_new.copy()
-        dti = dt / inner_step_count
 
-        demon = sp.sparse.spdiags([1 / (1 + dti * D)], [0], m, m) @ V.transpose()
-        #demon = sp.sparse.spdiags([np.exp(-D*dt)],[0],m,m)
-        
-        for j in range(inner_step_count):
-            
-            u = V @ (demon @ u)
-                
-            if modularity:
-                # Add term for modularity
-                mean_f = np.dot(degree.reshape(1, len(degree)), u) / np.sum(degree)
-                u += 2 * dti * degree_diag @ (u - mean_f)
+start_time_hu_original_1 = time.time()
+# test HU original MBO
+u_hu_vector = mbo_modularity_hu_original(num_communities, m, dt, adj_mat, tol ,inner_step_count, modularity=True) 
+u_hu_label_1 = vector_to_labels(u_hu_vector)
+u_hu_dict_1 = label_to_dict(u_hu_label_1)
 
-            j = j + 1
-            
+print("HU original MBO (K=10):-- %.3f seconds --" % (time.time() - start_time_hu_original_1))
 
-        # Apply thresholding 
-        u = apply_threshold(u, target_size, thresh_type)
+modularity_hu_original_1 = co.modularity(u_hu_dict_1,G)
+ARI_hu_original_1 = adjusted_rand_score(u_hu_label_1, gt_list)
+purify_hu_original_1 = purity_score(gt_list, u_hu_label_1)
+inverse_purify_hu_original_1 = inverse_purity_score(gt_list, u_hu_label_1)
+NMI_hu_original_1 = normalized_mutual_info_score(gt_list, u_hu_label_1)
+AMI_hu_original_1 = adjusted_mutual_info_score(gt_list, u_hu_label_1)
 
-        # Check that the index is changing and stop if time step becomes too small
-        index = u == 1
-
-        norm_deviation = sp.linalg.norm(last_index ^ index) / sp.linalg.norm(index)
-        if norm_deviation < tol :
-            if dt < tol:
-                break
-            else:
-                dt *= 0.5
-        elif np.sum(last_last_index ^ index) == 0:
-            # Going back and forth
-            dt *= 0.5
-        last_last_index = last_index
-        last_index = index
-        
-        n = n+1
-
-    if dt >= tol:
-        print("MBO failed to converge")
-    return u
+print('average modularity score for HU original MBO (K=10): ', modularity_hu_original_1)
+print('average ARI for HU original MBO (K=10): ', ARI_hu_original_1)
+print('average purify for HU original MBO (K=10): ', purify_hu_original_1)
+print('average inverse purify for HU original MBO (K=10): ', inverse_purify_hu_original_1)
+print('average NMI for HU original MBO (K=10): ', NMI_hu_original_1)
+print('average AMI for HU original MBO (K=10): ', AMI_hu_original_1)
 

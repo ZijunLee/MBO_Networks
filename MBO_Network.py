@@ -282,7 +282,7 @@ def mbo_modularity_2(num_communities, m, adj_matrix, tol,gamma,eps=1,
 
     #null_model = (np.dot(np.transpose(degree), degree))/total_degree
     null_model = (dergee_di_null @ dergee_di_null.transpose())/ total_degree
-    null_model_eta = gamma * null_model
+    #null_model_eta = gamma * null_model
 
     #degree_null_model = np.array(np.sum(null_model, axis=1)).flatten()
     #num_nodes_null_model = len(degree_null_model)
@@ -290,16 +290,15 @@ def mbo_modularity_2(num_communities, m, adj_matrix, tol,gamma,eps=1,
     #signless_laplacian_null_model = degree_diag_null_model + null_model  # Q_P = D + P(null model)
 
     # method 2: B = W - P  (signed), compute signed laplacian
-    mix_matrix = adj_matrix - null_model_eta   # B = W - P (signed)
+    mix_matrix = adj_matrix - null_model   # B = W - P (signed)
     mix_matrix_absolute = np.abs(mix_matrix)
     degree_mix_mat = np.array(np.sum(mix_matrix_absolute, axis=1)).flatten()
     num_nodes_mix_mat = len(degree_mix_mat)
     #print(num_nodes_mix_mat)
-    degree_diag_mix_mat = sp.sparse.spdiags([degree_mix_mat], [0], num_nodes_mix_mat, num_nodes_mix_mat)  # Dbar
-#    laplacian_mix_mat =  degree_diag_mix_mat - mix_matrix  # L_B = Dbar - B
+    #degree_diag_mix_mat = sp.sparse.spdiags([degree_mix_mat], [0], num_nodes_mix_mat, num_nodes_mix_mat)  # Dbar
+    #laplacian_mix_mat =  degree_diag_mix_mat - mix_matrix  # L_B = Dbar - B
 
-#    laplacian_mix = graph_laplacian_positive + signless_graph_laplacian  # L_{mix} = L_B^+ + Q_B^- = Lbar
-#    laplacian_mix_mat = 0.5*laplacian_mix_mat
+    #laplacian_mix = graph_laplacian_positive + signless_graph_laplacian  # L_{mix} = L_B^+ + Q_B^- = Lbar
 
     # compute signed laplacian
         #graph_laplacian, degree = sp.sparse.csgraph.laplacian(A_absolute_matrix, return_diag=True)
@@ -322,11 +321,9 @@ def mbo_modularity_2(num_communities, m, adj_matrix, tol,gamma,eps=1,
 
     # compute symmetric normalized laplacian
     laplacian_mix_mat = graph_laplacian_positive + signless_graph_laplacian  # L_{mix} = L_B^+ + Q_B^- = Lbar
-#    laplacian_mix_mat = 0.5 * laplacian_mix_mat
 
     degree_inv = sp.sparse.spdiags([1.0 / degree_mix_mat], [0], num_nodes_mix_mat, num_nodes_mix_mat)   # obtain Dbar^{-1}
     sym_graph_laplacian = np.sqrt(degree_inv) @ laplacian_mix_mat @ np.sqrt(degree_inv)    # obtain L_{sym}
-#    sign_graph_laplacian = 0.5 * sign_graph_laplacian
 
         
     m = min(num_nodes_mix_mat - 2, m)  # Number of eigenvalues to use for pseudospectral
@@ -909,3 +906,93 @@ def mbo_modularity_1_normalized_Lf_Qh(num_nodes,num_communities, m,degree, nor_g
         #print(n)
 
     return u_new, n
+
+
+def mbo_modularity_hu_original(num_communities, m, dt, adj_matrix, tol ,inner_step_count, 
+                               target_size=None, max_iter=10000, thresh_type="max", modularity=False): # inner stepcount is actually important! and can't be set to 1...
+    
+    degree = np.array(np.sum(adj_matrix, axis=1)).flatten()
+    num_nodes = len(degree)
+
+    m = min(num_nodes - 2, m)  # Number of eigenvalues to use for pseudospectral
+
+    if target_size is None:
+        target_size = [num_nodes // num_communities for i in range(num_communities)]
+        target_size[-1] = num_nodes - sum(target_size[:-1])
+
+    #graph_laplacian, degree = sp.sparse.csgraph.laplacian(A_absolute_matrix, return_diag=True)
+    degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)
+    graph_laplacian = degree_diag - adj_matrix
+
+    degree_inv = sp.sparse.spdiags([1.0 / degree], [0], num_nodes, num_nodes)
+    graph_laplacian = np.sqrt(degree_inv) @ graph_laplacian @ np.sqrt(degree_inv)    # obtain L_{sym}
+    # degree = np.ones(num_nodes)
+    # degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)
+
+    D, V = eigsh(
+        graph_laplacian,
+        k=m,
+        v0=np.ones((graph_laplacian.shape[0], 1)),
+        which="SA")
+
+
+    # Initialize parameters
+    #u = get_initial_state(
+    #    num_nodes,
+    #    num_communities,
+    #    target_size,
+    #    type=initial_state_type,
+    #    fidelity_type=fidelity_type,
+    #    fidelity_V=fidelity_V,)
+
+    u = get_initial_state_1(num_nodes, num_communities, target_size)
+
+    last_last_index = u == 1
+    last_index = u == 1
+    last_dt = 0
+    #stop_criterion = 10
+    #u_new = u.copy()        
+    # Perform MBO scheme
+
+    for n in range(max_iter):
+        #u_old = u_new.copy()
+        dti = dt / inner_step_count
+
+        demon = sp.sparse.spdiags([1 / (1 + dti * D)], [0], m, m) @ V.transpose()
+        #demon = sp.sparse.spdiags([np.exp(-D*dt)],[0],m,m)
+        
+        for j in range(inner_step_count):
+            
+            u = V @ (demon @ u)
+                
+            if modularity:
+                # Add term for modularity
+                mean_f = np.dot(degree.reshape(1, len(degree)), u) / np.sum(degree)
+                u += 2 * dti * degree_diag @ (u - mean_f)
+
+            j = j + 1
+            
+
+        # Apply thresholding 
+        u = apply_threshold(u, target_size, thresh_type)
+
+        # Check that the index is changing and stop if time step becomes too small
+        index = u == 1
+
+        norm_deviation = sp.linalg.norm(last_index ^ index) / sp.linalg.norm(index)
+        if norm_deviation < tol :
+            if dt < tol:
+                break
+            else:
+                dt *= 0.5
+        elif np.sum(last_last_index ^ index) == 0:
+            # Going back and forth
+            dt *= 0.5
+        last_last_index = last_index
+        last_index = index
+        
+        n = n+1
+
+    if dt >= tol:
+        print("MBO failed to converge")
+    return u
