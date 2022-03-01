@@ -46,7 +46,7 @@ print('adj_mat type: ', type(adj_mat))
 
 ## parameter setting
 dt_inner = 0.1
-num_communities = 11
+num_communities = 10
 #num_communities_10 = 11
 m = 1 * num_communities
 #m_1 = 2 * num_communities
@@ -201,24 +201,23 @@ with open('MNIST_inner_1.csv', 'w', newline='') as csvfile:
 start_time_louvain = time.time()
 
 # Louvain algorithm (can setting resolution gamma)
-louvain = skn.clustering.Louvain(resolution=1,modularity='newman')
-louvain_labels = louvain.fit_transform(W)
+#louvain = skn.clustering.Louvain(resolution=1,modularity='newman')
+#louvain_labels = louvain.fit_transform(W)
 
-#partition_Louvain = community_louvain.best_partition(G)    # returns a dict
-#louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
-#louvain_label_set = dict_to_list_set(partition_Louvain)
-#louvain_array = np.asarray(louvain_list)
+partition_Louvain = community_louvain.best_partition(G)    # returns a dict
+louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
+louvain_array = np.asarray(louvain_list)
 
 print("Louvain algorithm:-- %.3f seconds --" % (time.time() - start_time_louvain))
 
 
 #modularity_louvain = nx_comm.modularity(G,louvain_label_set)
-modularity_louvain = skn.clustering.modularity(W,louvain_labels,resolution=0.5)
-ARI_louvain = adjusted_rand_score(louvain_labels, gt_list)
-purify_louvain = purity_score(gt_list, louvain_labels)
-inverse_purify_louvain = inverse_purity_score(gt_list, louvain_labels)
-NMI_louvain = normalized_mutual_info_score(gt_list, louvain_labels)
-AMI_louvain = adjusted_mutual_info_score(gt_list, louvain_labels)
+modularity_louvain = skn.clustering.modularity(W,louvain_array,resolution=0.5)
+ARI_louvain = adjusted_rand_score(louvain_array, gt_list)
+purify_louvain = purity_score(gt_list, louvain_array)
+inverse_purify_louvain = inverse_purity_score(gt_list, louvain_array)
+NMI_louvain = normalized_mutual_info_score(gt_list, louvain_array)
+AMI_louvain = adjusted_mutual_info_score(gt_list, louvain_array)
 
 print('average modularity Louvain score: ', modularity_louvain)
 print('average ARI Louvain  score: ', ARI_louvain)
@@ -301,7 +300,7 @@ with open('MNIST_CNM.csv', 'w', newline='') as csvfile:
 start_time_spectral_clustering = time.time()
 
 # Spectral clustering with k-means
-sc = SpectralClustering(n_clusters=11, affinity='precomputed')
+sc = SpectralClustering(n_clusters=10, affinity='precomputed')
 assignment = sc.fit_predict(adj_mat)
 
 #ass_dict = label_to_dict (assignment)
