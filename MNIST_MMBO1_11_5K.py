@@ -48,9 +48,9 @@ print('adj_mat type: ', type(adj_mat))
 dt_inner = 0.1
 num_communities = 11
 #num_communities_10 = 11
-#m = 1 * num_communities
+m = 1 * num_communities
 #m_1 = 2 * num_communities
-m = 100
+#m = 3
 dt = 0.5
 tol = 1e-5
 
@@ -70,12 +70,12 @@ start_time_1_unnor_1 = time.time()
 
 u_1_unnor_individual,num_repeat_1_unnor = mbo_modularity_1(num_nodes_1,num_communities, m_1,degree_1, graph_laplacian_1,signless_laplacian_null_model_1, 
                                                         tol, target_size_1,eta_1, eps=1)   
-print('u_1 unnor L_F & Q_H number of iteration (K=11 and m=100): ', num_repeat_1_unnor)
+print('u_1 unnor L_F & Q_H number of iteration (K=11 and m=5K): ', num_repeat_1_unnor)
 u_1_unnor_individual_label = vector_to_labels(u_1_unnor_individual)
 #u_1_unnor_individual_label_dict = label_to_dict(u_1_unnor_individual_label)
 #u_1_unnor_label_set = dict_to_list_set(u_1_unnor_individual_label_dict)
 
-print("mmbo 1 with unnormalized L_F and gamma=1 (K=11 and m=100):-- %.3f seconds --" % (time.time() - start_time_1_unnor_1))
+print("mmbo 1 with unnormalized L_F and gamma=1 (K=11 and m=5K):-- %.3f seconds --" % (time.time() - start_time_1_unnor_1))
 
 #modularity_1_unnor_individual = co.modularity(u_1_unnor_individual_label_dict,G)
 #modularity_1_unnor_lf_qh = nx_comm.modularity(G,u_1_unnor_label_set)
@@ -86,7 +86,7 @@ inverse_purify_mbo_1_unnor_lf_1 = inverse_purity_score(gt_list, u_1_unnor_indivi
 NMI_mbo_1_unnor_lf_1 = normalized_mutual_info_score(gt_list, u_1_unnor_individual_label)
 AMI_mbo_1_unnor_lf_1 = adjusted_mutual_info_score(gt_list, u_1_unnor_individual_label)
 
-print('average modularity_1 unnormalized L_F & Q_H score(K=11 and m=100): ', modu_1_unnor_Lf_Qh)
+print('average modularity_1 unnormalized L_F & Q_H score(K=11 and m=5K): ', modu_1_unnor_Lf_Qh)
 print('average ARI_1 unnormalized L_F & Q_H score: ', ARI_mbo_1_unnor_lf)
 print('average purify for MMBO1 unnormalized L_F with \eta =1 : ', purify_mbo_1_unnor_lf_1)
 print('average inverse purify for MMBO1 unnormalized L_F with \eta =1 : ', inverse_purify_mbo_1_unnor_lf_1)
@@ -117,7 +117,7 @@ start_time_1_nor_Lf_Qh_1 = time.time()
 
 u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1 = mbo_modularity_1(num_nodes_1,num_communities, m_1,degree_1, nor_graph_laplacian_1,nor_signless_laplacian_1, 
                                                 tol, target_size_1,eta_1, eps=1)     
-print('u_1 nor L_F & Q_H number of iteration(K=11 and m=100): ', num_repeat_1_nor_Lf_Qh_1)
+print('u_1 nor L_F & Q_H number of iteration(K=11 and m=5K): ', num_repeat_1_nor_Lf_Qh_1)
 u_1_nor_Lf_Qh_individual_label_1 = vector_to_labels(u_1_nor_Lf_Qh_individual_1)
 #u_1_nor_Lf_Qh_individual_label_dict_1 = label_to_dict(u_1_nor_Lf_Qh_individual_label_1)
 #u_1_nor_Lf_Qh_label_set = dict_to_list_set(u_1_nor_Lf_Qh_individual_label_dict_1)
@@ -133,7 +133,7 @@ inverse_purify_mbo_1_nor_Lf_Qh_1 = inverse_purity_score(gt_list, u_1_nor_Lf_Qh_i
 NMI_mbo_1_nor_Lf_Qh_1 = normalized_mutual_info_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
 AMI_mbo_1_nor_Lf_Qh_1 = adjusted_mutual_info_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
 
-print('average modularity_1 normalized L_F & Q_H score(K=11 and m=100): ', modularity_1_nor_lf_qh)
+print('average modularity_1 normalized L_F & Q_H score(K=11 and m=5K): ', modularity_1_nor_lf_qh)
 print('average ARI_1 normalized L_F & Q_H score: ', ARI_mbo_1_nor_Lf_Qh_1)
 print('average purify for MMBO1 normalized L_F & Q_H with \eta =1 : ', purify_mbo_1_nor_Lf_Qh_1)
 print('average inverse purify for MMBO1 normalized L_F & Q_H with \eta =1 : ', inverse_purify_mbo_1_nor_Lf_Qh_1)
@@ -160,7 +160,7 @@ start_time_1_inner_nor_1 = time.time()
 # MMBO1 with inner step & normalized L_F and gamma=1
 
 u_inner_individual_1,num_repeat_inner = mbo_modularity_inner_step(num_nodes_1, num_communities, m_1, nor_graph_laplacian_1, nor_signless_laplacian_1,dt_inner, tol,target_size_1, inner_step_count)
-print('u_inner number of iteration(K=12): ', num_repeat_inner)
+print('u_inner number of iteration(K=11 and m=5K): ', num_repeat_inner)
 u_inner_individual_label_1 = vector_to_labels(u_inner_individual_1)
 #u_inner_individual_label_dict_1 = label_to_dict(u_inner_individual_label_1)
 #u_inner_label_set = dict_to_list_set(u_inner_individual_label_dict_1)
@@ -176,7 +176,7 @@ inverse_purify_mbo_1_inner_1 = inverse_purity_score(gt_list, u_inner_individual_
 NMI_mbo_1_inner_1 = normalized_mutual_info_score(gt_list, u_inner_individual_label_1)
 AMI_mbo_1_inner_1 = adjusted_mutual_info_score(gt_list, u_inner_individual_label_1)
 
-print('average modularity_1 inner step score(K=11 and m=100): ', modularity_1_inner_1)
+print('average modularity_1 inner step score(K=11 and m=5K): ', modularity_1_inner_1)
 print('average ARI_1 inner step score: ', ARI_mbo_1_inner_1)
 print('average purify for MMBO1 inner step with \eta =1 : ', purify_mbo_1_inner_1)
 print('average inverse purify for MMBO1 inner step with \eta =1 : ', inverse_purify_mbo_1_inner_1)
@@ -317,7 +317,7 @@ NMI_spectral_clustering = normalized_mutual_info_score(gt_list, assignment)
 AMI_spectral_clustering = adjusted_mutual_info_score(gt_list, assignment)
 
 
-print('average modularity Spectral clustering score(K=11 and m=100): ', modularity_spectral_clustering)
+print('average modularity Spectral clustering score(K=11 and m=5K): ', modularity_spectral_clustering)
 print('average ARI Spectral clustering  score: ', ARI_spectral_clustering)
 print('average purify for Spectral clustering : ', purify_spectral_clustering)
 print('average inverse purify for Spectral clustering : ', inverse_purify_spectral_clustering)

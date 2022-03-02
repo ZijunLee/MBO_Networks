@@ -59,7 +59,7 @@ u_hu_vector = mbo_modularity_hu_original(num_communities, m, dt, adj_mat, tol ,i
 u_hu_label_1 = vector_to_labels(u_hu_vector)
 #u_hu_dict_1 = label_to_dict(u_hu_label_1)
 
-print("HU original MBO (K=12):-- %.3f seconds --" % (time.time() - start_time_hu_original_1))
+print("HU original MBO (K=11 and m=5K):-- %.3f seconds --" % (time.time() - start_time_hu_original_1))
 
 modu_hu_original_1 = skn.clustering.modularity(W,u_hu_label_1,resolution=0.5)
 ARI_hu_original_1 = adjusted_rand_score(u_hu_label_1, gt_list)
@@ -68,10 +68,10 @@ inverse_purify_hu_original_1 = inverse_purity_score(gt_list, u_hu_label_1)
 NMI_hu_original_1 = normalized_mutual_info_score(gt_list, u_hu_label_1)
 AMI_hu_original_1 = adjusted_mutual_info_score(gt_list, u_hu_label_1)
 
-print('average modularity score for HU original MBO (K=12): ', modu_hu_original_1)
-print('average ARI for HU original MBO (K=12): ', ARI_hu_original_1)
-print('average purify for HU original MBO (K=12): ', purify_hu_original_1)
-print('average inverse purify for HU original MBO (K=12): ', inverse_purify_hu_original_1)
-print('average NMI for HU original MBO (K=12): ', NMI_hu_original_1)
-print('average AMI for HU original MBO (K=12): ', AMI_hu_original_1)
+print('average modularity score for HU original MBO (K=11 and m=5K): ', modu_hu_original_1)
+print('average ARI for HU original MBO (K=11 and m=5K): ', ARI_hu_original_1)
+print('average purify for HU original MBO (K=11 and m=5K): ', purify_hu_original_1)
+print('average inverse purify for HU original MBO (K=11 and m=5K): ', inverse_purify_hu_original_1)
+print('average NMI for HU original MBO (K=11 and m=5K): ', NMI_hu_original_1)
+print('average AMI for HU original MBO (K=11 and m=5K): ', AMI_hu_original_1)
 

@@ -69,7 +69,7 @@ u_2_individual_label_1 = vector_to_labels(u_2_individual_1)
 u_2_individual_label_dict_1 = label_to_dict(u_2_individual_label_1)
 #u_2_nor_label_set = dict_to_list_set(u_2_individual_label_dict_1)
 
-print("mmbo 2 with normalized & gamma = 1:-- %.3f seconds --" % (time.time() - start_time_2_nor_1))
+print("mmbo 2 with normalized & gamma = 1(K=11 and m=5K):-- %.3f seconds --" % (time.time() - start_time_2_nor_1))
 
 #modularity_2_nor_individual_1 = co.modularity(u_2_individual_label_dict_1,G)
 #modularity_2_nor_lf_qh = nx_comm.modularity(G,u_2_nor_label_set)
@@ -81,8 +81,8 @@ NMI_mbo_2_nor_1 = normalized_mutual_info_score(gt_list, u_2_individual_label_1)
 AMI_mbo_2_nor_1 = adjusted_mutual_info_score(gt_list, u_2_individual_label_1)
 
 
-print('average mmbo 2 with normalized score: ', modularity_2_nor_lf_qh)
-print('average ARI for mmbo 2 with normalized score: ', ARI_mbo_2_nor_1)
+print('average mmbo 2 with normalized score(K=11 and m=5K): ', modularity_2_nor_lf_qh)
+print('average ARI for mmbo 2 with normalized score(K=11 and m=5K): ', ARI_mbo_2_nor_1)
 print('average purify for mmbo 2 with normalized with \eta =1 : ', purify_mbo_2_nor_1)
 print('average inverse purify for mmbo 2 with normalized with \eta =1 : ', inverse_purify_mbo_2_nor_1)
 print('average NMI for mmbo 2 with normalized with \eta =1 : ', NMI_mbo_2_nor_1)
