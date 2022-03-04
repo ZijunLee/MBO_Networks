@@ -5,8 +5,8 @@ from scipy.linalg import lu_factor, lu_solve
 from scipy.sparse.linalg import eigs, eigsh
 from random import randrange
 import random
-#import numba as nb
 from torch import sign
+import time
 
 from graph_mbo.utils import apply_threshold, get_fidelity_term, get_initial_state,labels_to_vector,to_standard_labels,_diffusion_step_eig,_mbo_forward_step_multiclass,get_initial_state_1,ProjectToSimplex
 
@@ -189,15 +189,24 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
 def mbo_modularity_1(num_nodes,num_communities, m,degree,dti, graph_laplacian,signless_laplacian_null_model, tol, target_size,
                     gamma, eps=1, max_iter=10000, initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
+    print('Start with MMBO using the projection on the eigenvectors')
+
+    start_time_lap_mix = time.time()
+
     laplacian_mix = graph_laplacian + signless_laplacian_null_model  # L_{mix} = L_A_{sym} + Q_P
     #print('L_{mix} shape: ',laplacian_mix.shape)
     
+    print("compute laplacian_mix:-- %.3f seconds --" % (time.time() - start_time_lap_mix))
+    
+    start_time_eigendecomposition = time.time()
     # compute eigenvalues and eigenvectors
     D_sign, V_sign = eigsh(
         laplacian_mix,
         k=m,
         v0=np.ones((laplacian_mix.shape[0], 1)),
         which= "SA",)
+
+    print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
     #print('D_sign shape: ', D_sign.shape)
     #print('V_sign shape: ', V_sign.shape)
 
@@ -215,7 +224,7 @@ def mbo_modularity_1(num_nodes,num_communities, m,degree,dti, graph_laplacian,si
     #else:
     #    fidelity_V = None
 
-
+    start_time_initialize = time.time()
     # Initialize parameters
     #u = get_initial_state(
     #    num_nodes,
@@ -226,7 +235,8 @@ def mbo_modularity_1(num_nodes,num_communities, m,degree,dti, graph_laplacian,si
     #    fidelity_V=fidelity_V,)
 
     u = get_initial_state_1(num_nodes, num_communities, target_size)
-
+    print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
+    
     # Time step selection
     #dtlow = 0.15/((gamma+1)*np.max(degree))
     #dthigh = np.log(np.linalg.norm(u)/eps)/D_sign[0]
@@ -237,32 +247,35 @@ def mbo_modularity_1(num_nodes,num_communities, m,degree,dti, graph_laplacian,si
     n = 0
     stop_criterion = 10
     u_new = u.copy()
- 
+    
+    start_time_MBO_iteration = time.time()
     while (n < max_iter) and (stop_criterion > tol):
         u_old = u_new.copy()
-
-        #if pseudospectral:
-
         #a = V_sign.transpose() @ u_old
-
         #demon = sp.sparse.spdiags([1 / (1 + dt * D)], [0], m, m)
-        demon = sp.sparse.spdiags([np.exp(- 0.5 * D_sign * dti)],[0],m,m) @ V_sign.transpose()
-        
-        #for j in range(inner_step_count):
-            
-            # Solve system (apply CG or pseudospectral)
 
+        #start_time_diffusion = time.time()
+
+        demon = sp.sparse.spdiags([np.exp(- 0.5 * D_sign * dti)],[0],m,m) @ V_sign.transpose()
+        #for j in range(inner_step_count):
+            # Solve system (apply CG or pseudospectral)
         u_half = V_sign @ (demon @ u_old)  # Project back into normal space
 
+        #print("compute MBO diffusion step:-- %.3f seconds --" % (time.time() - start_time_diffusion))
+        
+        #start_time_thresholding = time.time()
         # Apply thresholding 
         u_new = apply_threshold(u_half, target_size, thresh_type)
         #u_new = _mbo_forward_step_multiclass(u_half)
         #print('u_new: ',u_new)
-                    
+        #print("compute MBO thresholding:-- %.3f seconds --" % (time.time() - start_time_thresholding))            
                     
         # Stop criterion
+        #start_time_stop_criterion = time.time()
         #stop_criterion = (np.abs(u_new - u_old)).sum()
         stop_criterion = sp.linalg.norm(u_new-u_old) / sp.linalg.norm(u_new)
+        
+        #print("compute stop criterion:-- %.3f seconds --" % (time.time() - start_time_stop_criterion))
         
         #Ui_diff = []
         #Ui_max = []
@@ -276,7 +289,9 @@ def mbo_modularity_1(num_nodes,num_communities, m,degree,dti, graph_laplacian,si
 
         n = n+1
         #print(n)
-
+    
+    print("compute the whole MBO iteration:-- %.3f seconds --" % (time.time() - start_time_MBO_iteration))
+    
     return u_new, n
 
 
@@ -567,13 +582,16 @@ def mbo_modularity_given_eig(eigval,eigvec, u_init,k_weights,tol=0.5, gamma=0.5,
 
 
 def mbo_modularity_inner_step(num_nodes, num_communities, m, graph_laplacian, signless_laplacian_null_model,dt, tol,target_size,inner_step_count,
-                       fidelity_type="karate", max_iter=10000,
-                       fidelity_coeff=10, initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
-    
-    
+                        max_iter=10000,initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
+    print('Start with MMBO with finite difference')
+
+    start_time_lap_mix = time.time()
+
     laplacian_mix = graph_laplacian + signless_laplacian_null_model  # L_{mix} = L_A_{sym} + Q_P
     #print('L_{mix} shape: ',laplacian_mix.shape)
+    print("compute laplacian_mix:-- %.3f seconds --" % (time.time() - start_time_lap_mix))
     
+    start_time_eigendecomposition = time.time()
     # compute eigenvalues and eigenvectors
     D_sign, V_sign = eigsh(
         laplacian_mix,
@@ -582,8 +600,9 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, graph_laplacian, si
         which= "SA",)
     #print('D_sign shape: ', D_sign.shape)
     #print('V_sign shape: ', V_sign.shape)
-
-
+    print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
+   
+    start_time_initialize = time.time()
     # Initialize parameters
     #u = get_initial_state(
     #    num_nodes,
@@ -594,6 +613,7 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, graph_laplacian, si
     #    fidelity_V=fidelity_V,)
 
     u = get_initial_state_1(num_nodes, num_communities, target_size)
+    print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
 
     last_last_index = u == 1
     last_index = u == 1
@@ -602,17 +622,18 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, graph_laplacian, si
     # Perform MBO scheme
     n = 0
     stop_criterion = 10
-    #u_new = u.copy()
-    #for n in range(max_iter):
+    u_new = u.copy()
+    
+    start_time_MBO_iteration = time.time()
     while (n < max_iter) and (stop_criterion > tol):
-        #u_old = u_new.copy()
+        u_old = u_new.copy()
 
         dti = dt / (2 * inner_step_count)
 
+        #start_time_diffusion = time.time()
         #demon = sp.sparse.spdiags([1.0 / (1.0 + dti * D_sign)], [0], m, m) @ V_sign.transpose()
         
         #for j in range(inner_step_count):
-            
             # Solve system (apply CG or pseudospectral)
             #u_half = V_sign @ (demon @ u_old)  # Project back into normal space
 
@@ -629,61 +650,74 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, graph_laplacian, si
         #demon = sp.sparse.spdiags([np.exp(-D*dt)],[0],m,m)
         
         for j in range(inner_step_count):
-            u = V_sign @ (demon @ u)
-
-            
-        # Apply thresholding 
-        u = apply_threshold(u, target_size, thresh_type)
-
-        # Check that the index is changing and stop if time step becomes too small
-        index = u == 1
-
-        norm_deviation = sp.linalg.norm(last_index ^ index) / sp.linalg.norm(index)
-        if norm_deviation < tol :
-            if dt < tol:
-                break
-            else:
-                dt *= 0.5
-        elif np.sum(last_last_index ^ index) == 0:
-            # Going back and forth
-            dt *= 0.5
-        last_last_index = last_index
-        last_index = index
+            u_half = V_sign @ (demon @ u_old)
         
+        #print("compute MBO diffusion step:-- %.3f seconds --" % (time.time() - start_time_diffusion))
+        
+        #start_time_thresholding = time.time()
+        # Apply thresholding 
+        u_new = apply_threshold(u_half, target_size, thresh_type)
+        #print("compute MBO thresholding:-- %.3f seconds --" % (time.time() - start_time_thresholding)) 
+        
+        start_time_stop_criterion = time.time()
+        
+        # Stop criterion
+
+        stop_criterion = (np.abs(u_new - u_old)).sum()
+        #stop_criterion = sp.linalg.norm(u_new-u_old) / sp.linalg.norm(u_new)
+        # Check that the index is changing and stop if time step becomes too small
+        #index = u == 1
+
+        #norm_deviation = sp.linalg.norm(last_index ^ index) / sp.linalg.norm(index)
+        #if norm_deviation < tol :
+        #    if dt < tol:
+        #        break
+        #    else:
+        #        dt *= 0.5
+        #elif np.sum(last_last_index ^ index) == 0:
+        #    # Going back and forth
+        #    dt *= 0.5
+        #last_last_index = last_index
+        #last_index = index
+        #print("compute stop criterion:-- %.3f seconds --" % (time.time() - start_time_stop_criterion))
+
         n = n+1
-    return u, n
+    print("compute the whole MBO iteration:-- %.3f seconds --" % (time.time() - start_time_MBO_iteration))
+
+    return u_new, n
 
 
 
 
-def mbo_modularity_hu_original(num_communities, m, dt, adj_matrix, tol ,inner_step_count, 
-                               target_size=None, max_iter=10000, thresh_type="max", modularity=False): # inner stepcount is actually important! and can't be set to 1...
+def mbo_modularity_hu_original(num_nodes, num_communities, m,degree, dt, nor_graph_laplacian, tol,target_size, inner_step_count, 
+                            gamma=0.5, max_iter=10000, thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
-    degree = np.array(np.sum(adj_matrix, axis=1)).flatten()
-    num_nodes = len(degree)
+    print('Start Hu, Laurent algorithm')
 
-    m = min(num_nodes - 2, m)  # Number of eigenvalues to use for pseudospectral
+    #degree = np.array(np.sum(adj_matrix, axis=1)).flatten()
+    #num_nodes = len(degree)
 
-    if target_size is None:
-        target_size = [num_nodes // num_communities for i in range(num_communities)]
-        target_size[-1] = num_nodes - sum(target_size[:-1])
+    #m = min(num_nodes - 2, m)  # Number of eigenvalues to use for pseudospectral
 
-    #graph_laplacian, degree = sp.sparse.csgraph.laplacian(A_absolute_matrix, return_diag=True)
+    #if target_size is None:
+    #    target_size = [num_nodes // num_communities for i in range(num_communities)]
+    #    target_size[-1] = num_nodes - sum(target_size[:-1])
+
     degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)
-    graph_laplacian = degree_diag - adj_matrix
+    #graph_laplacian = degree_diag - adj_matrix
 
-    degree_inv = sp.sparse.spdiags([1.0 / degree], [0], num_nodes, num_nodes)
-    graph_laplacian = np.sqrt(degree_inv) @ graph_laplacian @ np.sqrt(degree_inv)    # obtain L_{sym}
-    # degree = np.ones(num_nodes)
-    # degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)
+    #degree_inv = sp.sparse.spdiags([1.0 / degree], [0], num_nodes, num_nodes)
+    #graph_laplacian = np.sqrt(degree_inv) @ graph_laplacian @ np.sqrt(degree_inv)    # obtain L_{sym}
 
+    start_time_eigendecomposition = time.time()
     D, V = eigsh(
-        graph_laplacian,
+        nor_graph_laplacian,
         k=m,
-        v0=np.ones((graph_laplacian.shape[0], 1)),
+        v0=np.ones((nor_graph_laplacian.shape[0], 1)),
         which="SA")
-
-
+    print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
+    
+    start_time_initialize = time.time()
     # Initialize parameters
     #u = get_initial_state(
     #    num_nodes,
@@ -694,53 +728,64 @@ def mbo_modularity_hu_original(num_communities, m, dt, adj_matrix, tol ,inner_st
     #    fidelity_V=fidelity_V,)
 
     u = get_initial_state_1(num_nodes, num_communities, target_size)
-
+    print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
+    
     last_last_index = u == 1
     last_index = u == 1
     last_dt = 0
-    #stop_criterion = 10
-    #u_new = u.copy()        
+    stop_criterion = 10
+    n = 0
+    u_new = u.copy()        
+    
+    start_time_MBO_iteration = time.time()
     # Perform MBO scheme
-
-    for n in range(max_iter):
-        #u_old = u_new.copy()
-        dti = dt / inner_step_count
-
-        demon = sp.sparse.spdiags([1 / (1 + dti * D)], [0], m, m) @ V.transpose()
-        #demon = sp.sparse.spdiags([np.exp(-D*dt)],[0],m,m)
+    #for n in range(max_iter):
+    while (n < max_iter) and (stop_criterion > tol):
+        u_old = u_new.copy()
+        vv = u_old.copy()
+        ww = vv.copy()
+        #dti = dt / inner_step_count
         
+        #start_time_diffusion = time.time()
+        #demon = sp.sparse.spdiags([1 / (1 + dti * D)], [0], m, m) @ V.transpose()
+        #demon = sp.sparse.spdiags([np.exp(-D*dt)],[0],m,m)
         for j in range(inner_step_count):
-            
-            u = V @ (demon @ u)
-                
-            if modularity:
-                # Add term for modularity
-                mean_f = np.dot(degree.reshape(1, len(degree)), u) / np.sum(degree)
-                u += 2 * dti * degree_diag @ (u - mean_f)
+            mean_f = np.dot(degree.reshape(1, len(degree)), vv) / np.sum(degree)
+            ww += 2 * gamma * dt * degree_diag @ (vv - mean_f)
+            vv = _diffusion_step_eig(ww,V,D,dt)
 
-            j = j + 1
-            
-
+        #print("compute MBO diffusion step:-- %.3f seconds --" % (time.time() - start_time_diffusion))
+        
+        #start_time_thresholding = time.time()
         # Apply thresholding 
-        u = apply_threshold(u, target_size, thresh_type)
+        #u_new = apply_threshold(vv, target_size, thresh_type)
+        u_new = _mbo_forward_step_multiclass(vv)
+        #print("compute MBO thresholding:-- %.3f seconds --" % (time.time() - start_time_thresholding)) 
 
+        #start_time_stop_criterion = time.time()
+        # Stop criterion
+
+        #stop_criterion = (np.abs(u_new - u_old)).sum()
+        stop_criterion = sp.linalg.norm(u_new-u_old) / sp.linalg.norm(u_new)
         # Check that the index is changing and stop if time step becomes too small
-        index = u == 1
+        #index = u == 1
 
-        norm_deviation = sp.linalg.norm(last_index ^ index) / sp.linalg.norm(index)
-        if norm_deviation < tol :
-            if dt < tol:
-                break
-            else:
-                dt *= 0.5
-        elif np.sum(last_last_index ^ index) == 0:
-            # Going back and forth
-            dt *= 0.5
-        last_last_index = last_index
-        last_index = index
+        #norm_deviation = sp.linalg.norm(last_index ^ index) / sp.linalg.norm(index)
+        #if norm_deviation < tol :
+        #    if dt < tol:
+        #        break
+        #    else:
+        #        dt *= 0.5
+        #elif np.sum(last_last_index ^ index) == 0:
+        #    # Going back and forth
+        #    dt *= 0.5
+        #last_last_index = last_index
+        #last_index = index
+        #print("compute stop criterion:-- %.3f seconds --" % (time.time() - start_time_stop_criterion))
         
         n = n+1
+    print("compute the whole MBO iteration:-- %.3f seconds --" % (time.time() - start_time_MBO_iteration))
 
     if dt >= tol:
         print("MBO failed to converge")
-    return u
+    return u_new, n
