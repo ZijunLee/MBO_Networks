@@ -52,15 +52,18 @@ m = 100
 dt = 0.5
 tol = 1e-5
 inner_step_count =3
+eta_1 = 1
 
+num_nodes_1,m_1, degree_1, target_size_1,null_model_eta_1,graph_laplacian_1, nor_graph_laplacian_1,random_walk_nor_lap_1, signless_laplacian_null_model_1, nor_signless_laplacian_1, rw_signless_laplacian_1 = adj_to_laplacian_signless_laplacian(adj_mat,num_communities,m,eta_1,target_size=None)
 
 start_time_hu_original_1 = time.time()
 # test HU original MBO
-u_hu_vector = mbo_modularity_hu_original(num_communities, m, dt, adj_mat, tol ,inner_step_count, modularity=True) 
-u_hu_label_1 = vector_to_labels(u_hu_vector)
-#u_hu_dict_1 = label_to_dict(u_hu_label_1)
+u_hu_vector, num_iter_hu = mbo_modularity_hu_original(num_nodes_1, num_communities, m_1,degree_1, dt_inner, nor_graph_laplacian_1, tol,target_size_1,inner_step_count) 
 
 print("HU original MBO (K=11 and m=100):-- %.3f seconds --" % (time.time() - start_time_hu_original_1))
+print('the number of iteration of HU: ',num_iter_hu)
+u_hu_label_1 = vector_to_labels(u_hu_vector)
+#u_hu_dict_1 = label_to_dict(u_hu_label_1)
 
 modu_hu_original_1 = skn.clustering.modularity(W,u_hu_label_1,resolution=0.5)
 ARI_hu_original_1 = adjusted_rand_score(u_hu_label_1, gt_list)
