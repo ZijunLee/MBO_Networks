@@ -58,10 +58,10 @@ num_nodes_1,m_1, degree_1, target_size_1,null_model_eta_1,graph_laplacian_1, nor
 
 start_time_hu_original_1 = time.time()
 # test HU original MBO
-u_hu_vector, num_iter_hu = mbo_modularity_hu_original(num_nodes_1, num_communities, m_1,degree_1, dt_inner, nor_graph_laplacian_1, tol,target_size_1,inner_step_count) 
+u_hu_vector, num_iter_HU = mbo_modularity_hu_original(num_nodes_1, num_communities, m_1,degree_1, dt_inner, nor_graph_laplacian_1, tol,target_size_1 ,inner_step_count) 
 
 print("HU original MBO (K=11 and m=100):-- %.3f seconds --" % (time.time() - start_time_hu_original_1))
-print('the number of iteration of HU: ',num_iter_hu)
+print('the number of iteration of HU: ',num_iter_HU)
 u_hu_label_1 = vector_to_labels(u_hu_vector)
 #u_hu_dict_1 = label_to_dict(u_hu_label_1)
 
