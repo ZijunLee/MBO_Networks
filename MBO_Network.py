@@ -2,7 +2,7 @@ from joblib import PrintTime
 import numpy as np
 import scipy as sp
 from scipy.linalg import lu_factor, lu_solve
-from scipy.sparse.linalg import eigs, eigsh
+from scipy.sparse.linalg import eigs, eigsh, svds
 from random import randrange
 import random
 from torch import sign
@@ -186,7 +186,7 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
 
 
 
-def mbo_modularity_1(num_nodes,num_communities, m,degree,dti, graph_laplacian,signless_laplacian_null_model, tol, target_size,
+def mbo_modularity_1(num_nodes,num_communities, m,degree, graph_laplacian,signless_laplacian_null_model, tol, target_size,
                     gamma, eps=1, max_iter=10000, initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start with MMBO using the projection on the eigenvectors')
@@ -203,8 +203,10 @@ def mbo_modularity_1(num_nodes,num_communities, m,degree,dti, graph_laplacian,si
     D_sign, V_sign = eigsh(
         laplacian_mix,
         k=m,
-        v0=np.ones((laplacian_mix.shape[0], 1)),
-        which= "SA",)
+        sigma=0,
+    #    v0=np.ones((laplacian_mix.shape[0], 1)),
+        which='LM')
+
 
     print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
     #print('D_sign shape: ', D_sign.shape)
@@ -237,11 +239,13 @@ def mbo_modularity_1(num_nodes,num_communities, m,degree,dti, graph_laplacian,si
     u = get_initial_state_1(num_nodes, num_communities, target_size)
     print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
     
+    start_time_timestep_selection = time.time()
     # Time step selection
-    #dtlow = 0.15/((gamma+1)*np.max(degree))
-    #dthigh = np.log(np.linalg.norm(u)/eps)/D_sign[0]
-    #dti = np.sqrt(dtlow*dthigh)
+    dtlow = 0.15/((gamma+1)*np.max(degree))
+    dthigh = np.log(np.linalg.norm(u)/eps)/D_sign[0]
+    dti = np.sqrt(dtlow*dthigh)
     #print('dti: ',dti)
+    print("compute time step selection:-- %.3f seconds --" % (time.time() - start_time_timestep_selection))
         
     # Perform MBO scheme
     n = 0
