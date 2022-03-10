@@ -203,9 +203,9 @@ def mbo_modularity_1(num_nodes,num_communities, m,degree, graph_laplacian,signle
     D_sign, V_sign = eigsh(
         laplacian_mix,
         k=m,
-        sigma=0,
+    #    sigma=0,
     #    v0=np.ones((laplacian_mix.shape[0], 1)),
-        which='LM')
+        which='SA')
 
 
     print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
@@ -717,8 +717,9 @@ def mbo_modularity_hu_original(num_nodes, num_communities, m,degree, dt, nor_gra
     D, V = eigsh(
         nor_graph_laplacian,
         k=m,
-        v0=np.ones((nor_graph_laplacian.shape[0], 1)),
-        which="SA")
+        sigma=0,
+    #    v0=np.ones((nor_graph_laplacian.shape[0], 1)),
+        which='LA')
     print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
     
     start_time_initialize = time.time()
