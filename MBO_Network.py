@@ -717,9 +717,10 @@ def mbo_modularity_hu_original(num_nodes, num_communities, m,degree, dt, nor_gra
     D, V = eigsh(
         nor_graph_laplacian,
         k=m,
-        sigma=0,
+    #    sigma=0,
     #    v0=np.ones((nor_graph_laplacian.shape[0], 1)),
-        which='LA')
+        which='SA')
+    print('eigendecomposition uses SA')
     print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
     
     start_time_initialize = time.time()

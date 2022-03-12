@@ -50,7 +50,7 @@ num_communities = 11
 #m = 1 * num_communities
 m = 100
 dt = 1
-tol = 1e-5
+tol = 1e-6
 inner_step_count =3
 eta_1 = 1
 
