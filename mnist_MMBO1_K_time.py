@@ -41,7 +41,7 @@ gt_label_dict = dict(zip(len_gt_label, gt_list))     # gt_label_dict is a dict
 G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 print(type(G))
 
-adj_mat = nx.convert_matrix.to_numpy_matrix(G)
+adj_mat = nx.convert_matrix.to_numpy_array(G)
 print('adj_mat type: ', type(adj_mat))
 
 ## parameter setting
