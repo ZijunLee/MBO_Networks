@@ -208,10 +208,10 @@ def mbo_modularity_1(num_nodes,num_communities, m,degree, graph_laplacian,signle
     #    v0=np.ones((laplacian_mix.shape[0], 1)),
     #    which='SA')
 
-    eigenpair = eigs_slepc(laplacian_mix, m, which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-8,maxiter=10000)
+    eigenpair = eigs_slepc(laplacian_mix, m, which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-5,maxiter=10000)
     
     print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
-    
+    print('EPSType is krylovschur')
     D_sign = eigenpair[0]
     V_sign = eigenpair[1]
 
