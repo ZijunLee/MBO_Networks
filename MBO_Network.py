@@ -53,7 +53,7 @@ def adj_to_laplacian_signless_laplacian(adj_matrix,num_communities,m,gamma, targ
         
     A_absolute_matrix = np.abs(adj_matrix)
     degree = np.array(np.sum(A_absolute_matrix, axis=-1)).flatten()
-    dergee_di_null = np.sum(A_absolute_matrix, axis=-1)
+    dergee_di_null = np.expand_dims(degree, axis=-1)
     #print('max degree: ',degree.shape)
     #print('degree d_i type: ', dergee_di_null.shape)
     num_nodes = len(degree)
@@ -65,15 +65,17 @@ def adj_to_laplacian_signless_laplacian(adj_matrix,num_communities,m,gamma, targ
         target_size[-1] = num_nodes - sum(target_size[:-1])
 
     # compute unsigned laplacian
-    degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)
+    degree_diag = np.diag(degree)
+    #degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)
     graph_laplacian = degree_diag - adj_matrix    # L_A = D - A
-    #print('graph laplacian shape: ',graph_laplacian.shape)
+    #print('graph laplacian shape: ',type(graph_laplacian))
 
     # compute symmetric normalized laplacian
-    degree_inv = sp.sparse.spdiags([1.0 / degree], [0], num_nodes, num_nodes)   # obtain D^{-1}
+    degree_inv = np.diag((1 / degree))
+    #degree_inv = sp.sparse.spdiags([1.0 / degree], [0], num_nodes, num_nodes)   # obtain D^{-1}
     #print('D^{-1}: ', degree_inv.shape)
     nor_graph_laplacian = np.sqrt(degree_inv) @ graph_laplacian @ np.sqrt(degree_inv)    # obtain L_A_{sym}
-
+    #print('nor_graph_laplacian type: ', type(nor_graph_laplacian))
     # compute Random walk normalized Laplacian
     random_walk_nor_lap =  degree_inv @ graph_laplacian
 
@@ -81,24 +83,31 @@ def adj_to_laplacian_signless_laplacian(adj_matrix,num_communities,m,gamma, targ
     ## Construct Newman--Girvan null model
     null_model = np.zeros((len(degree), len(degree)))
     total_degree = np.sum(adj_matrix)
-    #print('total degree: ', total_degree)
+    total_degree_int = total_degree.astype(int)
+    #print('total degree: ', type(total_degree_int))
     #print('length of degree: ', len(degree))
+    #print('null model_original shape: ', type(null_model))
 
     #for i in range(len(degree)):
     #    for j in range(len(degree)):
     #        null_model[i][j] = (degree[i] * degree[j]) / total_degree
 
     #null_model = (np.dot(np.transpose(degree), degree))/total_degree
-    null_model = (dergee_di_null @ dergee_di_null.transpose())/ total_degree
+    #fraction = dergee_di_null @ dergee_di_null.transpose()
+    #print('fenzi type: ', type(fraction))
+    null_model = (dergee_di_null @ dergee_di_null.transpose())/ total_degree_int
     #null_model_eta = gamma * null_model
 
     #print('null model shape: ', type(null_model))
     
     degree_null_model = np.array(np.sum(null_model, axis=-1)).flatten()
+    #print('degree_null_model type: ',type(degree_null_model))
     num_nodes_null_model = len(degree_null_model)
-    degree_diag_null_model = sp.sparse.spdiags([degree_null_model], [0], num_nodes_null_model, num_nodes_null_model)   
+    #degree_diag_null_model = sp.sparse.spdiags([degree_null_model], [0], num_nodes_null_model, num_nodes_null_model)
+    degree_diag_null_model = np.diag(degree_null_model)   
     signless_laplacian_null_model = degree_diag_null_model + null_model  # Q_P = D + P(null model)
-    signless_degree_inv = sp.sparse.spdiags([1.0 / degree_null_model], [0], num_nodes_null_model, num_nodes_null_model)   # obtain D^{-1}
+    #signless_degree_inv = sp.sparse.spdiags([1.0 / degree_null_model], [0], num_nodes_null_model, num_nodes_null_model)   # obtain D^{-1}
+    signless_degree_inv = np.diag((1.0/degree_null_model))
     #print('D^{-1}: ', degree_inv.shape)
     nor_signless_laplacian = np.sqrt(signless_degree_inv) @ signless_laplacian_null_model @ np.sqrt(signless_degree_inv)
     rw_signless_lapclacian =  signless_degree_inv @ signless_laplacian_null_model
@@ -111,13 +120,14 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
     
     A_absolute_matrix = np.abs(adj_matrix)
     degree = np.array(np.sum(A_absolute_matrix, axis=1)).flatten()
-    dergee_di_null = np.sum(adj_matrix, axis=1)
+    dergee_di_null = np.expand_dims(degree, axis=-1)
     num_nodes = len(degree)
     #print(num_nodes)
 
     ## Construct Newman--Girvan null model
     null_model = np.zeros((len(degree), len(degree)))
     total_degree = np.sum(A_absolute_matrix)
+    total_degree_int = total_degree.astype(int)
     #print('total degree: ', total_degree)
     #print('length of degree: ', len(degree))
 
@@ -126,7 +136,7 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
     #        null_model[i][j] = (degree[i] * degree[j]) / total_degree
 
     #null_model = (np.dot(np.transpose(degree), degree))/total_degree
-    null_model = (dergee_di_null @ dergee_di_null.transpose())/ total_degree
+    null_model = (dergee_di_null @ dergee_di_null.transpose())/ total_degree_int
     #null_model_eta = gamma * null_model
 
     #degree_null_model = np.array(np.sum(null_model, axis=1)).flatten()
@@ -153,12 +163,14 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
     # B_{ij}^+
     mix_mat_positive = np.where(mix_matrix > 0, mix_matrix, 0)   # B_{ij}^+
     degree_mix_mat_positive = np.array(np.sum(mix_mat_positive, axis=1)).flatten()
-    num_nodes_positive = len(degree_mix_mat_positive)
-    degree_diag_positive = sp.sparse.spdiags([degree_mix_mat_positive], [0], num_nodes_positive, num_nodes_positive)  # D^+
+    #num_nodes_positive = len(degree_mix_mat_positive)
+    #degree_diag_positive = sp.sparse.spdiags([degree_mix_mat_positive], [0], num_nodes_positive, num_nodes_positive)  # D^+
+    degree_diag_positive = np.diag(degree_mix_mat_positive)
     graph_laplacian_positive = degree_diag_positive - mix_mat_positive  # L_B^+ = D^+ - B^+ 
     
     # compute symmetric normalized laplacian & Random walk normalized Laplacian
-    degree_inv_positive = sp.sparse.spdiags([1.0 / degree_mix_mat_positive], [0], num_nodes_positive, num_nodes_positive)   # obtain D^{-1}
+    #degree_inv_positive = sp.sparse.spdiags([1.0 / degree_mix_mat_positive], [0], num_nodes_positive, num_nodes_positive)   # obtain D^{-1}
+    degree_inv_positive = np.diag((1.0 /degree_mix_mat_positive))
     #print('D^{-1}: ', degree_inv.shape)
     sym_graph_laplacian_positive = np.sqrt(degree_inv_positive) @ graph_laplacian_positive @ np.sqrt(degree_inv_positive)    # obtain L_A_{sym}
     random_walk_nor_lap_positive =  degree_inv_positive @ graph_laplacian_positive
@@ -166,12 +178,14 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
     # B_{ij}^-
     mix_mat_negative = -np.where(mix_matrix < 0, mix_matrix, 0)   # B_{ij}^-
     degree_mix_mat_negative = np.array(np.sum(mix_mat_negative, axis=1)).flatten()
-    num_nodes_negative = len(degree_mix_mat_negative)
-    degree_diag_negative = sp.sparse.spdiags([degree_mix_mat_negative], [0], num_nodes_negative, num_nodes_negative)  # D^-
+    #num_nodes_negative = len(degree_mix_mat_negative)
+    degree_diag_negative = np.diag(degree_mix_mat_negative)
+    #degree_diag_negative = sp.sparse.spdiags([degree_mix_mat_negative], [0], num_nodes_negative, num_nodes_negative)  # D^-
     signless_graph_laplacian_neg = degree_diag_negative + mix_mat_negative  # Q_B^- = D^- + B^-
         
     # compute symmetric normalized laplacian & Random walk normalized Laplacian
-    degree_inv_negative = sp.sparse.spdiags([1.0 / degree_mix_mat_negative], [0], num_nodes_negative, num_nodes_negative)   # obtain D^{-1}
+    #degree_inv_negative = sp.sparse.spdiags([1.0 / degree_mix_mat_negative], [0], num_nodes_negative, num_nodes_negative)   # obtain D^{-1}
+    degree_inv_negative = np.diag((1.0 / degree_mix_mat_negative))
     #print('D^{-1}: ', degree_inv.shape)
     sym_signless_laplacian_negative = np.sqrt(degree_inv_negative) @ signless_graph_laplacian_neg @ np.sqrt(degree_inv_negative)    # obtain L_A_{sym}
     random_walk_signless_lap_negative =  degree_inv_negative @ signless_graph_laplacian_neg
@@ -195,7 +209,7 @@ def mbo_modularity_1(num_nodes,num_communities, m,degree, graph_laplacian,signle
     start_time_lap_mix = time.time()
 
     laplacian_mix = graph_laplacian + signless_laplacian_null_model  # L_{mix} = L_A_{sym} + Q_P
-    #print('L_{mix} shape: ',laplacian_mix.shape)
+    #print('L_{mix} shape: ',type(laplacian_mix))
     
     print("compute laplacian_mix:-- %.3f seconds --" % (time.time() - start_time_lap_mix))
     
