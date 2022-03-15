@@ -9,7 +9,7 @@ from torch import sign
 import time
 
 from graph_mbo.utils import apply_threshold, get_fidelity_term, get_initial_state,labels_to_vector,to_standard_labels,_diffusion_step_eig,_mbo_forward_step_multiclass,get_initial_state_1,ProjectToSimplex
-from graph_cut.util.nystrom import nystrom_extension
+#from graph_cut.util.nystrom import nystrom_extension
 from slec4py_test2 import eigs_slepc
 
 
@@ -52,8 +52,8 @@ from slec4py_test2 import eigs_slepc
 def adj_to_laplacian_signless_laplacian(adj_matrix,num_communities,m,gamma, target_size=None):
         
     A_absolute_matrix = np.abs(adj_matrix)
-    degree = np.array(np.sum(A_absolute_matrix, axis=1)).flatten()
-    dergee_di_null = np.sum(A_absolute_matrix, axis=1)
+    degree = np.array(np.sum(A_absolute_matrix, axis=-1)).flatten()
+    dergee_di_null = np.sum(A_absolute_matrix, axis=-1)
     #print('max degree: ',degree.shape)
     #print('degree d_i type: ', dergee_di_null.shape)
     num_nodes = len(degree)
@@ -92,9 +92,9 @@ def adj_to_laplacian_signless_laplacian(adj_matrix,num_communities,m,gamma, targ
     null_model = (dergee_di_null @ dergee_di_null.transpose())/ total_degree
     #null_model_eta = gamma * null_model
 
-    #print('null model shape: ', null_model_eta.shape)
+    #print('null model shape: ', type(null_model))
     
-    degree_null_model = np.array(np.sum(null_model, axis=1)).flatten()
+    degree_null_model = np.array(np.sum(null_model, axis=-1)).flatten()
     num_nodes_null_model = len(degree_null_model)
     degree_diag_null_model = sp.sparse.spdiags([degree_null_model], [0], num_nodes_null_model, num_nodes_null_model)   
     signless_laplacian_null_model = degree_diag_null_model + null_model  # Q_P = D + P(null model)
