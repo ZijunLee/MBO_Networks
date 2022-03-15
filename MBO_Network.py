@@ -9,7 +9,8 @@ from torch import sign
 import time
 
 from graph_mbo.utils import apply_threshold, get_fidelity_term, get_initial_state,labels_to_vector,to_standard_labels,_diffusion_step_eig,_mbo_forward_step_multiclass,get_initial_state_1,ProjectToSimplex
-
+from graph_cut.util.nystrom import nystrom_extension
+from slec4py_test2 import eigs_slepc
 
 
 
@@ -200,15 +201,20 @@ def mbo_modularity_1(num_nodes,num_communities, m,degree, graph_laplacian,signle
     
     start_time_eigendecomposition = time.time()
     # compute eigenvalues and eigenvectors
-    D_sign, V_sign = eigsh(
-        laplacian_mix,
-        k=m,
+    #D_sign, V_sign = eigsh(
+    #    laplacian_mix,
+    #    k=m,
     #    sigma=0,
     #    v0=np.ones((laplacian_mix.shape[0], 1)),
-        which='SA')
+    #    which='SA')
 
-
+    eigenpair = eigs_slepc(laplacian_mix, m, which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-8,maxiter=10000)
+    
     print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
+    
+    D_sign = eigenpair[0]
+    V_sign = eigenpair[1]
+
     #print('D_sign shape: ', D_sign.shape)
     #print('V_sign shape: ', V_sign.shape)
 
@@ -447,64 +453,24 @@ def mbo_modularity_2(num_nodes, num_communities, m,dti, tol, graph_laplacian_pos
 
 
 ## given eigenvalues and eigenvectors
-def mbo_modularity_given_eig(eigval,eigvec, u_init,k_weights,tol=0.5, gamma=0.5,eps=1,max_iter=10000): 
+def mbo_modularity_given_eig(num_communities, eigval,eigvec,deg,dt, tol, 
+                            inner_step_count, gamma=0.5,max_iter=10000): 
     
-    degree = np.array(k_weights).flatten
-    Neig = eigvec.shape[1]
+    num_nodes = len(deg)
+    degree_diag = sp.sparse.spdiags([deg], [0], num_nodes, num_nodes)
     #degree = np.array(np.sum(adj_matrix, axis=1)).flatten()
     #print(np.max(degree))
     #num_nodes = len(degree)
-        
-    #m = min(num_nodes - 2, m)  # Number of eigenvalues to use for pseudospectral
-
-    #if target_size is None:
-    #    target_size = [num_nodes // num_communities for i in range(num_communities)]
-    #    target_size[-1] = num_nodes - sum(target_size[:-1])
-
-    # compute unsigned laplacian
-    #degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)
-    #graph_laplacian = degree_diag - adj_matrix    # L_A = D - A
-    # compute symmetric normalized laplacian
-    #degree_inv = sp.sparse.spdiags([1.0 / degree], [0], num_nodes, num_nodes)   # obtain D^{-1}
-    #nor_graph_laplacian = np.sqrt(degree_inv) @ graph_laplacian @ np.sqrt(degree_inv)    # obtain L_A_{sym}
     
-    ## Construct Newman--Girvan null model
-    #null_model = np.zeros((len(degree), len(degree)))
-    #resolution = 1
-    #total_degree = np.sum(adj_matrix)
-    #for i in range(len(degree)):
-    #    for j in range(len(degree)):
-    #        null_model[i][j] = gamma * ((degree[i] * degree[j]) / total_degree)
+    target_size = [num_nodes // num_communities for i in range(num_communities)]
+    target_size[-1] = num_nodes - sum(target_size[:-1])
 
-    #degree_null_model = np.array(np.sum(null_model, axis=1)).flatten()
-    #num_nodes_null_model = len(degree_null_model)
-    #degree_diag_null_model = sp.sparse.spdiags([degree_null_model], [0], num_nodes_null_model, num_nodes_null_model)   
-    #signless_laplacian_null_model = degree_diag_null_model + null_model  # Q_P = D + P(null model)
-    
-    #laplacian_mix = 1 * (graph_laplacian + signless_laplacian_null_model)  # L_{mix} = L_A_{sym} + Q_P
-    
     # compute eigenvalues and eigenvectors
     #D_sign, V_sign = eigsh(
     #    laplacian_mix,
     #    k=m,
     #    v0=np.ones((laplacian_mix.shape[0], 1)),
     #    which= "SA",)
-
-
-    #if fidelity_type == "spectral":
-    #    fidelity_D, fidelity_V = eigsh(
-    #        laplacian_mix,
-    #        k=num_communities + 1,
-    #        v0=np.ones((laplacian_mix.shape[0], 1)),
-    #        which="SA",
-    #    )
-    #    fidelity_V = fidelity_V[:, 1:]  # Remove the constant eigenvector
-    #    fidelity_D = fidelity_D[1:]
-    #    # apply_threshold(fidelity_V, target_size, "max")
-    #    # return fidelity_V
-    #else:
-    #    fidelity_V = None
-
 
     # Initialize parameters
     #u = get_initial_state(
@@ -515,74 +481,70 @@ def mbo_modularity_given_eig(eigval,eigvec, u_init,k_weights,tol=0.5, gamma=0.5,
     #    fidelity_type=fidelity_type,
     #    fidelity_V=fidelity_V,)
 
+    start_time_initialize = time.time()
+    # Initialize parameters
+    #u = get_initial_state(
+    #    num_nodes,
+    #    num_communities,
+    #    target_size,
+    #    type=initial_state_type,
+    #    fidelity_type=fidelity_type,
+    #    fidelity_V=fidelity_V,)
 
-    # convert u_init to standard multiclass form for binary tags
-    if (len(u_init.shape)== 1) or (u_init.shape[1] == 1): 
-        u_init = labels_to_vector(to_standard_labels(u_init))
-    # Perform MBO scheme
-    n = 0
+    u = get_initial_state_1(num_nodes, num_communities, target_size)
+    print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
+    
+
     stop_criterion = 10
-    u_new = u_init.copy()
-
-    #Time step selection
-    dtlow = 0.15/((gamma+1)*np.max(degree))
-    dthigh = np.log(np.linalg.norm(u_init)/eps)/eigval[0]
-    dti = np.sqrt(dtlow*dthigh)
-        
+    n = 0
+    u_new = u.copy()        
+    
+    start_time_MBO_iteration = time.time()
+    # Perform MBO scheme
+    #for n in range(max_iter):
     while (n < max_iter) and (stop_criterion > tol):
-
         u_old = u_new.copy()
+        vv = u_old.copy()
+        ww = vv.copy()
+ 
+        for j in range(inner_step_count):
+            mean_f = np.dot(deg.reshape(1, len(deg)), vv) / np.sum(deg)
+            ww += 2 * gamma * dt * degree_diag @ (vv - mean_f)
+            vv = _diffusion_step_eig(ww,eigvec,eigval,dt)
 
-        #dti = dt / (2 * inner_step_count)
-
-        #if pseudospectral:
-
-        #a = V_sign.transpose() @ u_old
-
-        #demon = sp.sparse.spdiags([1 / (1 + dt * D)], [0], m, m)
-        demon = sp.sparse.spdiags([np.exp(- 0.5 * eigval * dti)],[0],Neig,Neig) @ eigvec.transpose()
-        #a = demon @ a
-        #demon = sp.sparse.spdiags([1.0 / (1.0 + dti * D_sign)], [0], m, m) @ V_sign.transpose()
-        #    P = sp.sparse.spdiags([np.exp(-D_sign*dti)],[0],m,m) @ V_sign.T
+        #print("compute MBO diffusion step:-- %.3f seconds --" % (time.time() - start_time_diffusion))
         
-        #for j in range(inner_step_count):
-            
-            # Solve system (apply CG or pseudospectral)
-
-        u_half = eigvec @ (demon @ u_old)  # Project back into normal space
-            #    u = V_sign @ (P @ u)
-            #fidelity_term = get_fidelity_term(u, type=fidelity_type, V=fidelity_V)
-                
-                # Project fidelity term into Hilbert space
-                #if normalized:
-                #    d = V_sign.transpose() @ (degree_inv @ fidelity_term)
-                #    d = V_sign.transpose() @ (eigenvalue_mat @ fidelity_term)
-                #else:
-                #d = V_sign.transpose() @ fidelity_term
-                
+        #start_time_thresholding = time.time()
         # Apply thresholding 
-        #u_new = apply_threshold(u_half, target_size, thresh_type)
-        u_new = _mbo_forward_step_multiclass(u_half)
-                    
-                    
+        #u_new = apply_threshold(vv, target_size, thresh_type)
+        u_new = _mbo_forward_step_multiclass(vv)
+        #print("compute MBO thresholding:-- %.3f seconds --" % (time.time() - start_time_thresholding)) 
+
+        #start_time_stop_criterion = time.time()
         # Stop criterion
+
         #stop_criterion = (np.abs(u_new - u_old)).sum()
         stop_criterion = sp.linalg.norm(u_new-u_old) / sp.linalg.norm(u_new)
-        
-        #Ui_diff = []
-        #Ui_max = []
-        #for i in range(num_nodes):    
-        #    Ui_diff.append((np.linalg.norm(u_new[i,:] - u_old[i,:]))**2)
-        #    Ui_max.append((np.linalg.norm(u_new[i,:]))**2)
-            
-        #max_diff = max(Ui_diff)
-        #max_new = max(Ui_max)
-        #stop_criterion = max_diff/max_new
+        # Check that the index is changing and stop if time step becomes too small
+        #index = u == 1
 
+        #norm_deviation = sp.linalg.norm(last_index ^ index) / sp.linalg.norm(index)
+        #if norm_deviation < tol :
+        #    if dt < tol:
+        #        break
+        #    else:
+        #        dt *= 0.5
+        #elif np.sum(last_last_index ^ index) == 0:
+        #    # Going back and forth
+        #    dt *= 0.5
+        #last_last_index = last_index
+        #last_index = index
+        #print("compute stop criterion:-- %.3f seconds --" % (time.time() - start_time_stop_criterion))
+        
         n = n+1
+    print("compute the whole MBO iteration:-- %.3f seconds --" % (time.time() - start_time_MBO_iteration))
 
     return u_new, n
-
 
 
 def mbo_modularity_inner_step(num_nodes, num_communities, m, graph_laplacian, signless_laplacian_null_model,dt, tol,target_size,inner_step_count,
@@ -619,9 +581,6 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, graph_laplacian, si
     u = get_initial_state_1(num_nodes, num_communities, target_size)
     print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
 
-    last_last_index = u == 1
-    last_index = u == 1
-    last_dt = 0
 
     # Perform MBO scheme
     n = 0
@@ -640,15 +599,11 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, graph_laplacian, si
         #for j in range(inner_step_count):
             # Solve system (apply CG or pseudospectral)
             #u_half = V_sign @ (demon @ u_old)  # Project back into normal space
-
                 
         # Apply thresholding 
         #u_new = apply_threshold(u_half, target_size, thresh_type)
         #u_new = _mbo_forward_step_multiclass(u_half)
-                    
-        # Stop criterion
-       # stop_criterion = (np.abs(u_new - u_old)).sum()
-        #stop_criterion = sp.linalg.norm(u_new-u_old) / sp.linalg.norm(u_new)
+
         
         demon = sp.sparse.spdiags([1 / (1 + dti * D_sign)], [0], m, m) @ V_sign.transpose()
         #demon = sp.sparse.spdiags([np.exp(-D*dt)],[0],m,m)
@@ -667,23 +622,9 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, graph_laplacian, si
         
         # Stop criterion
 
-        stop_criterion = (np.abs(u_new - u_old)).sum()
-        #stop_criterion = sp.linalg.norm(u_new-u_old) / sp.linalg.norm(u_new)
-        # Check that the index is changing and stop if time step becomes too small
-        #index = u == 1
+        #stop_criterion = (np.abs(u_new - u_old)).sum()
+        stop_criterion = sp.linalg.norm(u_new-u_old) / sp.linalg.norm(u_new)
 
-        #norm_deviation = sp.linalg.norm(last_index ^ index) / sp.linalg.norm(index)
-        #if norm_deviation < tol :
-        #    if dt < tol:
-        #        break
-        #    else:
-        #        dt *= 0.5
-        #elif np.sum(last_last_index ^ index) == 0:
-        #    # Going back and forth
-        #    dt *= 0.5
-        #last_last_index = last_index
-        #last_index = index
-        #print("compute stop criterion:-- %.3f seconds --" % (time.time() - start_time_stop_criterion))
 
         n = n+1
     print("compute the whole MBO iteration:-- %.3f seconds --" % (time.time() - start_time_MBO_iteration))
