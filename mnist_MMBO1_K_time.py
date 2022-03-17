@@ -21,20 +21,20 @@ import sknetwork as skn
 W = gl.weightmatrix.knn('mnist', 10, metric='vae')
 #W_dense = W.todense()
 #print(W_dense.shape)
-#print(type(W_dense))
+#print(type(W))
 
 gt_labels = gl.datasets.load('mnist', labels_only=True)
 gt_list = gt_labels.tolist()  
 #print('gt shape: ', type(gt_list))
 
 # convert a list to a dict
-gt_label_dict = []
-len_gt_label = []
+#gt_label_dict = []
+#len_gt_label = []
 
-for e in range(len(gt_list)):
-    len_gt_label.append(e)
+#for e in range(len(gt_list)):
+#    len_gt_label.append(e)
 
-gt_label_dict = dict(zip(len_gt_label, gt_list))     # gt_label_dict is a dict
+#gt_label_dict = dict(zip(len_gt_label, gt_list))     # gt_label_dict is a dict
 
 
 #G = nx.convert_matrix.from_numpy_matrix(W_dense)
@@ -58,8 +58,8 @@ num_nodes_1,m_1, degree_1, target_size_1,null_model_eta_1,graph_laplacian_1, nor
 start_time_1_nor_Lf_Qh_1 = time.time()
 ## Test MMBO 1 with normalized L_F
 
-u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1 = mbo_modularity_1(num_nodes_1,num_communities, m_1,degree_1,dt, nor_graph_laplacian_1,nor_signless_laplacian_1, 
-                                                tol, target_size_1,eta_1, eps=1)
+u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1 = mbo_modularity_1(num_nodes_1,num_communities, m_1, degree_1, nor_graph_laplacian_1,nor_signless_laplacian_1,
+                                                 tol, target_size_1, eta_1)
 print("MMBO1 with normalized L_F & Q_H (K=11, m=K):-- %.3f seconds --" % (time.time() - start_time_1_nor_Lf_Qh_1))
 print('u_1 nor L_F & Q_H number of iteration(K=11 and m=K): ', num_repeat_1_nor_Lf_Qh_1)
 u_1_nor_Lf_Qh_individual_label_1 = vector_to_labels(u_1_nor_Lf_Qh_individual_1)
@@ -73,7 +73,7 @@ inverse_purify_mbo_1_nor_Lf_Qh_1 = inverse_purity_score(gt_list, u_1_nor_Lf_Qh_i
 NMI_mbo_1_nor_Lf_Qh_1 = normalized_mutual_info_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
 AMI_mbo_1_nor_Lf_Qh_1 = adjusted_mutual_info_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
 
-print('average modularity_1 normalized L_F & Q_H score(K=11 and m=5K): ', modularity_1_nor_lf_qh)
+print('average modularity_1 normalized L_F & Q_H score(K=11 and m=K): ', modularity_1_nor_lf_qh)
 print('average ARI_1 normalized L_F & Q_H score: ', ARI_mbo_1_nor_Lf_Qh_1)
 print('average purify for MMBO1 normalized L_F & Q_H with \eta =1 : ', purify_mbo_1_nor_Lf_Qh_1)
 print('average inverse purify for MMBO1 normalized L_F & Q_H with \eta =1 : ', inverse_purify_mbo_1_nor_Lf_Qh_1)
