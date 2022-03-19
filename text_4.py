@@ -4,9 +4,7 @@ import sys
 sys.path.append('/'.join(os.getcwd().split('/')[:-1]))
 import numpy as np
 import scipy as sp
-from graph_cut.util.misc import to_standard_labels
 from graph_cut.data.read_mnist import Read_mnist, subsample
-import graph_cut.graph_cluster as gc
 #reload(util)
 #reload(data)
 #reload(gc)
@@ -14,7 +12,6 @@ from sklearn import datasets
 from scipy.sparse.linalg import eigsh
 from numpy.random import permutation
 # matplotlib inline
-import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from graph_cut_util import LaplacianClustering,build_affinity_matrix_new
 from sklearn.metrics import adjusted_rand_score
