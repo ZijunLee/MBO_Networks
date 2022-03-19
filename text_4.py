@@ -38,7 +38,7 @@ gpath = '/'.join(os.getcwd().split('/')[:-1])
 
 #raw_data, labels = Read_mnist(digits = [4,5,9],path = gpath+'/MBO_signed_graphs/graph_cut/data') 
 #raw_data = raw_data/255.
-full_data, full_labels = Read_mnist(digits = range(10),path = gpath+'/MBO_signed_graphs/graph_cut/data')
+full_data, full_labels = Read_mnist(digits = range(10),path = gpath+'/MBO_SignedNetworks/graph_cut/data')
 full_data = full_data/255.
 sample_data,sample_labels = subsample(sample_num = 750, rd = full_data, labels = full_labels)
 print('sample_labels: ',sample_labels)
