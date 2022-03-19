@@ -10,8 +10,10 @@ def Read_mnist(digits, path = "."):
     Python function for importing the MNIST data set.
     """
 
-    fname_img = path + '/train-images-idx3-ubyte'
-    fname_lbl = path+ '/train-labels-idx1-ubyte'
+    #fname_img = path + '/train-images-idx3-ubyte'
+    #fname_lbl = path+ '/train-labels-idx1-ubyte'
+    fname_img = '/home/zijul93/MBO_SignedNetworks/graph_cut/data/train-images-idx3-ubyte'
+    fname_lbl = '/home/zijul93/MBO_SignedNetworks/graph_cut/data/train-labels-idx1-ubyte'
     flbl = open(fname_lbl, 'rb')
     magic_nr, size = struct.unpack(">II", flbl.read(8))
     lbl = np.array(array("b", flbl.read()))
