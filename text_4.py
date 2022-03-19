@@ -41,10 +41,11 @@ eta_1 =1
 #full_data, full_labels = Read_mnist(digits = range(10),path = gpath+'/MBO_signed_graphs/graph_cut/data')
 full_data, full_labels = Read_mnist(digits = range(10),path ='/home/zijul93/MBO_SignedNetworks/graph_cut/data')
 full_data = full_data/255.
-#sample_data,sample_labels = subsample(sample_num = 700, rd = full_data, labels = full_labels)
-#print('sample_labels: ',sample_labels)
+sample_data,sample_labels = subsample(sample_num = 1000, rd = full_data, labels = full_labels)
+print('sample number is 1000')
+print('sample_labels: ',sample_labels)
 
-adj_mat = build_affinity_matrix_new(full_data,affinity='z-p',gamma=1, n_neighbors=10, neighbor_type='knearest')
+adj_mat = build_affinity_matrix_new(sample_data,affinity='z-p',gamma=1, n_neighbors=10, neighbor_type='knearest')
 print('adj_mat type: ',adj_mat.shape)
 
 num_nodes_1,m_1, degree_1, target_size_1,null_model_eta_1,graph_laplacian_1, nor_graph_laplacian_1,random_walk_nor_lap_1, signless_laplacian_null_model_1, nor_signless_laplacian_1, rw_signless_laplacian_1 = adj_to_laplacian_signless_laplacian(adj_mat,num_communities,m,eta_1,target_size=None)
@@ -63,11 +64,11 @@ print('u_1_nor_Lf_Qh_individual_label_1: ', u_1_nor_Lf_Qh_individual_label_1)
 
 
 modularity_1_nor_lf_qh = skn.clustering.modularity(adj_mat,u_1_nor_Lf_Qh_individual_label_1,resolution=0.5)
-ARI_mbo_1_nor_Lf_Qh_1 = adjusted_rand_score(u_1_nor_Lf_Qh_individual_label_1, full_labels)
-purify_mbo_1_nor_Lf_Qh_1 = purity_score(full_labels, u_1_nor_Lf_Qh_individual_label_1)
-inverse_purify_mbo_1_nor_Lf_Qh_1 = inverse_purity_score(full_labels, u_1_nor_Lf_Qh_individual_label_1)
-NMI_mbo_1_nor_Lf_Qh_1 = normalized_mutual_info_score(full_labels, u_1_nor_Lf_Qh_individual_label_1)
-AMI_mbo_1_nor_Lf_Qh_1 = adjusted_mutual_info_score(full_labels, u_1_nor_Lf_Qh_individual_label_1)
+ARI_mbo_1_nor_Lf_Qh_1 = adjusted_rand_score(u_1_nor_Lf_Qh_individual_label_1, sample_labels)
+purify_mbo_1_nor_Lf_Qh_1 = purity_score(sample_labels, u_1_nor_Lf_Qh_individual_label_1)
+inverse_purify_mbo_1_nor_Lf_Qh_1 = inverse_purity_score(sample_labels, u_1_nor_Lf_Qh_individual_label_1)
+NMI_mbo_1_nor_Lf_Qh_1 = normalized_mutual_info_score(sample_labels, u_1_nor_Lf_Qh_individual_label_1)
+AMI_mbo_1_nor_Lf_Qh_1 = adjusted_mutual_info_score(sample_labels, u_1_nor_Lf_Qh_individual_label_1)
 
 print('average modularity_1 normalized L_F & Q_H score(K=11 and m=K): ', modularity_1_nor_lf_qh)
 print('average ARI_1 normalized L_F & Q_H score: ', ARI_mbo_1_nor_Lf_Qh_1)
