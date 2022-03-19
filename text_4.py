@@ -42,7 +42,7 @@ eta_1 =1
 full_data, full_labels = Read_mnist(digits = range(10),path ='/home/zijul93/MBO_SignedNetworks/graph_cut/data')
 #full_data, full_labels = Read_mnist(digits = range(10))
 full_data = full_data/255.
-sample_data,sample_labels = subsample(sample_num = 100, rd = full_data, labels = full_labels)
+sample_data,sample_labels = subsample(sample_num = 1000, rd = full_data, labels = full_labels)
 print('sample number is 1000')
 print('sample_labels: ',sample_labels)
 
