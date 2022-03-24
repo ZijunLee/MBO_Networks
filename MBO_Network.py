@@ -7,6 +7,7 @@ from random import randrange
 import random
 from torch import sign
 import time
+import quimb
 
 from graph_mbo.utils import apply_threshold, get_fidelity_term, get_initial_state,labels_to_vector,to_standard_labels,_diffusion_step_eig,_mbo_forward_step_multiclass,get_initial_state_1,ProjectToSimplex
 #from graph_cut.util.nystrom import nystrom_extension
@@ -201,7 +202,7 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
 
 
 
-def mbo_modularity_1(num_nodes,num_communities, m,degree, graph_laplacian,signless_laplacian_null_model, tol, target_size,
+def mbo_modularity_1(num_nodes,num_communities, m,degree,dt, graph_laplacian,signless_laplacian_null_model, tol, target_size,
                     gamma, eps=1, max_iter=10000, initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start with MMBO using the projection on the eigenvectors')
@@ -222,8 +223,8 @@ def mbo_modularity_1(num_nodes,num_communities, m,degree, graph_laplacian,signle
     #    v0=np.ones((laplacian_mix.shape[0], 1)),
     #    which='SA')
 
-    eigenpair = eigs_slepc(laplacian_mix, m, which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-5,maxiter=10000)
-    
+    #eigenpair = eigs_slepc(laplacian_mix, m, which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
+    eigenpair = quimb.linalg.slepc_linalg.eigs_slepc(laplacian_mix, m, B=None,which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
     print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
     print('EPSType is krylovschur')
     D_sign = eigenpair[0]
@@ -261,12 +262,13 @@ def mbo_modularity_1(num_nodes,num_communities, m,degree, graph_laplacian,signle
     
     start_time_timestep_selection = time.time()
     # Time step selection
-    dtlow = 0.15/((gamma+1)*np.max(degree))
-    dthigh = np.log(np.linalg.norm(u)/eps)/D_sign[0]
-    dti = np.sqrt(dtlow*dthigh)
+    #dtlow = 0.15/((gamma+1)*np.max(degree))
+    #dthigh = np.log(np.linalg.norm(u)/eps)/D_sign[0]
+    #dti = np.sqrt(dtlow*dthigh)
     #print('dti: ',dti)
-    print("compute time step selection:-- %.3f seconds --" % (time.time() - start_time_timestep_selection))
-        
+    #print("compute time step selection:-- %.3f seconds --" % (time.time() - start_time_timestep_selection))
+    dti = dt 
+
     # Perform MBO scheme
     n = 0
     stop_criterion = 10
@@ -468,10 +470,18 @@ def mbo_modularity_2(num_nodes, num_communities, m,dti, tol, graph_laplacian_pos
 
 ## given eigenvalues and eigenvectors
 def mbo_modularity_given_eig(num_communities, eigval,eigvec,deg,dt, tol, 
-                            inner_step_count, gamma=0.5,max_iter=10000): 
+                            inner_step_count, gamma=0.5,max_iter=10000, thresh_type="max"): 
     
+
+    m = len(eigval)
+    print('m: ',m)
+
+    eigval = eigval.reshape((m,))
+    print('eigenvalue shape: ', eigval.shape)
+
     num_nodes = len(deg)
-    degree_diag = sp.sparse.spdiags([deg], [0], num_nodes, num_nodes)
+    #degree_diag = np.diag(deg)
+    #degree_diag = sp.sparse.spdiags([deg], [0], num_nodes, num_nodes)
     #degree = np.array(np.sum(adj_matrix, axis=1)).flatten()
     #print(np.max(degree))
     #num_nodes = len(degree)
@@ -508,30 +518,31 @@ def mbo_modularity_given_eig(num_communities, eigval,eigvec,deg,dt, tol,
     u = get_initial_state_1(num_nodes, num_communities, target_size)
     print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
     
-
-    stop_criterion = 10
+    # Perform MBO scheme
     n = 0
-    u_new = u.copy()        
+    stop_criterion = 10
+    u_new = u.copy()
     
     start_time_MBO_iteration = time.time()
-    # Perform MBO scheme
-    #for n in range(max_iter):
     while (n < max_iter) and (stop_criterion > tol):
         u_old = u_new.copy()
-        vv = u_old.copy()
-        ww = vv.copy()
- 
-        for j in range(inner_step_count):
-            mean_f = np.dot(deg.reshape(1, len(deg)), vv) / np.sum(deg)
-            ww += 2 * gamma * dt * degree_diag @ (vv - mean_f)
-            vv = _diffusion_step_eig(ww,eigvec,eigval,dt)
+        #a = V_sign.transpose() @ u_old
+        #demon = sp.sparse.spdiags([1 / (1 + dt * D)], [0], m, m)
+
+        #start_time_diffusion = time.time()
+
+        demon = sp.sparse.spdiags([np.exp(- 0.5 * eigval * dt)],[0],m,m) @ eigvec.transpose()
+        #for j in range(inner_step_count):
+            # Solve system (apply CG or pseudospectral)
+        u_half = eigvec @ (demon @ u_old)  # Project back into normal space
 
         #print("compute MBO diffusion step:-- %.3f seconds --" % (time.time() - start_time_diffusion))
         
         #start_time_thresholding = time.time()
         # Apply thresholding 
-        #u_new = apply_threshold(vv, target_size, thresh_type)
-        u_new = _mbo_forward_step_multiclass(vv)
+        u_new = apply_threshold(u_half, target_size, thresh_type)
+        #u_new = _mbo_forward_step_multiclass(u_half)
+        
         #print("compute MBO thresholding:-- %.3f seconds --" % (time.time() - start_time_thresholding)) 
 
         #start_time_stop_criterion = time.time()
@@ -539,20 +550,7 @@ def mbo_modularity_given_eig(num_communities, eigval,eigvec,deg,dt, tol,
 
         #stop_criterion = (np.abs(u_new - u_old)).sum()
         stop_criterion = sp.linalg.norm(u_new-u_old) / sp.linalg.norm(u_new)
-        # Check that the index is changing and stop if time step becomes too small
-        #index = u == 1
 
-        #norm_deviation = sp.linalg.norm(last_index ^ index) / sp.linalg.norm(index)
-        #if norm_deviation < tol :
-        #    if dt < tol:
-        #        break
-        #    else:
-        #        dt *= 0.5
-        #elif np.sum(last_last_index ^ index) == 0:
-        #    # Going back and forth
-        #    dt *= 0.5
-        #last_last_index = last_index
-        #last_index = index
         #print("compute stop criterion:-- %.3f seconds --" % (time.time() - start_time_stop_criterion))
         
         n = n+1

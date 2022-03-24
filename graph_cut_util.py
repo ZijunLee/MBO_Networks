@@ -1,3 +1,4 @@
+from quimb import sparse
 import scipy
 import scipy.sparse as sp
 #import scipy as sp
@@ -1011,24 +1012,32 @@ def mbo_modularity_eig(V,E,dt,u_init,k_weights,gamma = .5, tol = .5,Maxiter = 50
 
 
 
-def mbo_modularity_given_eig(eigval,eigvec,dt,u_init,k_weights, tol=1e-5, 
+def mbo_modularity_given_eig(num_communities,eigval,eigvec,dt,u_init,k_weights, tol=1e-5, 
                             inner_step_count=3, gamma=0.5, max_iter=10000): 
 
-    #print('degree shape: ', k_weights.shape)
-    #print('degree type: ', type(k_weights))
-    if len(k_weights.shape) == 1:
-        k_weights = k_weights.reshape(len(k_weights),1)
+    m = len(eigval)
+    print('m: ',m)
 
-    if (len(u_init.shape)== 1) or (u_init.shape[1] == 1): 
-        u_init = labels_to_vector(to_standard_labels(u_init))
-    
-    #num_nodes = len(k_weights)
-    #degree_diag = sp.spdiags([k_weights], [0], num_nodes, num_nodes)
+    eigval = eigval.reshape((m,))
+    print('eigenvalue shape: ', eigval.shape)
+
+    num_nodes = len(k_weights)
+    #degree_diag = np.diag(deg)
+    #degree_diag = sp.sparse.spdiags([deg], [0], num_nodes, num_nodes)
     #degree = np.array(np.sum(adj_matrix, axis=1)).flatten()
     #print(np.max(degree))
     #num_nodes = len(degree)
+    
+    target_size = [num_nodes // num_communities for i in range(num_communities)]
+    target_size[-1] = num_nodes - sum(target_size[:-1])
 
-    #start_time_initialize = time.time()
+    # compute eigenvalues and eigenvectors
+    #D_sign, V_sign = eigsh(
+    #    laplacian_mix,
+    #    k=m,
+    #    v0=np.ones((laplacian_mix.shape[0], 1)),
+    #    which= "SA",)
+
     # Initialize parameters
     #u = get_initial_state(
     #    num_nodes,
@@ -1038,40 +1047,53 @@ def mbo_modularity_given_eig(eigval,eigvec,dt,u_init,k_weights, tol=1e-5,
     #    fidelity_type=fidelity_type,
     #    fidelity_V=fidelity_V,)
 
-    #u = get_initial_state_1(num_nodes, num_communities, target_size)
-    #print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
-    
+    start_time_initialize = time.time()
+    # Initialize parameters
+    #u = get_initial_state(
+    #    num_nodes,
+    #    num_communities,
+    #    target_size,
+    #    type=initial_state_type,
+    #    fidelity_type=fidelity_type,
+    #    fidelity_V=fidelity_V,)
 
-    stop_criterion = 10
+    u = get_initial_state_1(num_nodes, num_communities, target_size)
+    print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
+    
+    # Perform MBO scheme
     n = 0
-    u_new = u_init.copy()        
+    stop_criterion = 10
+    u_new = u.copy()
     
     start_time_MBO_iteration = time.time()
-    # Perform MBO scheme
-    #for n in range(max_iter):
     while (n < max_iter) and (stop_criterion > tol):
         u_old = u_new.copy()
-        vv = u_old.copy()
-        ww = vv.copy()
- 
-        for j in range(inner_step_count):
-            mean_f = np.dot(k_weights.reshape(1, len(k_weights)), vv) / np.sum(k_weights)
-            ww += 2 * gamma * dt * k_weights * (vv - mean_f)
-            vv = _diffusion_step_eig(ww,eigvec,eigval,dt)
+        #a = V_sign.transpose() @ u_old
+        #demon = sp.sparse.spdiags([1 / (1 + dt * D)], [0], m, m)
+
+        #start_time_diffusion = time.time()
+
+        demon = sp.spdiags([np.exp(- 0.5 * eigval * dt)],[0],m,m) @ eigvec.transpose()
+        #for j in range(inner_step_count):
+            # Solve system (apply CG or pseudospectral)
+        u_half = eigvec @ (demon @ u_old)  # Project back into normal space
 
         #print("compute MBO diffusion step:-- %.3f seconds --" % (time.time() - start_time_diffusion))
         
         #start_time_thresholding = time.time()
         # Apply thresholding 
-        #u_new = apply_threshold(vv, target_size, thresh_type)
-        u_new = _mbo_forward_step_multiclass(vv)
+        #u_new = apply_threshold(u_half, target_size, thresh_type)
+        u_new = _mbo_forward_step_multiclass(u_half)
+        
         #print("compute MBO thresholding:-- %.3f seconds --" % (time.time() - start_time_thresholding)) 
 
         #start_time_stop_criterion = time.time()
         # Stop criterion
 
-        #stop_criterion = (np.abs(u_new - u_old)).sum()
-        stop_criterion = scipy.linalg.norm(u_new-u_old) / scipy.linalg.norm(u_new)
+        stop_criterion = (np.abs(u_new - u_old)).sum()
+        #stop_criterion = np.linalg.norm(u_new-u_old) / np.linalg.norm(u_new)
+
+        #print("compute stop criterion:-- %.3f seconds --" % (time.time() - start_time_stop_criterion))
         
         n = n+1
     print("compute the whole MBO iteration:-- %.3f seconds --" % (time.time() - start_time_MBO_iteration))
@@ -1529,7 +1551,7 @@ class LaplacianClustering(Parameters):
         elif self.scheme_type == 'MBO_modularity':
             inner_step_count = None
             temp = np.ones((self.data.raw_data.shape[0],1))
-            #print('degree: ', type(temp))
+            print('degree: ', temp.shape)
             if self.inner_step_count is None:
                 inner_step_count = 3 # default value
             else : 
@@ -1541,10 +1563,11 @@ class LaplacianClustering(Parameters):
                 self.dt = .1
                 print("Warning, stepsize dt not supplied. Using default value .1")                   
             if type(self.graph.laplacian_matrix_) is dict:
-                res, num_iteration = mbo_modularity_inner_step(self.graph.laplacian_matrix_['E'], self.graph.laplacian_matrix_['V'], 
-                        dt = self.dt, u_init = self.u_init, k_weights = temp, gamma = self.gamma)
-                #res, num_iteration = mbo_modularity_given_eig(self.graph.laplacian_matrix_['E'], self.graph.laplacian_matrix_['V'], 
+                num_communities = self.n_class 
+                #res, num_iteration = mbo_modularity_inner_step(self.graph.laplacian_matrix_['E'], self.graph.laplacian_matrix_['V'], 
                 #        dt = self.dt, u_init = self.u_init, k_weights = temp, gamma = self.gamma)
+                res, num_iteration = mbo_modularity_given_eig(num_communities, self.graph.laplacian_matrix_['E'], self.graph.laplacian_matrix_['V'], 
+                        dt = self.dt, u_init = self.u_init, k_weights = temp, gamma = self.gamma)
                 #res, num_iteration = mbo_modularity_eig(self.graph.laplacian_matrix_['V'],self.graph.laplacian_matrix_['E'],k_weights = temp, 
                 #    dt = self.dt, u_init = self.u_init, gamma = self.gamma ,inner_step_count = inner_step_count)
                 print('number of interation: ',num_iteration)
