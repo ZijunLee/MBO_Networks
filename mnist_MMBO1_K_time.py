@@ -80,3 +80,26 @@ print('average purify for MMBO1 normalized L_F & Q_H with \eta =1 : ', purify_mb
 print('average inverse purify for MMBO1 normalized L_F & Q_H with \eta =1 : ', inverse_purify_mbo_1_nor_Lf_Qh_1)
 print('average NMI for MMBO1 normalized L_F & Q_H with \eta =1 : ', NMI_mbo_1_nor_Lf_Qh_1)
 print('average AMI for MMBO1 normalized L_F & Q_H with \eta =1 : ', AMI_mbo_1_nor_Lf_Qh_1)
+
+
+
+start_time_louvain = time.time()
+# Louvain
+partition_Louvain = community_louvain.best_partition(G, resolution=0.5)    # returns a dict
+louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
+louvain_array = np.asarray(louvain_list)
+print("Louvain:-- %.3f seconds --" % (time.time() - start_time_louvain))
+
+modularity_louvain = skn.clustering.modularity(W,louvain_array,resolution=0.5)
+ARI_louvain = adjusted_rand_score(louvain_array, gt_list)
+purify_louvain = purity_score(gt_list, louvain_array)
+inverse_purify_louvain = inverse_purity_score(gt_list, louvain_array)
+NMI_louvain = normalized_mutual_info_score(gt_list, louvain_array)
+AMI_louvain = adjusted_mutual_info_score(gt_list, louvain_array)
+
+print(' modularity Louvain score: ', modularity_louvain)
+print(' ARI Louvain  score: ', ARI_louvain)
+print(' purify for Louvain : ', purify_louvain)
+print(' inverse purify for Louvain : ', inverse_purify_louvain)
+print(' NMI for Louvain with \eta =1 : ', NMI_louvain)
+print(' AMI for Louvain: ', AMI_louvain)
