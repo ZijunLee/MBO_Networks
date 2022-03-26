@@ -58,9 +58,9 @@ num_nodes_1,m_1, degree_1, target_size_1,null_model_eta_1,graph_laplacian_1, nor
 start_time_1_nor_Lf_Qh_1 = time.time()
 ## Test MMBO 1 with normalized L_F
 
-u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1 = mbo_modularity_1(num_nodes_1,num_communities, m_1, degree_1, nor_graph_laplacian_1,nor_signless_laplacian_1,
-                                                 tol, target_size_1, eta_1)
-
+u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1 = mbo_modularity_1(num_nodes_1,num_communities, m_1,degree_1,dt_inner, nor_graph_laplacian_1,nor_signless_laplacian_1, 
+                                                tol, target_size_1,eta_1)
+                                                
 print("MMBO1 with normalized L_F & Q_H (K=11, m=K):-- %.3f seconds --" % (time.time() - start_time_1_nor_Lf_Qh_1))
 print('u_1 nor L_F & Q_H number of iteration(K=11 and m=K): ', num_repeat_1_nor_Lf_Qh_1)
 u_1_nor_Lf_Qh_individual_label_1 = vector_to_labels(u_1_nor_Lf_Qh_individual_1)
