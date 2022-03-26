@@ -18,7 +18,7 @@ import csv
 import sknetwork as skn
 
 #Load labels, knndata, and build 10-nearest neighbor weight matrix
-W = gl.weightmatrix.knn('mnist', 10, metric='vae')
+W = gl.weightmatrix.knn('mnist', 10)
 #W_dense = W.todense()
 #print(W_dense.shape)
 #print(type(W))
