@@ -18,11 +18,12 @@ from igraph import Graph
 import time
 import csv
 import sknetwork as skn
+from community import community_louvain
 
 
 # parameter setting
-dt_inner = 0.1
-num_communities = 5
+dt_inner = 1
+num_communities = 10
 m = 1 * num_communities
 m_100 = 100
 tol = 0.0003
@@ -39,7 +40,7 @@ num_nodes_each_cluster = int(N/num_communities)
 
 sizes = []
 
-for i in range(5):
+for i in range(10):
     sizes.append(num_nodes_each_cluster)
 
 #print(len(sizes))
@@ -133,8 +134,8 @@ start_time_1_nor_Lf_Qh_1 = time.time()
 #AMI_1_nor_Lf_Qh_accumulator_1 =0
 
 #for _ in range(30):
-u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1 = mbo_modularity_1(num_nodes_1,num_communities, m_1,degree_1, nor_graph_laplacian_1,nor_signless_laplacian_1, 
-                                                tol, target_size_1,eta_1, eps=1)
+u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1 = mbo_modularity_1(num_nodes_1,num_communities, m_1,degree_1,dt_inner, nor_graph_laplacian_1,nor_signless_laplacian_1, 
+                                                tol, target_size_1,eta_1)
 
 print("MMBO1 with normalized L_F & Q_H and gamma=1:-- %.3f seconds --" % (time.time() - start_time_1_nor_Lf_Qh_1))
 print('number of ieration of MMBO1 with sym L_F & Q_H: ',num_repeat_1_nor_Lf_Qh_1)   
@@ -502,12 +503,26 @@ start_time_hu_original = time.time()
 start_time_louvain = time.time()
 
 # Louvain algorithm (can setting resolution gamma)
-#partition_Louvain = co.best_partition(G, resolution=1)    # returns a dict
-#louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
+partition_Louvain = community_louvain.best_partition(G, resolution=0.5)    # returns a dict
+louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
+louvain_array = np.asarray(louvain_list)
 #print('Louvain:', type(partition_Louvain))
 #print('louvain: ',louvain_list)
 
-#print("Louvain algorithm:-- %.3f seconds --" % (time.time() - start_time_louvain))
+print("Louvain algorithm:-- %.3f seconds --" % (time.time() - start_time_louvain))
+
+modularity_louvain = skn.clustering.modularity(adj_mat_nparray,louvain_array,resolution=0.5)
+ARI_louvain = adjusted_rand_score(louvain_array, gt_membership)
+purify_louvain = purity_score(gt_membership, louvain_array)
+inverse_purify_louvain = inverse_purity_score(gt_membership, louvain_array)
+NMI_louvain = normalized_mutual_info_score(gt_membership, louvain_array)
+
+print('average modularity Louvain score: ', modularity_louvain)
+print('average ARI Louvain  score: ', ARI_louvain)
+print('average purify for Louvain : ', purify_louvain)
+print('average inverse purify for Louvain : ', inverse_purify_louvain)
+print('average NMI for Louvain with \eta =1 : ', NMI_louvain)
+
 
 
 start_time_CNM = time.time()
