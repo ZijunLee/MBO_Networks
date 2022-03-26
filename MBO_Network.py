@@ -216,19 +216,19 @@ def mbo_modularity_1(num_nodes,num_communities, m,degree,dt, graph_laplacian,sig
     
     start_time_eigendecomposition = time.time()
     # compute eigenvalues and eigenvectors
-    D_sign, V_sign = eigsh(
-        laplacian_mix,
-        k=m,
+    #D_sign, V_sign = eigsh(
+    #    laplacian_mix,
+    #    k=m,
     #    sigma=0,
     #    v0=np.ones((laplacian_mix.shape[0], 1)),
-        which='SA')
+    #    which='SA')
 
     #eigenpair = eigs_slepc(laplacian_mix, m, which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
-    #eigenpair = quimb.linalg.slepc_linalg.eigs_slepc(laplacian_mix, m, B=None,which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
+    eigenpair = quimb.linalg.slepc_linalg.eigs_slepc(laplacian_mix, m, B=None,which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
     print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
-    #print('EPSType is krylovschur')
-    #D_sign = eigenpair[0]
-    #V_sign = eigenpair[1]
+    print('EPSType is krylovschur')
+    D_sign = eigenpair[0]
+    V_sign = eigenpair[1]
 
     #print('D_sign shape: ', D_sign.shape)
     #print('V_sign shape: ', V_sign.shape)
