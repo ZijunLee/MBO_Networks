@@ -9,3 +9,15 @@ NetworkX
 community
 python-louvain
 graphlearning
+numba
+cytoolz
+tqdm
+psutil
+quimb
+mpi4py
+slepc4py
+petsc4py
+sknetwork
+
+tensorflow
+openmpi
