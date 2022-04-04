@@ -2,7 +2,7 @@ import os, struct
 from array import array
 import numpy as np
 from numpy.random import permutation
-def read_mnist(digits, path = "."):
+def Read_mnist_function(digits, path = "."):
     """
     Python function for importing the MNIST data set.
     """
