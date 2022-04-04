@@ -2,18 +2,13 @@ import os, struct
 from array import array
 import numpy as np
 from numpy.random import permutation
-
-
-
-def Read_mnist(digits, path = "."):
+def read_mnist(digits, path = "."):
     """
     Python function for importing the MNIST data set.
     """
 
     fname_img = path + '/train-images-idx3-ubyte'
     fname_lbl = path+ '/train-labels-idx1-ubyte'
-    #fname_img = '/home/zijul93/MBO_SignedNetworks/graph_cut/data/train-images-idx3-ubyte'
-    #fname_lbl = '/home/zijul93/MBO_SignedNetworks/graph_cut/data/train-labels-idx1-ubyte'
     flbl = open(fname_lbl, 'rb')
     magic_nr, size = struct.unpack(">II", flbl.read(8))
     lbl = np.array(array("b", flbl.read()))
@@ -24,7 +19,7 @@ def Read_mnist(digits, path = "."):
     img = np.array(array("B", fimg.read()))
     fimg.close()
     img = img.reshape(size,rows*cols)
-    ind = np.array([ k for k in range(size) if lbl[k] in digits ]).astype(int)
+    ind = np.array([ k for k in xrange(size) if lbl[k] in digits ]).astype(int)
 
     images = img[ind,:]
     labels = lbl[ind]
