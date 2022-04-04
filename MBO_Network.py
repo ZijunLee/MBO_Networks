@@ -195,11 +195,15 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
 
 
 
-def mbo_modularity_1(num_nodes,num_communities, m, dt, laplacian_mix, tol, target_size,
+def mbo_modularity_1(num_nodes,num_communities, m, dt, graph_lap,signless_lap, tol, target_size,
                     gamma, eps=1, max_iter=10000, initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start with MMBO using the projection on the eigenvectors')
     
+    start_time_l_mix = time.time()
+    laplacian_mix = graph_lap + signless_lap
+    print("compute l_{mix}:-- %.3f seconds --" % (time.time() - start_time_l_mix))
+
     start_time_eigendecomposition = time.time()
     # compute eigenvalues and eigenvectors
     #D_sign, V_sign = eigsh(
@@ -453,10 +457,14 @@ def mbo_modularity_given_eig(num_communities, eigval,eigvec,deg,dt, tol,
     return u_new, n
 
 
-def mbo_modularity_inner_step(num_nodes, num_communities, m, laplacian_mix, dt, tol,target_size,inner_step_count,
+def mbo_modularity_inner_step(num_nodes, num_communities, m, graph_lap, signless_lap, dt, tol,target_size,inner_step_count,
                         max_iter=10000,initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start with MMBO with finite difference')
+
+    start_time_l_mix = time.time()
+    laplacian_mix = graph_lap + signless_lap
+    print("compute l_{mix}:-- %.3f seconds --" % (time.time() - start_time_l_mix))
     
     start_time_eigendecomposition = time.time()
     # compute eigenvalues and eigenvectors
