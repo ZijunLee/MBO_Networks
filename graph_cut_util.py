@@ -22,7 +22,7 @@ _graph_params_default_values = {'affinity': 'rbf', 'n_neighbors': None,
 'num_nystrom': None, 'neighbor_type':'full','laplacian_matrix_':None }
 
 
-def build_affinity_matrix_new(raw_data,affinity='rbf',gamma=None, n_neighbors=10, neighbor_type='knearest'):
+def build_affinity_matrix_new(raw_data,gamma=None,affinity='rbf', n_neighbors=10, neighbor_type='knearest'):
 #                          Eig_solver='full', Laplacian_type='n'):
     """ Build affinity matrix. Wrappers using sklearn modules
     Parameters
@@ -84,17 +84,17 @@ def build_affinity_matrix_new(raw_data,affinity='rbf',gamma=None, n_neighbors=10
                 dist_matrix = 0.5 * (distance_matrix + distance_matrix.T)
                 dist_matrix = np.array(dist_matrix.todense())
 
-        else:
+        else:   # neighbor_type == 'full'
             dist_matrix = cdist(raw_data,raw_data,'sqeuclidean')
 
         if affinity == 'rbf':
-            gamma = None
+            # gamma = None
             if gamma is None:
                 print("graph kernel width gamma not specified, using default value 1")
                 gamma = 1
             else : 
                 gamma = gamma
-            affinity_matrix_ = np.exp(-gamma*dist_matrix)
+            affinity_matrix_ = np.exp(-gamma*dist_matrix)   # Gaussian function
 
     affinity_matrix_[affinity_matrix_ == 1.] = 0. 
     d_mean = np.mean(np.sum(affinity_matrix_,axis = 0))
@@ -194,41 +194,56 @@ def affinity_matrix_to_laplacian(W, mode = 'n'):  # output: L_{mix} = L_A + Q_A
     W : affinity_matrix_
 
     """
-
-    A_absolute_matrix = np.abs(W)
-    degree = np.array(np.sum(A_absolute_matrix, axis=1)).flatten()
-    dergee_di_null = np.sum(A_absolute_matrix, axis=1)
-    #print('max degree: ',degree.shape)
-    #print('degree d_i type: ', dergee_di_null.shape)
-    num_nodes = len(degree)
-
-    null_model = np.zeros((len(degree), len(degree)))
-    total_degree = np.sum(A_absolute_matrix)
-    null_model = (dergee_di_null @ dergee_di_null.transpose())/ total_degree
-
-    degree_null_model = np.array(np.sum(null_model, axis=1)).flatten()
-    num_nodes_null_model = len(degree_null_model)
-    degree_diag_null_model = sp.sparse.spdiags([degree_null_model], [0], num_nodes_null_model, num_nodes_null_model)   
-    signless_laplacian_null_model = degree_diag_null_model + null_model  # Q_P = D + P(null model)
-    signless_degree_inv = sp.sparse.spdiags([1.0 / degree_null_model], [0], num_nodes_null_model, num_nodes_null_model)   # obtain D^{-1}
-    #print('D^{-1}: ', degree_inv.shape)
-    nor_signless_laplacian = np.sqrt(signless_degree_inv) @ signless_laplacian_null_model @ np.sqrt(signless_degree_inv)
-    
     if sp.issparse(W):
         W = np.array(W.todense())  # currently not handeling sparse matrices separately, converting it to full
+   
+
     if mode == 'n' : # normalized laplacian
-        n_nodes = W.shape[0]
-        Lap = -W.copy()
+    #    n_nodes = W.shape[0]
+    #    Lap = -W.copy()
         # set diagonal to zero
-        Lap.flat[::n_nodes + 1] = 0
-        d = -Lap.sum(axis=0)
-        d = np.sqrt(d)
-        d_zeros = (d == 0)
-        d[d_zeros] = 1
-        Lap /= d
-        Lap /= d[:, np.newaxis]
-        Lap.flat[::n_nodes + 1] = (1 - d_zeros).astype(Lap.dtype)
-        l_mix = nor_signless_laplacian + Lap
+    #    Lap.flat[::n_nodes + 1] = 0
+    #    d = -Lap.sum(axis=0)
+    #    d = np.sqrt(d)
+    #    d_zeros = (d == 0)
+    #    d[d_zeros] = 1
+    #    Lap /= d
+    #    Lap /= d[:, np.newaxis]
+    #    Lap.flat[::n_nodes + 1] = (1 - d_zeros).astype(Lap.dtype)
+
+        A_absolute_matrix = np.abs(W)
+        degree = np.array(np.sum(A_absolute_matrix, axis=-1)).flatten()
+        dergee_di_null = np.expand_dims(degree, axis=-1)
+        #print('max degree: ',degree.shape)
+        #print('degree d_i type: ', dergee_di_null.shape)
+        num_nodes = len(degree)
+
+        # compute unsigned laplacian
+        degree_diag = np.diag(degree)
+        #degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)
+        graph_laplacian = degree_diag - W    # L_A = D - A
+        degree_inv = np.diag((1 / degree))
+        #degree_inv = sp.sparse.spdiags([1.0 / degree], [0], num_nodes, num_nodes)   # obtain D^{-1}
+        #print('D^{-1}: ', degree_inv.shape)
+        nor_graph_laplacian = np.sqrt(degree_inv) @ graph_laplacian @ np.sqrt(degree_inv)    # obtain L_A_{sym}
+
+        null_model = np.zeros((len(degree), len(degree)))
+        total_degree = np.sum(A_absolute_matrix)
+        null_model = (dergee_di_null @ dergee_di_null.transpose())/ total_degree
+
+        degree_null_model = np.array(np.sum(null_model, axis=-1)).flatten()
+        #print('degree_null_model type: ',type(degree_null_model))
+        #num_nodes_null_model = len(degree_null_model)
+        #degree_diag_null_model = sp.sparse.spdiags([degree_null_model], [0], num_nodes_null_model, num_nodes_null_model)
+        degree_diag_null_model = np.diag(degree_null_model)   
+        signless_laplacian_null_model = degree_diag_null_model + null_model  # Q_P = D + P(null model)
+        #signless_degree_inv = sp.sparse.spdiags([1.0 / degree_null_model], [0], num_nodes_null_model, num_nodes_null_model)   # obtain D^{-1}
+        signless_degree_inv = np.diag((1.0/degree_null_model))
+        #print('D^{-1}: ', degree_inv.shape)
+        nor_signless_laplacian = np.sqrt(signless_degree_inv) @ signless_laplacian_null_model @ np.sqrt(signless_degree_inv)
+ 
+        l_mix = nor_signless_laplacian + nor_graph_laplacian
+
         return l_mix
     if mode == 'u' : # unnormalized laplacian L_{mix}
         n_nodes = W.shape[0]
@@ -439,7 +454,7 @@ def generate_initial_value_binary(opt = 'rd_equal', V = None, n_samples = None):
     if opt == 'rd_equal':
         ind = permutation(n_samples)
         u_init = np.zeros(n_samples)
-        mid = n_samples/2
+        mid = n_samples//2
         u_init[ind[:mid]] = 1
         u_init[ind[mid:]] = -1
         res =  u_init
@@ -1566,10 +1581,10 @@ class LaplacianClustering(Parameters):
                 num_communities = self.n_class 
                 #res, num_iteration = mbo_modularity_inner_step(self.graph.laplacian_matrix_['E'], self.graph.laplacian_matrix_['V'], 
                 #        dt = self.dt, u_init = self.u_init, k_weights = temp, gamma = self.gamma)
-                res, num_iteration = mbo_modularity_given_eig(num_communities, self.graph.laplacian_matrix_['E'], self.graph.laplacian_matrix_['V'], 
-                        dt = self.dt, u_init = self.u_init, k_weights = temp, gamma = self.gamma)
-                #res, num_iteration = mbo_modularity_eig(self.graph.laplacian_matrix_['V'],self.graph.laplacian_matrix_['E'],k_weights = temp, 
-                #    dt = self.dt, u_init = self.u_init, gamma = self.gamma ,inner_step_count = inner_step_count)
+                #res, num_iteration = mbo_modularity_given_eig(num_communities, self.graph.laplacian_matrix_['E'], self.graph.laplacian_matrix_['V'], 
+                #        dt = self.dt, u_init = self.u_init, k_weights = temp, gamma = self.gamma)
+                res, num_iteration = mbo_modularity_eig(self.graph.laplacian_matrix_['V'],self.graph.laplacian_matrix_['E'],k_weights = temp, 
+                    dt = self.dt, u_init = self.u_init, gamma = self.gamma ,inner_step_count = inner_step_count)
                 print('number of interation: ',num_iteration)
                 self.labels_ = vector_to_labels(res)            
             elif type(self.graph.laplacian_matrix_) is np.ndarray:
