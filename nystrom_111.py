@@ -24,7 +24,7 @@ from sklearn.metrics.pairwise import rbf_kernel
 from scipy import linalg
 from sklearn.svm import LinearSVC
 import time
-from graph_cut.data.read_mnist import Read_mnist, subsample
+from graph_cut.data.read_mnist import Read_mnist_function, subsample
 from graph_cut_util import LaplacianClustering,build_affinity_matrix_new
 from MBO_Network import mbo_modularity_1, adj_to_laplacian_signless_laplacian, mbo_modularity_inner_step, mbo_modularity_hu_original,construct_null_model
 from graph_mbo.utils import purity_score,inverse_purity_score
@@ -46,7 +46,7 @@ gpath = '/'.join(os.getcwd().split('/')[:-1])
 #raw_data, labels = Read_mnist(digits = [4,9],path = gpath+'/MBO_signed_graphs/graph_cut/data') 
 #raw_data = raw_data/255.
 #full_data, full_labels = Read_mnist(digits = range(10),path = gpath+'/MBO_signed_graphs/graph_cut/data')
-full_data, full_labels = Read_mnist(digits = range(10),path ='/home/zijul93/MBO_SignedNetworks/graph_cut/data')
+full_data, full_labels = Read_mnist_function(digits = range(10),path ='/home/zijul93/MBO_SignedNetworks/graph_cut/data')
 #full_data, full_labels = Read_mnist(digits = range(10))
 full_data = full_data/255.
 
