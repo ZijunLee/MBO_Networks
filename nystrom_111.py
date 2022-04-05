@@ -37,7 +37,7 @@ dt_inner = 1
 num_communities = 10
 m = 1 * num_communities
 dt = 0.5
-tol = 1e-7
+tol = 1e-4
 inner_step_count =3
 eta_1 =1
 
@@ -45,12 +45,12 @@ gpath = '/'.join(os.getcwd().split('/')[:-1])
 
 #raw_data, labels = Read_mnist(digits = [4,9],path = gpath+'/MBO_signed_graphs/graph_cut/data') 
 #raw_data = raw_data/255.
-#full_data, full_labels = Read_mnist(digits = range(10),path = gpath+'/MBO_signed_graphs/graph_cut/data')
-full_data, full_labels = Read_mnist_function(digits = range(10),path ='/home/zijul93/MBO_SignedNetworks/graph_cut/data')
+full_data, full_labels = Read_mnist_function(digits = range(10),path = gpath+'/MBO_signed_graphs/graph_cut/data')
+#full_data, full_labels = Read_mnist_function(digits = range(10),path ='/home/zijul93/MBO_SignedNetworks/graph_cut/data')
 #full_data, full_labels = Read_mnist(digits = range(10))
 full_data = full_data/255.
 
-sample_data,sample_labels = subsample(sample_num = 1500, rd = full_data, labels = full_labels)
+sample_data,sample_labels = subsample(sample_num = 900, rd = full_data, labels = full_labels)
 
 pca = PCA(n_components = 50, svd_solver='full')
 pca.fit_transform(full_data)
@@ -229,7 +229,7 @@ print(' NMI for MMBO1 inner step with sym normalized \eta =1 : ', NMI_mbo_1_inne
 
 
 start_time_hu_original = time.time()
-
+m_100 =100
 # test HU original MBO
 u_hu_vector, num_iter_HU = mbo_modularity_hu_original(num_nodes, num_communities, m_1,degree, dt_inner, sym_graph_lap, tol,target_size,inner_step_count) 
 u_hu_label_1 = vector_to_labels(u_hu_vector)

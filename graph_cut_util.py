@@ -82,19 +82,22 @@ def build_affinity_matrix_new(raw_data,gamma=None,affinity='rbf', n_neighbors=10
                 distance_matrix = kneighbors_graph(raw_data, n_neighbors=n_neighbors, include_self=True, mode = 'distance')
                 distance_matrix = distance_matrix*distance_matrix # square the distance
                 dist_matrix = 0.5 * (distance_matrix + distance_matrix.T)
+                del distance_matrix
                 dist_matrix = np.array(dist_matrix.todense())
+            
+                
 
         else:   # neighbor_type == 'full'
             dist_matrix = cdist(raw_data,raw_data,'sqeuclidean')
 
         if affinity == 'rbf':
-            # gamma = None
             if gamma is None:
                 print("graph kernel width gamma not specified, using default value 1")
                 gamma = 1
             else : 
                 gamma = gamma
             affinity_matrix_ = np.exp(-gamma*dist_matrix)   # Gaussian function
+            del dist_matrix
 
     affinity_matrix_[affinity_matrix_ == 1.] = 0. 
     d_mean = np.mean(np.sum(affinity_matrix_,axis = 0))

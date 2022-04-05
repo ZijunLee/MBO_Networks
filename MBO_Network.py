@@ -74,6 +74,8 @@ def adj_to_laplacian_signless_laplacian(adj_matrix, null_model, num_communities,
     A_absolute_matrix = np.abs(adj_matrix)
     degree = np.array(np.sum(A_absolute_matrix, axis=-1)).flatten()
     num_nodes = len(degree)
+
+    del A_absolute_matrix
         
     m = min(num_nodes - 2, m)  # Number of eigenvalues to use for pseudospectral
 
@@ -85,6 +87,8 @@ def adj_to_laplacian_signless_laplacian(adj_matrix, null_model, num_communities,
     degree_diag = np.diag(degree)
     #degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)
     graph_laplacian = degree_diag - adj_matrix    # L_A = D - A
+ 
+    del degree_diag, adj_matrix
 
     # compute symmetric normalized laplacian L_F
     degree_inv = np.diag((1 / degree))
@@ -94,6 +98,8 @@ def adj_to_laplacian_signless_laplacian(adj_matrix, null_model, num_communities,
     # compute random walk normalized Laplacian
     random_walk_nor_lap =  degree_inv @ graph_laplacian
 
+    del degree_inv
+
     # compute unnormalized laplacian
     degree_null_model = np.array(np.sum(null_model, axis=-1)).flatten()
     #degree_diag_null_model = sp.sparse.spdiags([degree_null_model], [0], num_nodes_null_model, num_nodes_null_model)
@@ -101,10 +107,17 @@ def adj_to_laplacian_signless_laplacian(adj_matrix, null_model, num_communities,
     signless_laplacian_null_model = degree_diag_null_model + null_model  # Q_P = D + P(null model)
     #signless_degree_inv = sp.sparse.spdiags([1.0 / degree_null_model], [0], num_nodes_null_model, num_nodes_null_model)   # obtain D^{-1}
     
+    del degree_diag_null_model, null_model
+
     # compute symmetric normalized signless laplacian Q_H
     signless_degree_inv = np.diag((1.0/degree_null_model))
+    
+    del degree_null_model
+
     nor_signless_laplacian = np.sqrt(signless_degree_inv) @ signless_laplacian_null_model @ np.sqrt(signless_degree_inv)
     rw_signless_lapclacian =  signless_degree_inv @ signless_laplacian_null_model
+
+    del signless_degree_inv
 
     return num_nodes,m, degree, target_size,graph_laplacian, nor_graph_laplacian,random_walk_nor_lap, signless_laplacian_null_model, nor_signless_laplacian, rw_signless_lapclacian
     
@@ -195,14 +208,15 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
 
 
 
-def mbo_modularity_1(num_nodes,num_communities, m, dt, graph_lap,signless_lap, tol, target_size,
+
+def mbo_modularity_1(num_nodes,num_communities, m, dt, u_init,laplacian_mix, tol, target_size,
                     gamma, eps=1, max_iter=10000, initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start with MMBO using the projection on the eigenvectors')
     
-    start_time_l_mix = time.time()
-    laplacian_mix = graph_lap + signless_lap
-    print("compute l_{mix}:-- %.3f seconds --" % (time.time() - start_time_l_mix))
+    #start_time_l_mix = time.time()
+    #laplacian_mix = graph_lap + signless_lap
+    #print("compute l_{mix}:-- %.3f seconds --" % (time.time() - start_time_l_mix))
 
     start_time_eigendecomposition = time.time()
     # compute eigenvalues and eigenvectors
@@ -223,10 +237,10 @@ def mbo_modularity_1(num_nodes,num_communities, m, dt, graph_lap,signless_lap, t
     #print('D_sign shape: ', D_sign.shape)
     #print('V_sign shape: ', V_sign.shape)
 
-    start_time_initialize = time.time()
+    #start_time_initialize = time.time()
     # Initialize parameters
-    u = get_initial_state_1(num_nodes, num_communities, target_size)
-    print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
+    #u = get_initial_state_1(num_nodes, num_communities, target_size)
+    #print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
     
     #start_time_timestep_selection = time.time()
     # Time step selection
@@ -240,10 +254,11 @@ def mbo_modularity_1(num_nodes,num_communities, m, dt, graph_lap,signless_lap, t
     # Perform MBO scheme
     n = 0
     stop_criterion = 10
-    u_new = u.copy()
+    u_new = u_init.copy()
     
     start_time_MBO_iteration = time.time()
     while (n < max_iter) and (stop_criterion > tol):
+    #for i in range(50):
         u_old = u_new.copy()
 
         # Diffusion step
@@ -457,14 +472,14 @@ def mbo_modularity_given_eig(num_communities, eigval,eigvec,deg,dt, tol,
     return u_new, n
 
 
-def mbo_modularity_inner_step(num_nodes, num_communities, m, graph_lap, signless_lap, dt, tol,target_size,inner_step_count,
+def mbo_modularity_inner_step(num_nodes, num_communities, m, u_init,laplacian_mix, dt, tol,target_size,inner_step_count,
                         max_iter=10000,initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start with MMBO with finite difference')
 
-    start_time_l_mix = time.time()
-    laplacian_mix = graph_lap + signless_lap
-    print("compute l_{mix}:-- %.3f seconds --" % (time.time() - start_time_l_mix))
+    #start_time_l_mix = time.time()
+    #laplacian_mix = graph_lap + signless_lap
+    #print("compute l_{mix}:-- %.3f seconds --" % (time.time() - start_time_l_mix))
     
     start_time_eigendecomposition = time.time()
     # compute eigenvalues and eigenvectors
@@ -480,19 +495,20 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, graph_lap, signless
     D_sign = eigenpair[0]
     V_sign = eigenpair[1]
    
-    start_time_initialize = time.time()
+    #start_time_initialize = time.time()
     # Initialize parameters
-    u = get_initial_state_1(num_nodes, num_communities, target_size)
-    print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
+    #u = get_initial_state_1(num_nodes, num_communities, target_size)
+    #print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
 
 
     # Perform MBO scheme
     n = 0
     stop_criterion = 10
-    u_new = u.copy()
+    u_new = u_init.copy()
     
     start_time_MBO_iteration = time.time()
     while (n < max_iter) and (stop_criterion > tol):
+    #for i in range(50):
         u_old = u_new.copy()
 
         dti = dt / (2 * inner_step_count)
@@ -526,7 +542,7 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, graph_lap, signless
 
 
 
-def mbo_modularity_hu_original(num_nodes, num_communities, m, degree, dt, nor_graph_laplacian, tol, target_size, inner_step_count, 
+def mbo_modularity_hu_original(num_nodes, num_communities, m, degree, dt, u_init,nor_graph_laplacian, tol, target_size, inner_step_count, 
                             gamma=0.5, max_iter=10000, thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start Hu, Laurent algorithm')
@@ -549,20 +565,21 @@ def mbo_modularity_hu_original(num_nodes, num_communities, m, degree, dt, nor_gr
     V_sign = eigenpair[1]
 
     
-    start_time_initialize = time.time()
+    #start_time_initialize = time.time()
     # Initialize parameters
-    u = get_initial_state_1(num_nodes, num_communities, target_size)
-    print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
+    #u = get_initial_state_1(num_nodes, num_communities, target_size)
+    #print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
     
 
     stop_criterion = 10
     n = 0
-    u_new = u.copy()        
+    u_new = u_init.copy()        
     
     start_time_MBO_iteration = time.time()
     # Perform MBO scheme
     #for n in range(max_iter):
     while (n < max_iter) and (stop_criterion > tol):
+    #for i in range(50):
         u_old = u_new.copy()
         vv = u_old.copy()
         ww = vv.copy()
