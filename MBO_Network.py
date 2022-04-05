@@ -1,7 +1,6 @@
 from joblib import PrintTime
 import numpy as np
 import scipy as sp
-from scipy.linalg import lu_factor, lu_solve
 from scipy.sparse.linalg import eigs, eigsh, svds
 from random import randrange
 import random
@@ -9,7 +8,7 @@ from torch import sign
 import time
 import quimb
 
-from graph_mbo.utils import apply_threshold, get_fidelity_term, get_initial_state,labels_to_vector,to_standard_labels,_diffusion_step_eig,_mbo_forward_step_multiclass,get_initial_state_1,ProjectToSimplex
+from graph_mbo.utils import apply_threshold,_diffusion_step_eig,_mbo_forward_step_multiclass,get_initial_state_1
 #from graph_cut.util.nystrom import nystrom_extension
 from slec4py_test2 import eigs_slepc
 
@@ -209,7 +208,7 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
 
 
 
-def mbo_modularity_1(num_nodes,num_communities, m, dt, u_init,laplacian_mix, tol, target_size,
+def mbo_modularity_1(num_nodes,num_communities, m, dt, u_init,laplacian_mix, eigval, eigvec, tol, target_size,
                     gamma, eps=1, max_iter=10000, initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start with MMBO using the projection on the eigenvectors')
@@ -228,11 +227,11 @@ def mbo_modularity_1(num_nodes,num_communities, m, dt, u_init,laplacian_mix, tol
     #    which='SA')
 
     #eigenpair = eigs_slepc(laplacian_mix, m, which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
-    eigenpair = quimb.linalg.slepc_linalg.eigs_slepc(laplacian_mix, m, B=None,which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
-    print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
-    print('EPSType is krylovschur')
-    D_sign = eigenpair[0]
-    V_sign = eigenpair[1]
+    #eigenpair = quimb.linalg.slepc_linalg.eigs_slepc(laplacian_mix, m, B=None,which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
+    #print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
+    #print('EPSType is krylovschur')
+    #D_sign = eigenpair[0]
+    #V_sign = eigenpair[1]
 
     #print('D_sign shape: ', D_sign.shape)
     #print('V_sign shape: ', V_sign.shape)
@@ -258,14 +257,14 @@ def mbo_modularity_1(num_nodes,num_communities, m, dt, u_init,laplacian_mix, tol
     
     start_time_MBO_iteration = time.time()
     while (n < max_iter) and (stop_criterion > tol):
-    #for i in range(50):
+
         u_old = u_new.copy()
 
         # Diffusion step
         #start_time_diffusion = time.time()
-        demon = sp.sparse.spdiags([np.exp(- 0.5 * D_sign * dti)],[0],m,m) @ V_sign.transpose()
+        demon = sp.sparse.spdiags([np.exp(- 0.5 * eigval * dti)],[0],m,m) @ eigvec.transpose()
         # Solve system (apply CG or pseudospectral)
-        u_half = V_sign @ (demon @ u_old)  # Project back into normal space
+        u_half = eigvec @ (demon @ u_old)  # Project back into normal space
         #print("compute MBO diffusion step:-- %.3f seconds --" % (time.time() - start_time_diffusion))
         
         #start_time_thresholding = time.time()
@@ -472,7 +471,7 @@ def mbo_modularity_given_eig(num_communities, eigval,eigvec,deg,dt, tol,
     return u_new, n
 
 
-def mbo_modularity_inner_step(num_nodes, num_communities, m, u_init,laplacian_mix, dt, tol,target_size,inner_step_count,
+def mbo_modularity_inner_step(num_nodes, num_communities, m, u_init,laplacian_mix, eigval, eigvec, dt, tol,target_size,inner_step_count,
                         max_iter=10000,initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start with MMBO with finite difference')
@@ -489,11 +488,11 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, u_init,laplacian_mi
     #    v0=np.ones((laplacian_mix.shape[0], 1)),
     #    which= "SA",)
 
-    eigenpair = quimb.linalg.slepc_linalg.eigs_slepc(laplacian_mix, m, B=None,which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
-    print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
-    print('EPSType is krylovschur')
-    D_sign = eigenpair[0]
-    V_sign = eigenpair[1]
+    #eigenpair = quimb.linalg.slepc_linalg.eigs_slepc(laplacian_mix, m, B=None,which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
+    #print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
+    #print('EPSType is krylovschur')
+    #D_sign = eigenpair[0]
+    #V_sign = eigenpair[1]
    
     #start_time_initialize = time.time()
     # Initialize parameters
@@ -515,11 +514,11 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, u_init,laplacian_mi
 
         #start_time_diffusion = time.time()
 
-        demon = sp.sparse.spdiags([1 / (1 + dti * D_sign)], [0], m, m) @ V_sign.transpose()
+        demon = sp.sparse.spdiags([1 / (1 + dti * eigval)], [0], m, m) @ eigvec.transpose()
 
         
         for j in range(inner_step_count):
-            u_half = V_sign @ (demon @ u_old)
+            u_half = eigvec @ (demon @ u_old)
         
         #print("compute MBO diffusion step:-- %.3f seconds --" % (time.time() - start_time_diffusion))
         
@@ -542,7 +541,7 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, u_init,laplacian_mi
 
 
 
-def mbo_modularity_hu_original(num_nodes, num_communities, m, degree, dt, u_init,nor_graph_laplacian, tol, target_size, inner_step_count, 
+def mbo_modularity_hu_original(num_nodes, num_communities, m, degree, dt, u_init,nor_graph_laplacian, eigval, eigvec, tol, target_size, inner_step_count, 
                             gamma=0.5, max_iter=10000, thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start Hu, Laurent algorithm')
@@ -558,11 +557,11 @@ def mbo_modularity_hu_original(num_nodes, num_communities, m, degree, dt, u_init
     #print('eigendecomposition uses SA')
     #print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
 
-    eigenpair = quimb.linalg.slepc_linalg.eigs_slepc(nor_graph_laplacian, m, B=None,which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
-    print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
-    print('EPSType is krylovschur')
-    D_sign = eigenpair[0]
-    V_sign = eigenpair[1]
+    #eigenpair = quimb.linalg.slepc_linalg.eigs_slepc(nor_graph_laplacian, m, B=None,which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
+    #print("compute eigendecomposition:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition))
+    #print('EPSType is krylovschur')
+    #D_sign = eigenpair[0]
+    #V_sign = eigenpair[1]
 
     
     #start_time_initialize = time.time()
@@ -577,7 +576,6 @@ def mbo_modularity_hu_original(num_nodes, num_communities, m, degree, dt, u_init
     
     start_time_MBO_iteration = time.time()
     # Perform MBO scheme
-    #for n in range(max_iter):
     while (n < max_iter) and (stop_criterion > tol):
     #for i in range(50):
         u_old = u_new.copy()
@@ -589,7 +587,7 @@ def mbo_modularity_hu_original(num_nodes, num_communities, m, degree, dt, u_init
         for j in range(inner_step_count):
             mean_f = np.dot(degree.reshape(1, len(degree)), vv) / np.sum(degree)
             ww += 2 * gamma * dt * degree_diag @ (vv - mean_f)
-            vv = _diffusion_step_eig(ww,V_sign,D_sign,dt)
+            vv = _diffusion_step_eig(ww,eigvec,eigval,dt)
 
         #print("compute MBO diffusion step:-- %.3f seconds --" % (time.time() - start_time_diffusion))
         
