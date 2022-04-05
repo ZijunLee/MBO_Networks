@@ -67,7 +67,8 @@ num_nodes, m_1, degree, target_size, graph_laplacian, sym_graph_lap,rw_graph_lap
 
 del null_model
 
-
+print('symmetric normalized L_F shape: ', sym_graph_lap.shape)
+print('symmetric normalized Q_H shape: ', sym_signless_lap.shape)
 # Compute L_{mix} = L_{F_sym} + Q_{H_sym}
 start_time_l_mix = time.time()
 l_mix = sym_graph_lap + sym_signless_lap
