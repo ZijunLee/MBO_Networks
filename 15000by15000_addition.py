@@ -12,15 +12,17 @@ m = 1 * num_communities
 
 gpath = '/'.join(os.getcwd().split('/')[:-1])
 
-full_data, full_labels = Read_mnist_function(digits = range(10),path = gpath+'graph_cut/data')
-#full_data, full_labels = Read_mnist_function(digits = range(10),path ='/home/zijul93/MBO_SignedNetworks/graph_cut/data')
+
+#full_data, full_labels = Read_mnist_function(digits = range(10),path = gpath+'/MBO_signed_graphs/graph_cut/data')
+#full_data, full_labels = Read_mnist_function(digits = range(10),path = gpath+'graph_cut/data')
+full_data, full_labels = Read_mnist_function(digits = range(10),path ='/home/zijul93/MBO_SignedNetworks/graph_cut/data')
 full_data = full_data/255.
 
-sample_data,sample_labels = subsample(sample_num = 1500, rd = full_data, labels = full_labels)
+#sample_data,sample_labels = subsample(sample_num = 1500, rd = full_data, labels = full_labels)
 
 pca = PCA(n_components = 50, svd_solver='full')
-pca.fit_transform(full_data)
-train_data = pca.transform(sample_data)
+train_data = pca.fit_transform(full_data)
+#train_data = pca.transform(sample_data)
 
 del full_data
 
