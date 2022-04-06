@@ -10,7 +10,7 @@ import time
 
 from graph_mbo.utils import apply_threshold,_diffusion_step_eig,_mbo_forward_step_multiclass,get_initial_state_1
 #from graph_cut.util.nystrom import nystrom_extension
-from slec4py_test2 import eigs_slepc
+#from slec4py_test2 import eigs_slepc
 
 
 
