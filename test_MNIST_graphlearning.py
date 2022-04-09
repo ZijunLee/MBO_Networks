@@ -1,653 +1,270 @@
 import numpy as np
 import graphlearning as gl
-from MBO_Network import mbo_modularity_1, mbo_modularity_2, adj_to_laplacian_signless_laplacian, mbo_modularity_inner_step
-from MBO_Network import mbo_modularity_1_normalized_lf,mbo_modularity_1_normalized_Qh,mbo_modularity_1_normalized_Lf_Qh
-from graph_mbo.utils import spectral_clustering,vector_to_labels, get_modularity_original,get_modularity,labels_to_vector,label_to_dict, purity_score,inverse_purity_score
-from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_mutual_info_score, adjusted_rand_score
-from matplotlib import pyplot as plt
+from graph_mbo.utils import vector_to_labels,labels_to_vector,label_to_dict, purity_score,inverse_purity_score
+from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_rand_score
 import networkx as nx
-import networkx.algorithms.community as nx_comm
 from networkx.algorithms.community import greedy_modularity_communities,girvan_newman
 import scipy as sp
 from sklearn.metrics import adjusted_rand_score
 from sklearn.cluster import KMeans, SpectralClustering
-from scipy.sparse.linalg import eigsh,eigs
-import community as co
+import sknetwork as skn
+from community import community_louvain
 import time
 import csv
+import quimb
+from sklearn.decomposition import PCA
+from sklearn.kernel_approximation import Nystroem
+from MBO_Network import mbo_modularity_1, adj_to_laplacian_signless_laplacian, mbo_modularity_inner_step, mbo_modularity_hu_original,construct_null_model
+from graph_cut_util import build_affinity_matrix_new
+from graph_mbo.utils import purity_score,inverse_purity_score,get_initial_state_1
+
+
+
+## parameter setting
+dt_inner = 1
+num_communities = 10
+m = 1 * num_communities
+dt = 0.5
+tol = 1e-5
+inner_step_count =3
+gamma_1 =1
 
 
 #Load labels, knndata, and build 10-nearest neighbor weight matrix
-W = gl.weightmatrix.knn('mnist', 10, metric='vae')
-#print(type(W))
+#W = gl.weightmatrix.knn('mnist', 10)
 
-gt_labels = gl.datasets.load('mnist', labels_only=True)
-gt_list = gt_labels.tolist()  
+
+data, gt_labels = gl.datasets.load('mnist')
+#gt_list = gt_labels.tolist()
+print(data.shape)
+print(type(data))
+print('gt shape: ', gt_labels.shape)
+
+
+#pca = PCA(n_components = 50)
+#train_data = pca.fit_transform(data)
+#train_data = pca.transform(sample_data)
+
+#del data
+
+#n1, p = train_data.shape
+#print("Features:", p)
+
+gamma = 0.02
+
+feature_map_nystroem = Nystroem(gamma=gamma,random_state=1,n_components=50)
+Z_training = feature_map_nystroem.fit_transform(data)
+print('Z_training shape: ', Z_training.shape)
+
+n1, p = Z_training.shape
+print("Features:", p)
+
+#W = gl.weightmatrix.knn(data, 10)
+#print('W shape: ', W.shape)
+#print('W type: ', type(W))
+
+
+#gt_labels = gl.datasets.load('mnist', labels_only=True)
+#gt_list = gt_labels.tolist()  
 #print('gt shape: ', type(gt_list))
 
 # convert a list to a dict
-gt_label_dict = []
-len_gt_label = []
+#gt_label_dict = []
+#len_gt_label = []
 
-for e in range(len(gt_list)):
-    len_gt_label.append(e)
+#for e in range(len(gt_list)):
+#    len_gt_label.append(e)
 
-gt_label_dict = dict(zip(len_gt_label, gt_list))     # gt_label_dict is a dict
-
-
-G = nx.convert_matrix.from_scipy_sparse_matrix(W)
-#print(type(G))
-
-## parameter setting
-dt_inner = 0.5
-num_communities = 11
-m = 1 * num_communities
-#m_1 = 2 * num_communities
-#m = 3
-dt = 0.5
-tol = 1e-5
-
-#tol = 0
-eta_1 = 1
-eta_06 = 0.6
-eta_05 = 0.5
-eta_03 = 1.3
-inner_step_count =3
-
-num_nodes_1,m_1, degree_1, target_size_1,null_model_eta_1,graph_laplacian_1, nor_graph_laplacian_1,random_walk_nor_lap_1, signless_laplacian_null_model_1, nor_signless_laplacian_1 = adj_to_laplacian_signless_laplacian(W,num_communities,m,eta_1,target_size=None)
-num_nodes_06,m_06, degree_06, target_size_06,null_model_eta_06,graph_laplacian_06, nor_graph_laplacian_06, random_walk_nor_lap_06, signless_laplacian_null_model_06, nor_signless_laplacian_06 = adj_to_laplacian_signless_laplacian(W,num_communities,m,eta_06,target_size=None)
-num_nodes_05,m_05, degree_05, target_size_05,null_model_eta_05,graph_laplacian_05, nor_graph_laplacian_05, random_walk_nor_lap_05, signless_laplacian_null_model_05, nor_signless_laplacian_05 = adj_to_laplacian_signless_laplacian(W,num_communities,m,eta_05,target_size=None)
+#gt_label_dict = dict(zip(len_gt_label, gt_list))     # gt_label_dict is a dict
 
 
-start_time = time.time()
+#del train_data
+
+adj_mat = build_affinity_matrix_new(Z_training,gamma=gamma, affinity='rbf',n_neighbors=10, neighbor_type='knearest')
+print('adj_mat shape: ', adj_mat.shape)
+
+del Z_training
+
+null_model = construct_null_model(adj_mat)
+
+num_nodes, m_1, degree, target_size, graph_laplacian, sym_graph_lap,rw_graph_lap, signless_laplacian, sym_signless_lap, rw_signless_lap = adj_to_laplacian_signless_laplacian(adj_mat, null_model, num_communities,m ,target_size=None)
+
+del null_model
+
+print('symmetric normalized L_F shape: ', sym_graph_lap.shape)
+print('symmetric normalized Q_H shape: ', sym_signless_lap.shape)
+# Compute L_{mix} = L_{F_sym} + Q_{H_sym}
+start_time_l_mix = time.time()
+l_mix = sym_graph_lap + sym_signless_lap
+time_l_mix = time.time() - start_time_l_mix
+print("compute l_{mix}:-- %.3f seconds --" % (time_l_mix))
 
 
-# mmbo 1 with unnormalized L_F and gamma=1
-u_1_unnor_individual,num_repeat_1_unnor = mbo_modularity_1(num_nodes_1,num_communities, m_1,degree_1, graph_laplacian_1,signless_laplacian_null_model_1, 
-                                                        tol, target_size_1,eta_1, eps=1)   
-u_1_unnor_individual_label = vector_to_labels(u_1_unnor_individual)
-u_1_unnor_individual_label_dict = label_to_dict(u_1_unnor_individual_label)
-#print('u_1_unnormalized label: ', u_1_unnor_individual_label)
+# Compute eigenvalues and eigenvectors of L_{mix} for MMBO
+start_time_eigendecomposition_l_mix = time.time()
+eigenpair_mmbo = quimb.linalg.slepc_linalg.eigs_slepc(l_mix, m, B=None,which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
+time_eig_l_mix = time.time() - start_time_eigendecomposition_l_mix
+print("compute eigenvalues and eigenvectors of L_{mix} for MMBO:-- %.3f seconds --" % (time_eig_l_mix))
+D_mmbo = eigenpair_mmbo[0]
+V_mmbo = eigenpair_mmbo[1]
 
 
-# mmbo 1 with unnormalized L_F and gamma = 0.5
-#u_1_unnor_individual_05,num_repeat_1_unnor_05 = mbo_modularity_1(num_nodes_05,num_communities, m_05,degree_05, graph_laplacian_05,signless_laplacian_null_model_05, 
-#                                                tol, target_size_05,eta_05, eps=1)     
-#u_1_unnor_individual_label_05 = vector_to_labels(u_1_unnor_individual_05)
-#u_1_unnor_individual_label_dict_05 = label_to_dict(u_1_unnor_individual_label_05)
+# Compute eigenvalues and eigenvectors of L_{F_sym} for HU's method
+start_time_eigendecomposition_l_sym = time.time()
+eigenpair_hu = quimb.linalg.slepc_linalg.eigs_slepc(sym_graph_lap, m, B=None,which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
+time_eig_l_sym = time.time() - start_time_eigendecomposition_l_sym
+print("compute eigenvalues and eigenvectors of L_{F_sym} for HU's method:-- %.3f seconds --" % (time_eig_l_sym))
+D_hu = eigenpair_hu[0]
+V_hu = eigenpair_hu[1]
 
 
-# mmbo 1 with unnormalized L_F and gamma = 0.6
-#u_1_unnor_individual_06,num_repeat_1_unnor_06 = mbo_modularity_1(num_nodes_06,num_communities, m_06,degree_06, graph_laplacian_06,signless_laplacian_null_model_06, 
-#                                                tol, target_size_06,eta_06, eps=1)     
-#u_1_unnor_individual_label_06 = vector_to_labels(u_1_unnor_individual_06)
-#u_1_unnor_individual_label_dict_06 = label_to_dict(u_1_unnor_individual_label_06)
+# Initialize u
+start_time_initialize = time.time()
+u_init = get_initial_state_1(num_nodes, num_communities, target_size)
+time_initialize_u = time.time() - start_time_initialize
+print("compute initialize u:-- %.3f seconds --" % (time_initialize_u))
 
 
-# MMBO1 with normalized L_F and gamma=1
-u_1_nor_individual_1,num_repeat_1_nor = mbo_modularity_1_normalized_lf(num_nodes_1,num_communities, m_1,degree_1, random_walk_nor_lap_1,signless_laplacian_null_model_1, 
-                                                tol, target_size_1,eta_1, eps=1)     
-u_1_nor_individual_label_1 = vector_to_labels(u_1_nor_individual_1)
-u_1_nor_individual_label_dict_1 = label_to_dict(u_1_nor_individual_label_1)
+
+# Test HU original MBO with symmetric normalized L_F
+start_time_hu_original = time.time()
+u_hu_vector, num_iter_HU = mbo_modularity_hu_original(num_nodes, num_communities, m_1,degree, dt_inner, u_init,sym_graph_lap,
+                             D_hu, V_hu, tol,target_size,inner_step_count) 
+time_hu_mbo = time.time() - start_time_hu_original
+print("HU original MBO:-- %.3f seconds --" % (time_eig_l_sym + time_initialize_u + time_hu_mbo))
+print('HU original MBO the num_iteration: ', num_iter_HU)
+
+u_hu_label_1 = vector_to_labels(u_hu_vector)
+
+modu_hu_original_1 = skn.clustering.modularity(adj_mat,u_hu_label_1,resolution=0.5)
+ARI_hu_original_1 = adjusted_rand_score(u_hu_label_1, gt_labels)
+purify_hu_original_1 = purity_score(gt_labels, u_hu_label_1)
+inverse_purify_hu_original_1 = inverse_purity_score(gt_labels, u_hu_label_1)
+NMI_hu_original_1 = normalized_mutual_info_score(gt_labels, u_hu_label_1)
+
+print(' modularity score for HU original MBO: ', modu_hu_original_1)
+print(' ARI for HU original MBO: ', ARI_hu_original_1)
+print(' purify for HU original MBO : ', purify_hu_original_1)
+print(' inverse purify for HU original MBO : ', inverse_purify_hu_original_1)
+print(' NMI for HU original MBO : ', NMI_hu_original_1)
 
 
-# MMBO1 with normalized L_F and gamma=0.5
-#u_1_nor_individual_05,num_repeat_1_nor_05 = mbo_modularity_1_normalized_lf(num_nodes_05,num_communities, m_05,degree_05, nor_graph_laplacian_05,signless_laplacian_null_model_05, 
-#                                                tol, target_size_05,eta_05, eps=1)       
-#u_1_nor_individual_label_05 = vector_to_labels(u_1_nor_individual_05)
-#u_1_nor_individual_label_dict_05 = label_to_dict(u_1_nor_individual_label_05)
+## Test MMBO using the projection on the eigenvectors with symmetric normalized L_F & Q_H
+start_time_1_nor_Lf_Qh_1 = time.time()
+u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1 = mbo_modularity_1(num_nodes,num_communities, m_1, dt, u_init, 
+                                                 l_mix, D_mmbo, V_mmbo, tol, target_size, gamma_1)
+time_MMBO_projection_sym = time.time() - start_time_1_nor_Lf_Qh_1                                                
+print("MMBO using projection with sym normalized L_F & Q_H (K=10, m=K):-- %.3f seconds --" % (time_l_mix + time_eig_l_mix + time_initialize_u + time_MMBO_projection_sym))
+print('u_1 nor L_F & Q_H number of iteration(K=10 and m=K): ', num_repeat_1_nor_Lf_Qh_1)
 
-
-# MMBO1 with normalized L_F and gamma=0.6
-#u_1_nor_individual_06,num_repeat_1_nor_06 = mbo_modularity_1_normalized_lf(num_nodes_06,num_communities, m_06,degree_06, nor_graph_laplacian_06,signless_laplacian_null_model_06, 
-#                                                tol, target_size_06,eta_06, eps=1)     
-#u_1_nor_individual_label_06 = vector_to_labels(u_1_nor_individual_06)
-#u_1_nor_individual_label_dict_06 = label_to_dict(u_1_nor_individual_label_06)
-
-
-# MMBO1 with normalized Q_H and gamma=1
-u_1_nor_Qh_individual_1,num_repeat_1_nor_Qh_1 = mbo_modularity_1_normalized_Qh(num_nodes_1,num_communities, m_1,degree_1, graph_laplacian_1,nor_signless_laplacian_1, 
-                                                tol, target_size_1,eta_1, eps=1)     
-u_1_nor_Qh_individual_label_1 = vector_to_labels(u_1_nor_Qh_individual_1)
-u_1_nor_Qh_individual_label_dict_1 = label_to_dict(u_1_nor_Qh_individual_label_1)
-
-
-# MMBO1 with normalized Q_H and gamma=0.6
-#u_1_nor_Qh_individual_06,num_repeat_1_nor_Qh_06 = mbo_modularity_1_normalized_Qh(num_nodes_06,num_communities, m_06,degree_06, graph_laplacian_06,nor_signless_laplacian_06, 
-#                                                tol, target_size_06,eta_06, eps=1)         
-#u_1_nor_Qh_individual_label_06 = vector_to_labels(u_1_nor_Qh_individual_06)
-#u_1_nor_Qh_individual_label_dict_06 = label_to_dict(u_1_nor_Qh_individual_label_06)
-
-
-# MMBO1 with normalized Q_H and gamma=0.5
-#u_1_nor_Qh_individual_05,num_repeat_1_nor_Qh_05 = mbo_modularity_1_normalized_Qh(num_nodes_05,num_communities, m_05,degree_05, graph_laplacian_05,nor_signless_laplacian_05, 
-#                                                tol, target_size_05,eta_05, eps=1)   
-#u_1_nor_Qh_individual_label_05 = vector_to_labels(u_1_nor_Qh_individual_05)
-#u_1_nor_Qh_individual_label_dict_05 = label_to_dict(u_1_nor_Qh_individual_label_05)
-
-
-# MMBO1 with normalized L_F & Q_H and gamma=1
-u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1 = mbo_modularity_1_normalized_Lf_Qh(num_nodes_1,num_communities, m_1,degree_1, nor_graph_laplacian_1,nor_signless_laplacian_1, 
-                                                tol, target_size_1,eta_1, eps=1)     
 u_1_nor_Lf_Qh_individual_label_1 = vector_to_labels(u_1_nor_Lf_Qh_individual_1)
-u_1_nor_Lf_Qh_individual_label_dict_1 = label_to_dict(u_1_nor_Lf_Qh_individual_label_1)
 
 
-# MMBO1 with normalized L_F & Q_H and gamma=0.6
-#u_1_nor_Lf_Qh_individual_06,num_repeat_1_nor_Lf_Qh_06 = mbo_modularity_1_normalized_Lf_Qh(num_nodes_06,num_communities, m_06,degree_06, nor_graph_laplacian_06,nor_signless_laplacian_06, 
-#                                                tol, target_size_06,eta_06, eps=1)       
-#u_1_nor_Lf_Qh_individual_label_06 = vector_to_labels(u_1_nor_Lf_Qh_individual_06)
-#u_1_nor_Lf_Qh_individual_label_dict_06 = label_to_dict(u_1_nor_Lf_Qh_individual_label_06)
+modularity_1_nor_lf_qh = skn.clustering.modularity(adj_mat,u_1_nor_Lf_Qh_individual_label_1,resolution=0.5)
+ARI_mbo_1_nor_Lf_Qh_1 = adjusted_rand_score(u_1_nor_Lf_Qh_individual_label_1, gt_labels)
+purify_mbo_1_nor_Lf_Qh_1 = purity_score(gt_labels, u_1_nor_Lf_Qh_individual_label_1)
+inverse_purify_mbo_1_nor_Lf_Qh_1 = inverse_purity_score(gt_labels, u_1_nor_Lf_Qh_individual_label_1)
+NMI_mbo_1_nor_Lf_Qh_1 = normalized_mutual_info_score(gt_labels, u_1_nor_Lf_Qh_individual_label_1)
 
-
-# MMBO1 with normalized L_F & Q_H and gamma=0.5
-#u_1_nor_Lf_Qh_individual_05,num_repeat_1_nor_Lf_Qh_05 = mbo_modularity_1_normalized_Lf_Qh(num_nodes_05,num_communities, m_05,degree_05, nor_graph_laplacian_05,nor_signless_laplacian_05, 
-#                                                tol, target_size_05,eta_05, eps=1)        
-#u_1_nor_Lf_Qh_individual_label_05 = vector_to_labels(u_1_nor_Lf_Qh_individual_05)
-#u_1_nor_Lf_Qh_individual_label_dict_05 = label_to_dict(u_1_nor_Lf_Qh_individual_label_05)
-
-
-
-# MMBO1 with random walk L_F and gamma=1
-u_1_rw_individual_1,num_repeat_1_rw = mbo_modularity_1_normalized_lf(num_nodes_1,num_communities, m_1,degree_1, random_walk_nor_lap_1,signless_laplacian_null_model_1, 
-                                                tol, target_size_1,eta_1, eps=1)     
-u_1_rw_individual_label_1 = vector_to_labels(u_1_rw_individual_1)
-u_1_rw_individual_label_dict_1 = label_to_dict(u_1_rw_individual_label_1)
+print(' modularity_1 normalized L_F & Q_H score(K=10 and m=K): ', modularity_1_nor_lf_qh)
+print('average ARI_1 normalized L_F & Q_H score: ', ARI_mbo_1_nor_Lf_Qh_1)
+print(' purify for MMBO1 normalized L_F & Q_H with \eta =1 : ', purify_mbo_1_nor_Lf_Qh_1)
+print(' inverse purify for MMBO1 normalized L_F & Q_H with \eta =1 : ', inverse_purify_mbo_1_nor_Lf_Qh_1)
+print(' NMI for MMBO1 normalized L_F & Q_H with \eta =1 : ', NMI_mbo_1_nor_Lf_Qh_1)
 
 
 
-# MMBO1 with inner step & normalized L_F and gamma=1
-u_inner_individual_1,num_repeat_inner = mbo_modularity_inner_step(num_nodes_1, num_communities, m_1, nor_graph_laplacian_1, nor_signless_laplacian_1,dt_inner, tol,target_size_1, inner_step_count)
-u_inner_individual_label_1 = vector_to_labels(u_inner_individual_1)
-u_inner_individual_label_dict_1 = label_to_dict(u_inner_individual_label_1)
+# MMBO1 with inner step & sym normalized L_F & Q_H
+start_time_1_inner_nor_1 = time.time()
+u_inner_nor_1,num_repeat_inner_nor = mbo_modularity_inner_step(num_nodes, num_communities, m_1, u_init, 
+                                        l_mix, D_mmbo, V_mmbo, dt_inner, tol,target_size, inner_step_count)
+time_MMBO_inner_step = time.time() - start_time_1_inner_nor_1
+print("MMBO1 with inner step & sym normalized L_F & Q_H:-- %.3f seconds --" % (time_l_mix + time_eig_l_mix + time_initialize_u + time_MMBO_inner_step))
+print('MMBO1 with inner step & sym the num_repeat_inner_nor: ',num_repeat_inner_nor)
+
+u_inner_nor_label_1 = vector_to_labels(u_inner_nor_1)
+
+modularity_1_inner_nor_1 = skn.clustering.modularity(adj_mat,u_inner_nor_label_1,resolution=0.5)
+ARI_mbo_1_inner_nor_1 = adjusted_rand_score(u_inner_nor_label_1, gt_labels)
+purify_mbo_1_inner_nor_1 = purity_score(gt_labels, u_inner_nor_label_1)
+inverse_purify_mbo_1_inner_nor_1 = inverse_purity_score(gt_labels, u_inner_nor_label_1)
+NMI_mbo_1_inner_nor_1 = normalized_mutual_info_score(gt_labels, u_inner_nor_label_1)
+
+print(' modularity_1 inner step sym normalized score: ', modularity_1_inner_nor_1)
+print(' ARI_1 inner step sym normalized score: ', ARI_mbo_1_inner_nor_1)
+print(' purify for MMBO1 inner step with sym normalized \eta =1 : ', purify_mbo_1_inner_nor_1)
+print(' inverse purify for MMBO1 inner step with sym normalized \eta =1 : ', inverse_purify_mbo_1_inner_nor_1)
+print(' NMI for MMBO1 inner step with sym normalized \eta =1 : ', NMI_mbo_1_inner_nor_1)
 
 
-
-# mmbo 2 with normalized & gamma = 1
-u_2_individual_1, num_repeat_2_1 = mbo_modularity_2(num_communities, m, W, tol,eta_1,eps=1) 
-u_2_individual_label_1 = vector_to_labels(u_2_individual_1)
-u_2_individual_label_dict_1 = label_to_dict(u_2_individual_label_1)
-
-
-# mmbo 2 with normalized & gamma = 0.6
-#u_2_individual_06, num_repeat_2_06 = mbo_modularity_2(num_communities, m, W, tol,eta_06,eps=1) 
-#u_2_individual_label_06 = vector_to_labels(u_2_individual_06)
-#u_2_individual_label_dict_06 = label_to_dict(u_2_individual_label_06)
-
-
-# mmbo 2 with normalized & gamma = 0.5
-#u_2_individual_05, num_repeat_2_05 = mbo_modularity_2(num_communities, m, W, tol,eta_05,eps=1) 
-#u_2_individual_label_05 = vector_to_labels(u_2_individual_05)
-#u_2_individual_label_dict_05 = label_to_dict(u_2_individual_label_05)
-
-
-# Louvain algorithm (can setting resolution gamma)
-partition_Louvain = co.best_partition(G, resolution=1)    # returns a dict
+# Louvain
+start_time_louvain = time.time()
+G = nx.convert_matrix.from_numpy_array(adj_mat)
+partition_Louvain = community_louvain.best_partition(G, resolution=0.5)    # returns a dict
+print("Louvain:-- %.3f seconds --" % (time.time() - start_time_louvain))
 louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
-#print('Louvain:', type(partition_Louvain))
-#print('louvain: ',louvain_list)
+louvain_array = np.asarray(louvain_list)
 
 
-# CNM algorithm (can setting resolution gamma)
-partition_CNM = nx_comm.greedy_modularity_communities(G)
+modularity_louvain = skn.clustering.modularity(adj_mat,louvain_array,resolution=1)
+ARI_louvain = adjusted_rand_score(louvain_array, gt_labels)
+purify_louvain = purity_score(gt_labels, louvain_array)
+inverse_purify_louvain = inverse_purity_score(gt_labels, louvain_array)
+NMI_louvain = normalized_mutual_info_score(gt_labels, louvain_array)
 
-partition_CNM_list = [list(x) for x in partition_CNM]
-#print(type(partition_CNM_list))
+print(' modularity Louvain score: ', modularity_louvain)
+print(' ARI Louvain  score: ', ARI_louvain)
+print(' purify for Louvain : ', purify_louvain)
+print(' inverse purify for Louvain : ', inverse_purify_louvain)
+print(' NMI for Louvain  : ', NMI_louvain)
 
-partition_CNM_expand = sum(partition_CNM_list, [])
-
-num_cluster_CNM = []
-for cluster in range(len(partition_CNM_list)):
-    for number_CNM in range(len(partition_CNM_list[cluster])):
-        num_cluster_CNM.append(cluster)
-
-#print(partition_CNM_list)
-CNM_dict = dict(zip(partition_CNM_expand, num_cluster_CNM))
-#print('CNM: ',CNM_dict)
-
-CNM_list = list(dict.values(CNM_dict))    #convert a dict to list
-
-
-# Girvan-Newman algorithm
-partition_GN = nx_comm.girvan_newman(G)
-#print(type(partition_GN))
-
-partition_GN_list = []
-for i in next(partition_GN):
-  partition_GN_list.append(list(i))
-#print(partition_GN_list)
-
-partition_GN_expand = sum(partition_GN_list, [])
-
-num_cluster_GN = []
-for cluster in range(len(partition_GN_list)):
-    for number_GN in range(len(partition_GN_list[cluster])):
-        num_cluster_GN.append(cluster)
-
-#print(partition_GN_list)
-GN_dict = dict(zip(partition_GN_expand, num_cluster_GN))
-#print('GN: ',GN_dict)
-
-GN_list = list(dict.values(GN_dict))    #convert a dict to list
 
 
 # Spectral clustering with k-means
+start_time_spectral_clustering = time.time()
 sc = SpectralClustering(n_clusters=10, affinity='precomputed')
-assignment = sc.fit_predict(W)
+assignment = sc.fit_predict(adj_mat)
+print("spectral clustering algorithm:-- %.3f seconds --" % (time.time() - start_time_spectral_clustering))
 
 ass_vec = labels_to_vector(assignment)
 ass_dict = label_to_dict (assignment)
 
 
-#print("--- %.3f seconds ---" % (time.time() - start_time))
-
-
-## Compute modularity scores
-
-modu_gt = co.modularity(gt_label_dict,G)
-
-modu_1_unnor_1 = co.modularity(u_1_unnor_individual_label_dict,G)
-#modu_1_unnor_05 = co.modularity(u_1_unnor_individual_label_dict_05,G)
-#modu_1_unnor_06 = co.modularity(u_1_unnor_individual_label_dict_06,G)
-
-modu_1_nor_Lf_1 = co.modularity(u_1_nor_individual_label_dict_1,G)
-#modu_1_nor_Lf_05 = co.modularity(u_1_nor_individual_label_dict_05,G)
-#modu_1_nor_Lf_06 = co.modularity(u_1_nor_individual_label_dict_06,G)
-
-modu_1_nor_Qh_1 = co.modularity(u_1_nor_Lf_Qh_individual_label_dict_1,G)
-#modu_1_nor_Qh_06 = co.modularity(u_1_nor_Lf_Qh_individual_label_dict_06,G)
-#modu_1_nor_Qh_05 = co.modularity(u_1_nor_Lf_Qh_individual_label_dict_05,G)
-
-modu_1_nor_Lf_Qh_1 = co.modularity(u_1_nor_Lf_Qh_individual_label_dict_1,G)
-#modu_1_nor_Lf_Qh_06 = co.modularity(u_1_nor_Lf_Qh_individual_label_dict_06,G)
-#modu_1_nor_Lf_Qh_05 = co.modularity(u_1_nor_Lf_Qh_individual_label_dict_05,G)
-
-modu_2_1 = co.modularity(u_2_individual_label_dict_1,G)
-#modu_2_06 = co.modularity(u_2_individual_label_dict_06,G)
-#modu_2_05 = co.modularity(u_2_individual_label_dict_05,G)
-
-modu_inner_1 = co.modularity(u_inner_individual_label_dict_1,G)
-
-modu_rw_1 = co.modularity(u_1_rw_individual_label_dict_1,G)
-
-modu_louvain = co.modularity(partition_Louvain,G)
-modu_CNM = co.modularity(CNM_dict,G)
-modu_GN = co.modularity(GN_dict,G)
-modu_sc = co.modularity(ass_dict,G)
-#modularity_GN_1 = get_modularity(G,GN_dict)
-#modularity_CNM_2 = nx_comm.modularity(G,partition_CNM_list)
-#modu_louvain = nx_comm.modularity(G, partition_Louvain)
-
-
-
-print('modularity_gt score:',modu_gt)
-print('modularity_1 unnormalized L_F & Q_H score:',modu_1_unnor_1)
-
-print('modularity_1 normalized L_F with \eta =1 score:',modu_1_nor_Lf_1)
-#print('modularity_1 normalized L_F with \eta =0.6 score:',modu_1_nor_Lf_06)
-#print('modularity_1 normalized L_F with \eta =0.5 score:',modu_1_nor_Lf_05)
-
-print('modularity_1 normalized Q_H with \eta =1 score:',modu_1_nor_Qh_1)
-#print('modularity_1 normalized Q_H with \eta =0.6 score:',modu_1_nor_Qh_06)
-#print('modularity_1 normalized Q_H with \eta =0.5 score:',modu_1_nor_Qh_05)
-
-print('modularity_1 normalized L_F & Q_H with \eta = 1 score:',modu_1_nor_Lf_Qh_1)
-#print('modularity_1 normalized L_F & Q_H with \eta = 0.6 score:',modu_1_nor_Lf_Qh_06)
-#print('modularity_1 normalized L_F & Q_H with \eta = 0.5 score:',modu_1_nor_Lf_Qh_05)
-
-print('modularity_2 with \eta = 1 score:',modu_2_1)
-#print('modularity_2 with \eta = 0.6 score:',modu_2_06)
-#print('modularity_2 with \eta = 0.5 score:',modu_2_05)
-
-print('modularity_inner_step score:',modu_inner_1)
-
-print('modularity_random walk score:',modu_rw_1)
-
-print('modularity_Louvain score:',modu_louvain)
-print('modularity_CNM score:',modu_CNM)
-print('modularity_GN score:',modu_GN)
-#print('modularity_GN_1 score:',modularity_GN_1)
-#print('modularity_CNM_2 score:',modularity_CNM_2)
-print('modularity_spectral clustering score:',modu_sc)
-
-
-
-
-## Compare ARI 
-ARI_mbo_1_unnor_lf = adjusted_rand_score(u_1_unnor_individual_label, gt_list)
-#ARI_mbo_1_unnor_lf_06 = adjusted_rand_score(u_1_unnor_individual_label_06, gt_list)
-#ARI_mbo_1_unnor_lf_05 = adjusted_rand_score(u_1_unnor_individual_label_05, gt_list)
-
-ARI_mbo_1_nor_Lf_1 = adjusted_rand_score(u_1_nor_individual_label_1, gt_list)
-#ARI_mbo_1_nor_Lf_06 = adjusted_rand_score(u_1_nor_individual_label_06, gt_list)
-#ARI_mbo_1_nor_Lf_05 = adjusted_rand_score(u_1_nor_individual_label_05, gt_list)
-
-ARI_mbo_1_nor_Qh_1 = adjusted_rand_score(u_1_nor_Qh_individual_label_1, gt_list)
-#ARI_mbo_1_nor_Qh_06 = adjusted_rand_score(u_1_nor_Qh_individual_label_06, gt_list)
-#ARI_mbo_1_nor_Qh_05 = adjusted_rand_score(u_1_nor_Qh_individual_label_05, gt_list)
-
-ARI_mbo_1_nor_Lf_Qh_1 = adjusted_rand_score(u_1_nor_Lf_Qh_individual_label_1, gt_list)
-#ARI_mbo_1_nor_Lf_Qh_06 = adjusted_rand_score(u_1_nor_Lf_Qh_individual_label_06, gt_list)
-#ARI_mbo_1_nor_Lf_Qh_05 = adjusted_rand_score(u_1_nor_Qh_individual_label_05, gt_list)
-
-ARI_mbo_2_1 = adjusted_rand_score(u_2_individual_label_1, gt_list)
-#ARI_mbo_2_06 = adjusted_rand_score(u_2_individual_label_06, gt_list)
-#ARI_mbo_2_05 = adjusted_rand_score(u_2_individual_label_05, gt_list)
-
-ARI_mbo_inner_1 = adjusted_rand_score(u_inner_individual_label_1, gt_list)
-
-ARI_mbo_rw_1 = adjusted_rand_score(u_1_rw_individual_label_1, gt_list)
-
-ARI_spectral_clustering = adjusted_rand_score(assignment, gt_list)
-ARI_GN = adjusted_rand_score(partition_GN, gt_list)
-ARI_louvain = adjusted_rand_score(louvain_list, gt_list)
-ARI_CNM = adjusted_rand_score(CNM_list, gt_list)
-
-
-
-print('ARI for MMBO1 unnormalized L_F with \eta =1 : ', ARI_mbo_1_unnor_lf)
-#print('ARI for MMBO1 unnormalized L_F with \eta =0.6 : ', ARI_mbo_1_unnor_lf_06)
-#print('ARI for MMBO1 unnormalized L_F with \eta =0.5 : ', ARI_mbo_1_unnor_lf_05)
-
-print('ARI for MMBO1 normalized L_F with \eta =1 : ', ARI_mbo_1_nor_Lf_1)
-#print('ARI for MMBO1 normalized L_F with \eta =0.6 : ', ARI_mbo_1_nor_Lf_06)
-#print('ARI for MMBO1 normalized L_F with \eta =0.5 : ', ARI_mbo_1_nor_Lf_05)
-
-print('ARI for MMBO1 normalized Q_H with \eta =1 : ', ARI_mbo_1_nor_Qh_1)
-#print('ARI for MMBO1 normalized Q_H with \eta =0.6 : ', ARI_mbo_1_nor_Qh_06)
-#print('ARI for MMBO1 normalized Q_H with \eta =0.5 : ', ARI_mbo_1_nor_Qh_05)
-
-print('ARI for MMBO1 normalized L_F & Q_H with \eta =1 : ', ARI_mbo_1_nor_Lf_Qh_1)
-#print('ARI for MMBO1 normalized L_F & Q_H with \eta =0.6 : ', ARI_mbo_1_nor_Lf_Qh_06)
-#print('ARI for MMBO1 normalized L_F & Q_H with \eta =0.5 : ', ARI_mbo_1_nor_Lf_Qh_05)
-
-print('ARI for MMBO2 with \eta =1: ', ARI_mbo_2_1)
-#print('ARI for MMBO2 with \eta =0.6: ', ARI_mbo_2_06)
-#print('ARI for MMBO2 with \eta =0.5: ', ARI_mbo_2_05)
-
-print('ARI for MBO_inner_step: ', ARI_mbo_inner_1)
-
-print('ARI for MBO_random walk: ', ARI_mbo_rw_1)
-
-print('ARI for spectral clustering: ', ARI_spectral_clustering)
-print('ARI for GN: ', ARI_GN)
-print('ARI for Louvain: ', ARI_louvain)
-print('ARI for CNM: ', ARI_CNM)
-
-
-# compute purify
-purify_mbo_1_unnor_lf_1 = purity_score(gt_list, u_1_unnor_individual_label)
-#purify_mbo_1_unnor_lf_06 = purity_score(gt_list, u_1_unnor_individual_label_06)
-#purify_mbo_1_unnor_lf_05 = purity_score(gt_list, u_1_unnor_individual_label_05)
-
-purify_mbo_1_nor_Lf_1 = purity_score(gt_list, u_1_nor_individual_label_1)
-#purify_mbo_1_nor_Lf_06 = purity_score(gt_list, u_1_nor_individual_label_06)
-#purify_mbo_1_nor_Lf_05 = purity_score(gt_list, u_1_nor_individual_label_05)
-
-purify_mbo_1_nor_Qh_1 = purity_score(gt_list, u_1_nor_Qh_individual_label_1)
-#purify_mbo_1_nor_Qh_06 = purity_score(gt_list, u_1_nor_Qh_individual_label_06)
-#purify_mbo_1_nor_Qh_05 = purity_score(gt_list, u_1_nor_Qh_individual_label_05)
-
-purify_mbo_1_nor_Lf_Qh_1 = purity_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
-#purify_mbo_1_nor_Lf_Qh_06 = purity_score(gt_list, u_1_nor_Lf_Qh_individual_label_06)
-#purify_mbo_1_nor_Lf_Qh_05 = purity_score(gt_list, u_1_nor_Lf_Qh_individual_label_05)
-
-purify_mbo_inner = purity_score(gt_list, u_inner_individual_label_1)
-
-purify_mbo_rw_1 = purity_score(gt_list, u_1_rw_individual_label_1)
-
-purify_mbo_2_1 = purity_score(gt_list, u_2_individual_label_1)
-#purify_mbo_2_06 = purity_score(gt_list, u_2_individual_label_06)
-#purify_mbo_2_05 = purity_score(gt_list, u_2_individual_label_05)
-
-purify_spectral_clustering = purity_score(gt_list, assignment)
-purify_gn = purity_score(gt_list, partition_GN)
-purify_louvain = purity_score(gt_list, louvain_list)
-purify_CNM = purity_score(gt_list, CNM_list)
-
-
-print('purify for MMBO1 unnormalized L_F with \eta =1 : ', purify_mbo_1_unnor_lf_1)
-#print('purify for MMBO1 unnormalized L_F with \eta =0.6 : ', purify_mbo_1_unnor_lf_06)
-#print('purify for MMBO1 unnormalized L_F with \eta =0.5 : ', purify_mbo_1_unnor_lf_05)
-
-print('purify for MMBO1 normalized L_F with \eta =1 : ', purify_mbo_1_nor_Lf_1)
-#print('purify for MMBO1 normalized L_F with \eta =0.6 : ', purify_mbo_1_nor_Lf_06)
-#print('purify for MMBO1 normalized L_F with \eta =0.5 : ', purify_mbo_1_nor_Lf_05)
-
-print('purify for MMBO1 normalized Q_H with \eta =1 : ', purify_mbo_1_nor_Qh_1)
-#print('purify for MMBO1 normalized Q_H with \eta =0.6 : ', purify_mbo_1_nor_Qh_06)
-#print('purify for MMBO1 normalized Q_H with \eta =0.5 : ', purify_mbo_1_nor_Qh_05)
-
-print('purify for MMBO1 normalized L_F & Q_H with \eta =1 : ', purify_mbo_1_nor_Lf_Qh_1)
-#print('purify for MMBO1 normalized L_F & Q_H with \eta =0.6 : ', purify_mbo_1_nor_Lf_Qh_06)
-#print('purify for MMBO1 normalized L_F & Q_H with \eta =0.5 : ', purify_mbo_1_nor_Lf_Qh_05)
-
-print('purify for MBO_inner_step: ', purify_mbo_inner)
-
-print('purify for MMBO1 ramdom walk L_F with \eta =1 : ', purify_mbo_rw_1)
-
-print('purify for MMBO2 with \eta =1: ', purify_mbo_2_1)
-#print('purify for MMBO2 with \eta =0.6: ', purify_mbo_2_06)
-#print('purify for MMBO2 with \eta =0.5: ', purify_mbo_2_05)
-
-#print('purify for MBO_inner_step: ', purify_mbo_inner)
-
-print('purify for spectral clustering: ', purify_spectral_clustering)
-print('purify for GN: ', purify_gn)
-print('purify for Louvain: ', purify_louvain)
-print('purify for CNM: ', purify_CNM)
-
-
-
-# compute Inverse Purity
-inverse_purify_mbo_1_unnor_lf_1 = inverse_purity_score(gt_list, u_1_unnor_individual_label)
-#inverse_purify_mbo_1_unnor_lf_06 = inverse_purity_score(gt_list, u_1_unnor_individual_label_06)
-#inverse_purify_mbo_1_unnor_lf_05 = inverse_purity_score(gt_list, u_1_unnor_individual_label_05)
-
-inverse_purify_mbo_1_nor_Lf_1 = inverse_purity_score(gt_list, u_1_nor_individual_label_1)
-#inverse_purify_mbo_1_nor_Lf_06 = inverse_purity_score(gt_list, u_1_nor_individual_label_06)
-#inverse_purify_mbo_1_nor_Lf_05 = inverse_purity_score(gt_list, u_1_nor_individual_label_05)
-
-inverse_purify_mbo_1_nor_Qh_1 = inverse_purity_score(gt_list, u_1_nor_Qh_individual_label_1)
-#inverse_purify_mbo_1_nor_Qh_06 = inverse_purity_score(gt_list, u_1_nor_Qh_individual_label_06)
-#inverse_purify_mbo_1_nor_Qh_05 = inverse_purity_score(gt_list, u_1_nor_Qh_individual_label_05)
-
-inverse_purify_mbo_1_nor_Lf_Qh_1 = inverse_purity_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
-#inverse_purify_mbo_1_nor_Lf_Qh_06 = inverse_purity_score(gt_list, u_1_nor_Lf_Qh_individual_label_06)
-#inverse_purify_mbo_1_nor_Lf_Qh_05 = inverse_purity_score(gt_list, u_1_nor_Lf_Qh_individual_label_05)
-
-inverse_purify_mbo_inner = inverse_purity_score(gt_list, u_inner_individual_label_1)
-
-inverse_purify_mbo_rw_1 = inverse_purity_score(gt_list, u_1_rw_individual_label_1)
-
-inverse_purify_mbo_2_1 = inverse_purity_score(gt_list, u_2_individual_label_1)
-#inverse_purify_mbo_2_06 = inverse_purity_score(gt_list, u_2_individual_label_06)
-#inverse_purify_mbo_2_05 = inverse_purity_score(gt_list, u_2_individual_label_05)
-
-inverse_purify_spectral_clustering = inverse_purity_score(gt_list, assignment)
-inverse_purify_gn = inverse_purity_score(gt_list, partition_GN)
-inverse_purify_louvain = inverse_purity_score(gt_list, louvain_list)
-inverse_purify_CNM = inverse_purity_score(gt_list, CNM_list)
-
-
-print('inverse purify for MMBO1 unnormalized L_F with \eta =1 : ', inverse_purify_mbo_1_unnor_lf_1)
-#print('inverse purify for MMBO1 unnormalized L_F with \eta =0.6 : ', inverse_purify_mbo_1_unnor_lf_06)
-#print('inverse purify for MMBO1 unnormalized L_F with \eta =0.5 : ', inverse_purify_mbo_1_unnor_lf_05)
-
-print('inverse purify for MMBO1 normalized L_F with \eta =1 : ', inverse_purify_mbo_1_nor_Lf_1)
-#print('inverse purify for MMBO1 normalized L_F with \eta =0.6 : ', inverse_purify_mbo_1_nor_Lf_06)
-#print('inverse purify for MMBO1 normalized L_F with \eta =0.5 : ', inverse_purify_mbo_1_nor_Lf_05)
-
-print('inverse purify for MMBO1 normalized Q_H with \eta =1 : ', inverse_purify_mbo_1_nor_Qh_1)
-#print('inverse purify for MMBO1 normalized Q_H with \eta =0.6 : ', inverse_purify_mbo_1_nor_Qh_06)
-#print('inverse purify for MMBO1 normalized Q_H with \eta =0.5 : ', inverse_purify_mbo_1_nor_Qh_05)
-
-print('inverse purify for MMBO1 normalized L_F & Q_H with \eta =1 : ', inverse_purify_mbo_1_nor_Lf_Qh_1)
-#print('inverse purify for MMBO1 normalized L_F & Q_H with \eta =0.6 : ', inverse_purify_mbo_1_nor_Lf_Qh_06)
-#print('inverse purify for MMBO1 normalized L_F & Q_H with \eta =0.5 : ', inverse_purify_mbo_1_nor_Lf_Qh_05)
-
-print('inverse purify for MBO_inner_step: ', inverse_purify_mbo_inner)
-
-print('inverse purify for MMBO1 ramdom walk L_F with \eta =1 : ', inverse_purify_mbo_rw_1)
-
-print('inverse purify for MMBO2 with \eta =1: ', inverse_purify_mbo_2_1)
-#print('inverse purify for MMBO2 with \eta =0.6: ', inverse_purify_mbo_2_06)
-#print('inverse purify for MMBO2 with \eta =0.5: ', inverse_purify_mbo_2_05)
-
-#print('inverse purify for MBO_inner_step: ', inverse_purify_mbo_inner)
-
-print('inverse purify for spectral clustering: ', inverse_purify_spectral_clustering)
-print('inverse purify for GN: ', inverse_purify_gn)
-print('inverse purify for Louvain: ', inverse_purify_louvain)
-print('inverse purify for CNM: ', inverse_purify_CNM)
-
-
-
-# compute Normalized Mutual Information (NMI)
-NMI_mbo_1_unnor_lf_1 = normalized_mutual_info_score(gt_list, u_1_unnor_individual_label)
-#NMI_mbo_1_unnor_lf_06 = normalized_mutual_info_score(gt_list, u_1_unnor_individual_label_06)
-#NMI_mbo_1_unnor_lf_05 = normalized_mutual_info_score(gt_list, u_1_unnor_individual_label_05)
-
-NMI_mbo_1_nor_Lf_1 = normalized_mutual_info_score(gt_list, u_1_nor_individual_label_1)
-#NMI_mbo_1_nor_Lf_06 = normalized_mutual_info_score(gt_list, u_1_nor_individual_label_06)
-#NMI_mbo_1_nor_Lf_05 = normalized_mutual_info_score(gt_list, u_1_nor_individual_label_05)
-
-NMI_mbo_1_nor_Qh_1 = normalized_mutual_info_score(gt_list, u_1_nor_Qh_individual_label_1)
-#NMI_mbo_1_nor_Qh_06 = normalized_mutual_info_score(gt_list, u_1_nor_Qh_individual_label_06)
-#NMI_mbo_1_nor_Qh_05 = normalized_mutual_info_score(gt_list, u_1_nor_Qh_individual_label_05)
-
-NMI_mbo_1_nor_Lf_Qh_1 = normalized_mutual_info_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
-#NMI_mbo_1_nor_Lf_Qh_06 = normalized_mutual_info_score(gt_list, u_1_nor_Lf_Qh_individual_label_06)
-#NMI_mbo_1_nor_Lf_Qh_05 = normalized_mutual_info_score(gt_list, u_1_nor_Lf_Qh_individual_label_05)
-
-NMI_mbo_inner = normalized_mutual_info_score(gt_list, u_inner_individual_label_1)
-
-NMI_mbo_rw_1 = normalized_mutual_info_score(gt_list, u_1_rw_individual_label_1)
-
-NMI_mbo_2_1 = normalized_mutual_info_score(gt_list, u_2_individual_label_1)
-#NMI_mbo_2_06 = normalized_mutual_info_score(gt_list, u_2_individual_label_06)
-#NMI_mbo_2_05 = normalized_mutual_info_score(gt_list, u_2_individual_label_05)
-
-NMI_spectral_clustering = normalized_mutual_info_score(gt_list, assignment)
-NMI_gn = normalized_mutual_info_score(gt_list, partition_GN)
-NMI_louvain = normalized_mutual_info_score(gt_list, louvain_list)
-NMI_CNM = normalized_mutual_info_score(gt_list, CNM_list)
-
-
-print('NMI for MMBO1 unnormalized L_F with \eta =1 : ', NMI_mbo_1_unnor_lf_1)
-#print('NMI for MMBO1 unnormalized L_F with \eta =0.6 : ', NMI_mbo_1_unnor_lf_06)
-#print('NMI for MMBO1 unnormalized L_F with \eta =0.5 : ', NMI_mbo_1_unnor_lf_05)
-
-print('NMI for MMBO1 normalized L_F with \eta =1 : ', NMI_mbo_1_nor_Lf_1)
-#print('NMI for MMBO1 normalized L_F with \eta =0.6 : ', NMI_mbo_1_nor_Lf_06)
-#print('NMI for MMBO1 normalized L_F with \eta =0.5 : ', NMI_mbo_1_nor_Lf_05)
-
-print('NMI for MMBO1 normalized Q_H with \eta =1 : ', NMI_mbo_1_nor_Qh_1)
-#print('NMI for MMBO1 normalized Q_H with \eta =0.6 : ', NMI_mbo_1_nor_Qh_06)
-#print('NMI for MMBO1 normalized Q_H with \eta =0.5 : ', NMI_mbo_1_nor_Qh_05)
-
-print('NMI for MMBO1 normalized L_F & Q_H with \eta =1 : ', NMI_mbo_1_nor_Lf_Qh_1)
-#print('NMI for MMBO1 normalized L_F & Q_H with \eta =0.6 : ', NMI_mbo_1_nor_Lf_Qh_06)
-#print('NMI for MMBO1 normalized L_F & Q_H with \eta =0.5 : ', NMI_mbo_1_nor_Lf_Qh_05)
-
-print('NMI for MBO_inner_step: ', NMI_mbo_inner)
-
-print('NMI for MMBO1 ramdom walk L_F with \eta =1 : ', NMI_mbo_rw_1)
-
-print('NMI for MMBO2 with \eta =1: ', NMI_mbo_2_1)
-#print('NMI for MMBO2 with \eta =0.6: ', NMI_mbo_2_06)
-#print('NMI for MMBO2 with \eta =0.5: ', NMI_mbo_2_05)
-
-print('NMI for MBO_inner_step: ', NMI_mbo_inner)
-
-print('NMI for spectral clustering: ', NMI_spectral_clustering)
-print('NMI for GN: ', NMI_gn)
-print('NMI for Louvain: ', NMI_louvain)
-print('NMI for CNM: ', NMI_CNM)
-
-
-
-# compute Adjusted Mutual Information (AMI)
-AMI_mbo_1_unnor_lf_1 = adjusted_mutual_info_score(gt_list, u_1_unnor_individual_label)
-#AMI_mbo_1_unnor_lf_06 = adjusted_mutual_info_score(gt_list, u_1_unnor_individual_label_06)
-#AMI_mbo_1_unnor_lf_05 = adjusted_mutual_info_score(gt_list, u_1_unnor_individual_label_05)
-
-AMI_mbo_1_nor_Lf_1 = adjusted_mutual_info_score(gt_list, u_1_nor_individual_label_1)
-#AMI_mbo_1_nor_Lf_06 = adjusted_mutual_info_score(gt_list, u_1_nor_individual_label_06)
-#AMI_mbo_1_nor_Lf_05 = adjusted_mutual_info_score(gt_list, u_1_nor_individual_label_05)
-
-AMI_mbo_1_nor_Qh_1 = adjusted_mutual_info_score(gt_list, u_1_nor_Qh_individual_label_1)
-#AMI_mbo_1_nor_Qh_06 = adjusted_mutual_info_score(gt_list, u_1_nor_Qh_individual_label_06)
-#AMI_mbo_1_nor_Qh_05 = adjusted_mutual_info_score(gt_list, u_1_nor_Qh_individual_label_05)
-
-AMI_mbo_1_nor_Lf_Qh_1 = adjusted_mutual_info_score(gt_list, u_1_nor_Lf_Qh_individual_label_1)
-#AMI_mbo_1_nor_Lf_Qh_06 = adjusted_mutual_info_score(gt_list, u_1_nor_Lf_Qh_individual_label_06)
-#AMI_mbo_1_nor_Lf_Qh_05 = adjusted_mutual_info_score(gt_list, u_1_nor_Lf_Qh_individual_label_05)
-
-AMI_mbo_inner = adjusted_mutual_info_score(gt_list, u_inner_individual_label_1)
-
-AMI_mbo_rw_1 = adjusted_mutual_info_score(gt_list, u_1_rw_individual_label_1)
-
-AMI_mbo_2_1 = adjusted_mutual_info_score(gt_list, u_2_individual_label_1)
-#AMI_mbo_2_06 = adjusted_mutual_info_score(gt_list, u_2_individual_label_06)
-#AMI_mbo_2_05 = adjusted_mutual_info_score(gt_list, u_2_individual_label_05)
-
-AMI_spectral_clustering = adjusted_mutual_info_score(gt_list, assignment)
-AMI_gn = adjusted_mutual_info_score(gt_list, partition_GN)
-AMI_louvain = adjusted_mutual_info_score(gt_list, louvain_list)
-AMI_CNM = adjusted_mutual_info_score(gt_list, CNM_list)
-
-
-print('AMI for MMBO1 unnormalized L_F with \eta =1 : ', AMI_mbo_1_unnor_lf_1)
-#print('AMI for MMBO1 unnormalized L_F with \eta =0.6 : ', AMI_mbo_1_unnor_lf_06)
-#print('AMI for MMBO1 unnormalized L_F with \eta =0.5 : ', AMI_mbo_1_unnor_lf_05)
-
-print('AMI for MMBO1 normalized L_F with \eta =1 : ', AMI_mbo_1_nor_Lf_1)
-#print('AMI for MMBO1 normalized L_F with \eta =0.6 : ', AMI_mbo_1_nor_Lf_06)
-#print('AMI for MMBO1 normalized L_F with \eta =0.5 : ', AMI_mbo_1_nor_Lf_05)
-
-print('AMI for MMBO1 normalized Q_H with \eta =1 : ', AMI_mbo_1_nor_Qh_1)
-#print('AMI for MMBO1 normalized Q_H with \eta =0.6 : ', AMI_mbo_1_nor_Qh_06)
-#print('AMI for MMBO1 normalized Q_H with \eta =0.5 : ', AMI_mbo_1_nor_Qh_05)
-
-print('AMI for MMBO1 normalized L_F & Q_H with \eta =1 : ', AMI_mbo_1_nor_Lf_Qh_1)
-#print('AMI for MMBO1 normalized L_F & Q_H with \eta =0.6 : ', AMI_mbo_1_nor_Lf_Qh_06)
-#print('AMI for MMBO1 normalized L_F & Q_H with \eta =0.5 : ', AMI_mbo_1_nor_Lf_Qh_05)
-
-print('AMI for MBO_inner_step: ', AMI_mbo_inner)
-
-print('AMI for MMBO1 ramdom walk L_F with \eta =1 : ', AMI_mbo_rw_1)
-
-print('AMI for MMBO2 with \eta =1: ', AMI_mbo_2_1)
-#print('AMI for MMBO2 with \eta =0.6: ', AMI_mbo_2_06)
-#print('AMI for MMBO2 with \eta =0.5: ', AMI_mbo_2_05)
-
-print('AMI for spectral clustering: ', AMI_spectral_clustering)
-print('AMI for GN: ', AMI_gn)
-print('AMI for Louvain: ', AMI_louvain)
-print('AMI for CNM: ', AMI_CNM)
-
-
-
-testarray =["modularity_gt score", "modularity_1 unnormalized", "modularity_1 normalized L_F ", 
-            "modularity_1 normalized Q_H ", "modularity_1 normalized L_F & Q_H ", "modularity_inner_step score", 
-            "modularity_random walk score", "modularity_2 ", 
-            "modularity_Louvain", "modularity_CNM", "modularity_GN", "modularity_spectral clustering",
-            "ARI for MMBO1 unnormalized L_F ", "ARI for MMBO1 normalized L_F with eta =1", "ARI for MMBO1 normalized Q_H with eta =1", 
-            "ARI for MMBO1 normalized L_F & Q_H ", "ARI for MBO_inner_step", "ARI for MBO_random walk", "ARI for MMBO2 with eta =1", 
-            "ARI for Louvain", "ARI for CNM", "ARI for GN", "ARI for spectral clustering",
-            "purify for MMBO1 unnormalized L_F", "purify for MMBO1 normalized L_F", "purify for MMBO1 normalized Q_H",
-            "purify for MMBO1 normalized L_F & Q_H", "purify for MBO_inner_step", "purify for MMBO1 ramdom walk L_F", "purify for MMBO2",
-            "purify for Louvain", "purify for CNM", "purify for GN", "purify for spectral clustering",
-            "inverse purify for MMBO1 unnormalized L_F", "inverse purify for MMBO1 normalized L_F", "inverse purify for MMBO1 normalized Q_H",
-            "inverse purify for MMBO1 normalized L_F & Q_H", "inverse purify for MBO_inner_step", "inverse purify for MMBO1 ramdom walk L_F", "inverse purify for MMBO2",
-            "inverse purify for Louvain", "inverse purify for CNM", "inverse purify for GN", "inverse purify for spectral clustering",
-            "NMI for MMBO1 unnormalized L_F", "NMI for MMBO1 normalized L_F", "NMI for MMBO1 normalized Q_H",
-            "NMI for MMBO1 normalized L_F & Q_H", "NMI for MBO_inner_step", "NMI for MMBO1 ramdom walk L_F", "NMI for MMBO2",
-            "NMI for Louvain", "NMI for CNM", "NMI for GN", "NMI for spectral clustering",
-            "AMI for MMBO1 unnormalized L_F", "AMI for MMBO1 normalized L_F", "AMI for MMBO1 normalized Q_H",
-            "AMI for MMBO1 normalized L_F & Q_H", "AMI for MBO_inner_step", "AMI for MMBO1 ramdom walk L_F", "AMI for MMBO2",
-            "AMI for Louvain", "AMI for CNM", "AMI for GN", "AMI for spectral clustering"]
+modularity_spectral_clustering = skn.clustering.modularity(adj_mat,assignment,resolution=0.5)
+ARI_spectral_clustering = adjusted_rand_score(assignment, gt_labels)
+purify_spectral_clustering = purity_score(gt_labels, assignment)
+inverse_purify_spectral_clustering = inverse_purity_score(gt_labels, assignment)
+NMI_spectral_clustering = normalized_mutual_info_score(gt_labels, assignment)
+
+
+print(' modularity Spectral clustering score(K=10 and m=K): ', modularity_spectral_clustering)
+print(' ARI Spectral clustering  score: ', ARI_spectral_clustering)
+print(' purify for Spectral clustering : ', purify_spectral_clustering)
+print(' inverse purify for Spectral clustering : ', inverse_purify_spectral_clustering)
+print(' NMI for Spectral clustering: ', NMI_spectral_clustering)
+
+
+
+
+#testarray =["modularity_gt score", "modularity_1 unnormalized", "modularity_1 normalized L_F ", 
+#            "modularity_1 normalized Q_H ", "modularity_1 normalized L_F & Q_H ", "modularity_inner_step score", 
+#            "modularity_random walk score", "modularity_2 ", 
+#            "modularity_Louvain", "modularity_CNM", "modularity_GN", "modularity_spectral clustering",
+#            "ARI for MMBO1 unnormalized L_F ", "ARI for MMBO1 normalized L_F with eta =1", "ARI for MMBO1 normalized Q_H with eta =1", 
+#            "ARI for MMBO1 normalized L_F & Q_H ", "ARI for MBO_inner_step", "ARI for MBO_random walk", "ARI for MMBO2 with eta =1", 
+#            "ARI for Louvain", "ARI for CNM", "ARI for GN", "ARI for spectral clustering",
+#            "purify for MMBO1 unnormalized L_F", "purify for MMBO1 normalized L_F", "purify for MMBO1 normalized Q_H",
+#            "purify for MMBO1 normalized L_F & Q_H", "purify for MBO_inner_step", "purify for MMBO1 ramdom walk L_F", "purify for MMBO2",
+#            "purify for Louvain", "purify for CNM", "purify for GN", "purify for spectral clustering",
+#            "inverse purify for MMBO1 unnormalized L_F", "inverse purify for MMBO1 normalized L_F", "inverse purify for MMBO1 normalized Q_H",
+#            "inverse purify for MMBO1 normalized L_F & Q_H", "inverse purify for MBO_inner_step", "inverse purify for MMBO1 ramdom walk L_F", "inverse purify for MMBO2",
+#            "inverse purify for Louvain", "inverse purify for CNM", "inverse purify for GN", "inverse purify for spectral clustering",
+#            "NMI for MMBO1 unnormalized L_F", "NMI for MMBO1 normalized L_F", "NMI for MMBO1 normalized Q_H",
+#            "NMI for MMBO1 normalized L_F & Q_H", "NMI for MBO_inner_step", "NMI for MMBO1 ramdom walk L_F", "NMI for MMBO2",
+#            "NMI for Louvain", "NMI for CNM", "NMI for GN", "NMI for spectral clustering",
+#            "AMI for MMBO1 unnormalized L_F", "AMI for MMBO1 normalized L_F", "AMI for MMBO1 normalized Q_H",
+#            "AMI for MMBO1 normalized L_F & Q_H", "AMI for MBO_inner_step", "AMI for MMBO1 ramdom walk L_F", "AMI for MMBO2",
+#            "AMI for Louvain", "AMI for CNM", "AMI for GN", "AMI for spectral clustering"]
 
 #resultarray = [modu_gt, modu_1_unnor_1, modu_1_unnor_06, modu_1_unnor_05,
 #               modu_1_nor_Lf_1, modu_1_nor_Lf_06, modu_1_nor_Lf_05,
@@ -662,28 +279,28 @@ testarray =["modularity_gt score", "modularity_1 unnormalized", "modularity_1 no
 #               ARI_mbo_2_1, ARI_mbo_2_06, ARI_mbo_2_05,
 #               ARI_louvain, ARI_CNM, ARI_GN, ARI_spectral_clustering]
 
-resultarray = [modu_gt, modu_1_unnor_1, modu_1_nor_Lf_1, modu_1_nor_Qh_1, 
-               modu_1_nor_Lf_Qh_1, modu_inner_1, modu_rw_1, modu_2_1, 
-               modu_louvain, modu_CNM, modu_GN, modu_sc,
-               ARI_mbo_1_unnor_lf, ARI_mbo_1_nor_Lf_1, ARI_mbo_1_nor_Qh_1, ARI_mbo_1_nor_Lf_Qh_1, 
-               ARI_mbo_inner_1, ARI_mbo_rw_1, ARI_mbo_2_1, 
-               ARI_louvain, ARI_CNM, ARI_GN, ARI_spectral_clustering,
-               purify_mbo_1_unnor_lf_1, purify_mbo_1_nor_Lf_1, purify_mbo_1_nor_Qh_1, purify_mbo_1_nor_Lf_Qh_1,
-               purify_mbo_inner, purify_mbo_rw_1, purify_mbo_2_1,
-               purify_louvain, purify_CNM, purify_gn, purify_spectral_clustering,
-               inverse_purify_mbo_1_unnor_lf_1, inverse_purify_mbo_1_nor_Lf_1, inverse_purify_mbo_1_nor_Qh_1, inverse_purify_mbo_1_nor_Lf_Qh_1,
-               inverse_purify_mbo_inner, inverse_purify_mbo_rw_1, inverse_purify_mbo_2_1,
-               inverse_purify_louvain, inverse_purify_CNM, inverse_purify_gn, inverse_purify_spectral_clustering,
-               NMI_mbo_1_unnor_lf_1, NMI_mbo_1_nor_Lf_1, NMI_mbo_1_nor_Qh_1, NMI_mbo_1_nor_Lf_Qh_1,
-               NMI_mbo_inner, NMI_mbo_rw_1, NMI_mbo_2_1,
-               NMI_louvain, NMI_CNM, NMI_gn, NMI_spectral_clustering,
-               AMI_mbo_1_unnor_lf_1, AMI_mbo_1_nor_Lf_1, AMI_mbo_1_nor_Qh_1, AMI_mbo_1_nor_Lf_Qh_1,
-               AMI_mbo_inner, AMI_mbo_rw_1, AMI_mbo_2_1,
-               AMI_louvain, AMI_CNM, AMI_gn, AMI_spectral_clustering]
+#resultarray = [modu_gt, modu_1_unnor_1, modu_1_nor_Lf_1, modu_1_nor_Qh_1, 
+#               modu_1_nor_Lf_Qh_1, modu_inner_1, modu_rw_1, modu_2_1, 
+#               modu_louvain, modu_CNM, modu_GN, modu_sc,
+#               ARI_mbo_1_unnor_lf, ARI_mbo_1_nor_Lf_1, ARI_mbo_1_nor_Qh_1, ARI_mbo_1_nor_Lf_Qh_1, 
+#               ARI_mbo_inner_1, ARI_mbo_rw_1, ARI_mbo_2_1, 
+#               ARI_louvain, ARI_CNM, ARI_GN, ARI_spectral_clustering,
+#               purify_mbo_1_unnor_lf_1, purify_mbo_1_nor_Lf_1, purify_mbo_1_nor_Qh_1, purify_mbo_1_nor_Lf_Qh_1,
+#               purify_mbo_inner, purify_mbo_rw_1, purify_mbo_2_1,
+#               purify_louvain, purify_CNM, purify_gn, purify_spectral_clustering,
+#               inverse_purify_mbo_1_unnor_lf_1, inverse_purify_mbo_1_nor_Lf_1, inverse_purify_mbo_1_nor_Qh_1, inverse_purify_mbo_1_nor_Lf_Qh_1,
+#               inverse_purify_mbo_inner, inverse_purify_mbo_rw_1, inverse_purify_mbo_2_1,
+#               inverse_purify_louvain, inverse_purify_CNM, inverse_purify_gn, inverse_purify_spectral_clustering,
+#               NMI_mbo_1_unnor_lf_1, NMI_mbo_1_nor_Lf_1, NMI_mbo_1_nor_Qh_1, NMI_mbo_1_nor_Lf_Qh_1,
+#               NMI_mbo_inner, NMI_mbo_rw_1, NMI_mbo_2_1,
+#               NMI_louvain, NMI_CNM, NMI_gn, NMI_spectral_clustering,
+#               AMI_mbo_1_unnor_lf_1, AMI_mbo_1_nor_Lf_1, AMI_mbo_1_nor_Qh_1, AMI_mbo_1_nor_Lf_Qh_1,
+#               AMI_mbo_inner, AMI_mbo_rw_1, AMI_mbo_2_1,
+#               AMI_louvain, AMI_CNM, AMI_gn, AMI_spectral_clustering]
 
 
-with open('MNIST_test.csv', 'w', newline='') as csvfile:
-    wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
-    wr.writerow(testarray)
-    wr.writerow(resultarray)
+#with open('MNIST_test.csv', 'w', newline='') as csvfile:
+#    wr = csv.writer(csvfile, quoting=csv.QUOTE_ALL)
+#    wr.writerow(testarray)
+#    wr.writerow(resultarray)
 
