@@ -398,7 +398,7 @@ def mbo_modularity_2(num_nodes, num_communities, m,dti, tol, graph_laplacian_pos
 
 
 ## given eigenvalues and eigenvectors
-def mbo_modularity_given_eig(num_communities, eigval,eigvec,deg,dt, tol, 
+def mbo_modularity_given_eig(num_communities, num_nodes,eigval,eigvec,dt, tol, 
                             inner_step_count, gamma=0.5,max_iter=10000, thresh_type="max"): 
     
 
@@ -408,7 +408,7 @@ def mbo_modularity_given_eig(num_communities, eigval,eigvec,deg,dt, tol,
     eigval = eigval.reshape((m,))
     print('eigenvalue shape: ', eigval.shape)
 
-    num_nodes = len(deg)
+    #num_nodes = len(deg)
     #degree_diag = np.diag(deg)
     #degree_diag = sp.sparse.spdiags([deg], [0], num_nodes, num_nodes)
     #degree = np.array(np.sum(adj_matrix, axis=1)).flatten()
