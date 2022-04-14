@@ -54,6 +54,9 @@ def construct_null_model(adj_matrix):
         
     A_absolute_matrix = np.abs(adj_matrix)
     degree = np.array(np.sum(A_absolute_matrix, axis=-1)).flatten()
+
+    del A_absolute_matrix
+
     dergee_di_null = np.expand_dims(degree, axis=-1)
     #print('max degree: ',degree.shape)
     #print('degree d_i type: ', dergee_di_null.shape)
