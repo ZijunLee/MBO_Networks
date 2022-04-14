@@ -86,23 +86,23 @@ print('W shape: ', W.shape)
 #adj_mat = build_affinity_matrix_new(Z_training,gamma=gamma, affinity='rbf',n_neighbors=10, neighbor_type='knearest')
 #print('adj_mat shape: ', adj_mat.shape)
 adj_mat = W.toarray()
-#print('adj_mat type: ', type(adj_mat))
+print('adj_mat type: ', type(adj_mat))
 
-del Z_training
+del Z_training, 
 
 
-start_time_construct_null_model = time.time()
-null_model = construct_null_model(adj_mat)
-time_null_model = time.time() - start_time_construct_null_model
-print("construct null model:-- %.3f seconds --" % (time_null_model))
+#start_time_construct_null_model = time.time()
+#null_model = construct_null_model(adj_mat)
+#time_null_model = time.time() - start_time_construct_null_model
+#print("construct null model:-- %.3f seconds --" % (time_null_model))
 
 
 start_time_construct_lap_signless = time.time()
-num_nodes, m_1, degree, target_size, graph_laplacian, sym_graph_lap,rw_graph_lap, signless_laplacian, sym_signless_lap, rw_signless_lap = adj_to_laplacian_signless_laplacian(adj_mat, null_model, num_communities,m ,target_size=None)
+num_nodes, m_1, degree, target_size, graph_laplacian, sym_graph_lap,rw_graph_lap, signless_laplacian, sym_signless_lap, rw_signless_lap = adj_to_laplacian_signless_laplacian(adj_mat, num_communities,m ,target_size=None)
 time_laplacian = time.time() - start_time_construct_lap_signless
 print("construct laplacian & signless laplacian:-- %.3f seconds --" % (time_laplacian))
 
-del null_model
+#del null_model
 
 #print('symmetric normalized L_F shape: ', sym_graph_lap.shape)
 #print('symmetric normalized Q_H shape: ', sym_signless_lap.shape)
@@ -126,11 +126,47 @@ D_mmbo, V_mmbo = eigsh(
 time_eig_l_mix = time.time() - start_time_eigendecomposition_l_mix
 print("compute eigenvalues and eigenvectors of L_{mix} for MMBO:-- %.3f seconds --" % (time_eig_l_mix))
 
+
+# Compute eigenvalues and eigenvectors of L_{F_sym} for HU's method
+start_time_eigendecomposition_l_sym = time.time()
+#eigenpair_hu = quimb.linalg.slepc_linalg.eigs_slepc(sym_graph_lap, m, B=None,which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
+D_hu, V_hu = eigsh(
+    sym_graph_lap,
+    k=m,
+#    sigma=0,
+#    v0=np.ones((laplacian_mix.shape[0], 1)),
+    which='SA')
+time_eig_l_sym = time.time() - start_time_eigendecomposition_l_sym
+print("compute eigenvalues and eigenvectors of L_{F_sym} for HU's method:-- %.3f seconds --" % (time_eig_l_sym))
+
 # Initialize u
 start_time_initialize = time.time()
 u_init = get_initial_state_1(num_nodes, num_communities, target_size)
 time_initialize_u = time.time() - start_time_initialize
 print("compute initialize u:-- %.3f seconds --" % (time_initialize_u))
+
+
+# Test HU original MBO with symmetric normalized L_F
+start_time_hu_original = time.time()
+u_hu_vector, num_iter_HU = mbo_modularity_hu_original(num_nodes, num_communities, m_1,degree, dt_inner, u_init,sym_graph_lap,
+                             D_hu, V_hu, tol,target_size,inner_step_count) 
+time_hu_mbo = time.time() - start_time_hu_original
+print("HU original MBO:-- %.3f seconds --" % (time_eig_l_sym + time_initialize_u + time_hu_mbo))
+print('HU original MBO the num_iteration: ', num_iter_HU)
+
+u_hu_label_1 = vector_to_labels(u_hu_vector)
+
+modu_hu_original_1 = skn.clustering.modularity(W,u_hu_label_1,resolution=0.5)
+ARI_hu_original_1 = adjusted_rand_score(u_hu_label_1, gt_labels)
+purify_hu_original_1 = purity_score(gt_labels, u_hu_label_1)
+inverse_purify_hu_original_1 = inverse_purity_score(gt_labels, u_hu_label_1)
+NMI_hu_original_1 = normalized_mutual_info_score(gt_labels, u_hu_label_1)
+
+print(' modularity score for HU original MBO: ', modu_hu_original_1)
+print(' ARI for HU original MBO: ', ARI_hu_original_1)
+print(' purify for HU original MBO : ', purify_hu_original_1)
+print(' inverse purify for HU original MBO : ', inverse_purify_hu_original_1)
+print(' NMI for HU original MBO : ', NMI_hu_original_1)
 
 
 
@@ -202,3 +238,27 @@ print(' ARI Louvain  score: ', ARI_louvain)
 print(' purify for Louvain : ', purify_louvain)
 print(' inverse purify for Louvain : ', inverse_purify_louvain)
 print(' NMI for Louvain  : ', NMI_louvain)
+
+
+# Spectral clustering with k-means
+start_time_spectral_clustering = time.time()
+sc = SpectralClustering(n_clusters=10, affinity='precomputed')
+assignment = sc.fit_predict(adj_mat)
+print("spectral clustering algorithm:-- %.3f seconds --" % (time.time() - start_time_spectral_clustering))
+
+ass_vec = labels_to_vector(assignment)
+ass_dict = label_to_dict (assignment)
+
+
+modularity_spectral_clustering = skn.clustering.modularity(W,assignment,resolution=0.5)
+ARI_spectral_clustering = adjusted_rand_score(assignment, gt_labels)
+purify_spectral_clustering = purity_score(gt_labels, assignment)
+inverse_purify_spectral_clustering = inverse_purity_score(gt_labels, assignment)
+NMI_spectral_clustering = normalized_mutual_info_score(gt_labels, assignment)
+
+
+print(' modularity Spectral clustering score(K=10 and m=K): ', modularity_spectral_clustering)
+print(' ARI Spectral clustering  score: ', ARI_spectral_clustering)
+print(' purify for Spectral clustering : ', purify_spectral_clustering)
+print(' inverse purify for Spectral clustering : ', inverse_purify_spectral_clustering)
+print(' NMI for Spectral clustering: ', NMI_spectral_clustering)

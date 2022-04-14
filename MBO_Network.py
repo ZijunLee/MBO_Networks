@@ -71,13 +71,22 @@ def construct_null_model(adj_matrix):
     
 
 
-def adj_to_laplacian_signless_laplacian(adj_matrix, null_model, num_communities, m, target_size=None):
+def adj_to_laplacian_signless_laplacian(adj_matrix, num_communities, m, target_size=None):
         
     A_absolute_matrix = np.abs(adj_matrix)
     degree = np.array(np.sum(A_absolute_matrix, axis=-1)).flatten()
     num_nodes = len(degree)
 
-    del A_absolute_matrix
+    start_time_construct_null_model = time.time()
+    dergee_di_null = np.expand_dims(degree, axis=-1)
+    null_model = np.zeros((len(degree), len(degree)))
+    total_degree = np.sum(adj_matrix)
+    total_degree_int = total_degree.astype(int)
+    null_model = (dergee_di_null @ dergee_di_null.transpose())/ total_degree_int
+    time_null_model = time.time() - start_time_construct_null_model
+    print("construct null model:-- %.3f seconds --" % (time_null_model))
+
+    del A_absolute_matrix, dergee_di_null
         
     m = min(num_nodes - 2, m)  # Number of eigenvalues to use for pseudospectral
 
@@ -85,6 +94,7 @@ def adj_to_laplacian_signless_laplacian(adj_matrix, null_model, num_communities,
         target_size = [num_nodes // num_communities for i in range(num_communities)]
         target_size[-1] = num_nodes - sum(target_size[:-1])
 
+    start_time_construct_lap_signless = time.time()
     # compute unnormalized laplacian
     degree_diag = np.diag(degree)
     #degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)
@@ -118,6 +128,9 @@ def adj_to_laplacian_signless_laplacian(adj_matrix, null_model, num_communities,
 
     nor_signless_laplacian = np.sqrt(signless_degree_inv) @ signless_laplacian_null_model @ np.sqrt(signless_degree_inv)
     rw_signless_lapclacian =  signless_degree_inv @ signless_laplacian_null_model
+
+    time_laplacian = time.time() - start_time_construct_lap_signless
+    print("construct laplacian & signless laplacian:-- %.3f seconds --" % (time_laplacian))
 
     del signless_degree_inv
 
