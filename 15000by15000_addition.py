@@ -64,7 +64,7 @@ Z_training = feature_map_nystroem.fit_transform(data)
 
 W = gl.weightmatrix.knn(Z_training, 10)
 print('W shape: ', W.shape)
-print('W type: ', type(W))
+#print('W type: ', type(W))
 
 
 #gt_labels = gl.datasets.load('mnist', labels_only=True)
@@ -90,10 +90,17 @@ adj_mat = W.toarray()
 
 del Z_training
 
-null_model = construct_null_model(adj_mat)
-print('null_model shape: ', null_model.shape)
 
+start_time_construct_null_model = time.time()
+null_model = construct_null_model(adj_mat)
+time_null_model = time.time() - start_time_construct_null_model
+print("construct null model:-- %.3f seconds --" % (time_null_model))
+
+
+start_time_construct_lap_signless = time.time()
 num_nodes, m_1, degree, target_size, graph_laplacian, sym_graph_lap,rw_graph_lap, signless_laplacian, sym_signless_lap, rw_signless_lap = adj_to_laplacian_signless_laplacian(adj_mat, null_model, num_communities,m ,target_size=None)
+time_laplacian = time.time() - start_time_construct_lap_signless
+print("construct laplacian & signless laplacian:-- %.3f seconds --" % (time_laplacian))
 
 del null_model
 
@@ -106,4 +113,92 @@ time_l_mix = time.time() - start_time_l_mix
 print("compute l_{mix}:-- %.3f seconds --" % (time_l_mix))
 
 
+print('Using ARPACK for eigen-decomposition')
+# Compute eigenvalues and eigenvectors of L_{mix} for MMBO
+start_time_eigendecomposition_l_mix = time.time()
+#eigenpair_mmbo = quimb.linalg.slepc_linalg.eigs_slepc(l_mix, m, B=None,which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
+D_mmbo, V_mmbo = eigsh(
+    l_mix,
+    k=m,
+#    sigma=0,
+#    v0=np.ones((laplacian_mix.shape[0], 1)),
+    which='SA')
+time_eig_l_mix = time.time() - start_time_eigendecomposition_l_mix
+print("compute eigenvalues and eigenvectors of L_{mix} for MMBO:-- %.3f seconds --" % (time_eig_l_mix))
 
+# Initialize u
+start_time_initialize = time.time()
+u_init = get_initial_state_1(num_nodes, num_communities, target_size)
+time_initialize_u = time.time() - start_time_initialize
+print("compute initialize u:-- %.3f seconds --" % (time_initialize_u))
+
+
+
+## Test MMBO using the projection on the eigenvectors with symmetric normalized L_F & Q_H
+start_time_1_nor_Lf_Qh_1 = time.time()
+u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1 = mbo_modularity_1(num_nodes,num_communities, m_1, dt, u_init, 
+                                                 l_mix, D_mmbo, V_mmbo, tol, target_size, gamma_1)
+time_MMBO_projection_sym = time.time() - start_time_1_nor_Lf_Qh_1                                                
+print("MMBO using projection with sym normalized L_F & Q_H (K=10, m=K):-- %.3f seconds --" % (time_l_mix + time_eig_l_mix + time_initialize_u + time_MMBO_projection_sym))
+print('u_1 nor L_F & Q_H number of iteration(K=10 and m=K): ', num_repeat_1_nor_Lf_Qh_1)
+
+u_1_nor_Lf_Qh_individual_label_1 = vector_to_labels(u_1_nor_Lf_Qh_individual_1)
+
+
+modularity_1_nor_lf_qh = skn.clustering.modularity(W,u_1_nor_Lf_Qh_individual_label_1,resolution=0.5)
+ARI_mbo_1_nor_Lf_Qh_1 = adjusted_rand_score(u_1_nor_Lf_Qh_individual_label_1, gt_labels)
+purify_mbo_1_nor_Lf_Qh_1 = purity_score(gt_labels, u_1_nor_Lf_Qh_individual_label_1)
+inverse_purify_mbo_1_nor_Lf_Qh_1 = inverse_purity_score(gt_labels, u_1_nor_Lf_Qh_individual_label_1)
+NMI_mbo_1_nor_Lf_Qh_1 = normalized_mutual_info_score(gt_labels, u_1_nor_Lf_Qh_individual_label_1)
+
+print(' modularity_1 normalized L_F & Q_H score(K=10 and m=K): ', modularity_1_nor_lf_qh)
+print('average ARI_1 normalized L_F & Q_H score: ', ARI_mbo_1_nor_Lf_Qh_1)
+print(' purify for MMBO1 normalized L_F & Q_H with \eta =1 : ', purify_mbo_1_nor_Lf_Qh_1)
+print(' inverse purify for MMBO1 normalized L_F & Q_H with \eta =1 : ', inverse_purify_mbo_1_nor_Lf_Qh_1)
+print(' NMI for MMBO1 normalized L_F & Q_H with \eta =1 : ', NMI_mbo_1_nor_Lf_Qh_1)
+
+
+
+# MMBO1 with inner step & sym normalized L_F & Q_H
+start_time_1_inner_nor_1 = time.time()
+u_inner_nor_1,num_repeat_inner_nor = mbo_modularity_inner_step(num_nodes, num_communities, m_1, u_init, 
+                                        l_mix, D_mmbo, V_mmbo, dt_inner, tol,target_size, inner_step_count)
+time_MMBO_inner_step = time.time() - start_time_1_inner_nor_1
+print("MMBO1 with inner step & sym normalized L_F & Q_H:-- %.3f seconds --" % (time_l_mix + time_eig_l_mix + time_initialize_u + time_MMBO_inner_step))
+print('MMBO1 with inner step & sym the num_repeat_inner_nor: ',num_repeat_inner_nor)
+
+u_inner_nor_label_1 = vector_to_labels(u_inner_nor_1)
+
+modularity_1_inner_nor_1 = skn.clustering.modularity(W,u_inner_nor_label_1,resolution=0.5)
+ARI_mbo_1_inner_nor_1 = adjusted_rand_score(u_inner_nor_label_1, gt_labels)
+purify_mbo_1_inner_nor_1 = purity_score(gt_labels, u_inner_nor_label_1)
+inverse_purify_mbo_1_inner_nor_1 = inverse_purity_score(gt_labels, u_inner_nor_label_1)
+NMI_mbo_1_inner_nor_1 = normalized_mutual_info_score(gt_labels, u_inner_nor_label_1)
+
+print(' modularity_1 inner step sym normalized score: ', modularity_1_inner_nor_1)
+print(' ARI_1 inner step sym normalized score: ', ARI_mbo_1_inner_nor_1)
+print(' purify for MMBO1 inner step with sym normalized \eta =1 : ', purify_mbo_1_inner_nor_1)
+print(' inverse purify for MMBO1 inner step with sym normalized \eta =1 : ', inverse_purify_mbo_1_inner_nor_1)
+print(' NMI for MMBO1 inner step with sym normalized \eta =1 : ', NMI_mbo_1_inner_nor_1)
+
+
+# Louvain
+start_time_louvain = time.time()
+G = nx.convert_matrix.from_sp(adj_mat)
+partition_Louvain = community_louvain.best_partition(G, resolution=0.5)    # returns a dict
+print("Louvain:-- %.3f seconds --" % (time.time() - start_time_louvain))
+louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
+louvain_array = np.asarray(louvain_list)
+
+
+modularity_louvain = skn.clustering.modularity(W,louvain_array,resolution=1)
+ARI_louvain = adjusted_rand_score(louvain_array, gt_labels)
+purify_louvain = purity_score(gt_labels, louvain_array)
+inverse_purify_louvain = inverse_purity_score(gt_labels, louvain_array)
+NMI_louvain = normalized_mutual_info_score(gt_labels, louvain_array)
+
+print(' modularity Louvain score: ', modularity_louvain)
+print(' ARI Louvain  score: ', ARI_louvain)
+print(' purify for Louvain : ', purify_louvain)
+print(' inverse purify for Louvain : ', inverse_purify_louvain)
+print(' NMI for Louvain  : ', NMI_louvain)
