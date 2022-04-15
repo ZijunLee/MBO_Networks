@@ -120,9 +120,9 @@ start_time_eigendecomposition_l_mix = time.time()
 D_mmbo, V_mmbo = eigsh(
     l_mix,
     k=m,
-#    sigma=0,
+    sigma=0,
 #    v0=np.ones((laplacian_mix.shape[0], 1)),
-    which='SA')
+    which='LA')
 time_eig_l_mix = time.time() - start_time_eigendecomposition_l_mix
 print("compute eigenvalues and eigenvectors of L_{mix} for MMBO:-- %.3f seconds --" % (time_eig_l_mix))
 #print('EPSType is krylovschur')
@@ -136,9 +136,9 @@ start_time_eigendecomposition_l_sym = time.time()
 D_hu, V_hu = eigsh(
     sym_graph_lap,
     k=m,
-#    sigma=0,
+    sigma=0,
 #    v0=np.ones((laplacian_mix.shape[0], 1)),
-    which='SA')
+    which='LA')
 time_eig_l_sym = time.time() - start_time_eigendecomposition_l_sym
 print("compute eigenvalues and eigenvectors of L_{F_sym} for HU's method:-- %.3f seconds --" % (time_eig_l_sym))
 #print('EPSType is krylovschur')

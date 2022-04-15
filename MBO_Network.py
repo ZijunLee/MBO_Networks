@@ -79,9 +79,11 @@ def adj_to_laplacian_signless_laplacian(adj_matrix, num_communities, m, target_s
 
     start_time_construct_null_model = time.time()
     dergee_di_null = np.expand_dims(degree, axis=-1)
+    #print('dergee_di_null: ', type(dergee_di_null))
     null_model = np.zeros((len(degree), len(degree)))
     total_degree = np.sum(adj_matrix)
     total_degree_int = total_degree.astype(int)
+    #print('total_degree_int: ', type(total_degree_int))
     null_model = (dergee_di_null @ dergee_di_null.transpose())/ total_degree_int
     time_null_model = time.time() - start_time_construct_null_model
     print("construct null model:-- %.3f seconds --" % (time_null_model))
@@ -143,6 +145,7 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
     A_absolute_matrix = np.abs(adj_matrix)
     degree = np.array(np.sum(A_absolute_matrix, axis=1)).flatten()
     dergee_di_null = np.expand_dims(degree, axis=-1)
+
     num_nodes = len(degree)
     #print(num_nodes)
 
@@ -150,7 +153,7 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
     null_model = np.zeros((len(degree), len(degree)))
     total_degree = np.sum(A_absolute_matrix)
     total_degree_int = total_degree.astype(int)
-    #print('total degree: ', total_degree)
+    print('total_degree_int: ', type(total_degree_int))
     #print('length of degree: ', len(degree))
 
     #for i in range(len(degree)):
@@ -527,6 +530,7 @@ def mbo_modularity_given_eig(num_communities, num_nodes,degree,m,u_init, eigval,
     #for i in range(50):
         u_old = u_new.copy()
         vv = u_old.copy()
+
         ww = vv.copy()
         
         #start_time_diffusion = time.time()
@@ -631,7 +635,7 @@ def mbo_modularity_hu_original(num_nodes, num_communities, m, degree, dt, u_init
     
     print('Start Hu, Laurent algorithm')
     degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)
-
+    print('degree shape: ', degree.shape)
     start_time_eigendecomposition = time.time()
     #D, V = eigsh(
     #    nor_graph_laplacian,
@@ -665,11 +669,18 @@ def mbo_modularity_hu_original(num_nodes, num_communities, m, degree, dt, u_init
     #for i in range(50):
         u_old = u_new.copy()
         vv = u_old.copy()
+        #print('vv shape: ', vv.shape)
         ww = vv.copy()
-        
-        #start_time_diffusion = time.time()
+        #aa = degree.reshape(1, len(degree))
+        #aa = degree
+        #print('aa shape: ', aa.shape)
 
+        #sum_deg = np.sum(degree)
+        #sum_deg_int = sum_deg.astype(int)
+        #print('sum_deg_int shape: ', type(sum_deg_int))
+        #start_time_diffusion = time.time()
         for j in range(inner_step_count):
+            #mean_f = (aa @ vv) / sum_deg_int
             mean_f = np.dot(degree.reshape(1, len(degree)), vv) / np.sum(degree)
             ww += 2 * gamma * dt * degree_diag @ (vv - mean_f)
             vv = _diffusion_step_eig(ww,eigvec,eigval,dt)
