@@ -113,37 +113,37 @@ time_l_mix = time.time() - start_time_l_mix
 print("compute l_{mix}:-- %.3f seconds --" % (time_l_mix))
 
 
-#print('Using ARPACK for eigen-decomposition')
+print('Using ARPACK for eigen-decomposition')
 # Compute eigenvalues and eigenvectors of L_{mix} for MMBO
 start_time_eigendecomposition_l_mix = time.time()
-eigenpair_mmbo = quimb.linalg.slepc_linalg.eigs_slepc(l_mix, m, B=None,which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
-#D_mmbo, V_mmbo = eigsh(
-#    l_mix,
-#    k=m,
+#eigenpair_mmbo = quimb.linalg.slepc_linalg.eigs_slepc(l_mix, m, B=None,which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
+D_mmbo, V_mmbo = eigsh(
+    l_mix,
+    k=m,
 #    sigma=0,
 #    v0=np.ones((laplacian_mix.shape[0], 1)),
-#    which='SA')
+    which='SA')
 time_eig_l_mix = time.time() - start_time_eigendecomposition_l_mix
 print("compute eigenvalues and eigenvectors of L_{mix} for MMBO:-- %.3f seconds --" % (time_eig_l_mix))
-print('EPSType is krylovschur')
-D_mmbo = eigenpair_mmbo[0]
-V_mmbo = eigenpair_mmbo[1]
+#print('EPSType is krylovschur')
+#D_mmbo = eigenpair_mmbo[0]
+#V_mmbo = eigenpair_mmbo[1]
 
 
 # Compute eigenvalues and eigenvectors of L_{F_sym} for HU's method
 start_time_eigendecomposition_l_sym = time.time()
-eigenpair_hu = quimb.linalg.slepc_linalg.eigs_slepc(sym_graph_lap, m, B=None,which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
-#D_hu, V_hu = eigsh(
-#    sym_graph_lap,
-#    k=m,
+#eigenpair_hu = quimb.linalg.slepc_linalg.eigs_slepc(sym_graph_lap, m, B=None,which='SA',isherm=True, return_vecs=True,EPSType='krylovschur',tol=1e-7,maxiter=10000)
+D_hu, V_hu = eigsh(
+    sym_graph_lap,
+    k=m,
 #    sigma=0,
 #    v0=np.ones((laplacian_mix.shape[0], 1)),
-#    which='SA')
+    which='SA')
 time_eig_l_sym = time.time() - start_time_eigendecomposition_l_sym
 print("compute eigenvalues and eigenvectors of L_{F_sym} for HU's method:-- %.3f seconds --" % (time_eig_l_sym))
-print('EPSType is krylovschur')
-D_hu = eigenpair_hu[0]
-V_hu = eigenpair_hu[1]
+#print('EPSType is krylovschur')
+#D_hu = eigenpair_hu[0]
+#V_hu = eigenpair_hu[1]
 
 # Initialize u
 start_time_initialize = time.time()
