@@ -18,7 +18,6 @@ from sklearn.kernel_approximation import Nystroem
 from MBO_Network import mbo_modularity_1, adj_to_laplacian_signless_laplacian, mbo_modularity_inner_step, mbo_modularity_hu_original,construct_null_model
 from graph_cut_util import build_affinity_matrix_new
 from graph_mbo.utils import purity_score,inverse_purity_score,get_initial_state_1
-from test_MNIST_1 import D_mmbo, V_mmbo
 
 
 
