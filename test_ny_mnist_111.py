@@ -48,10 +48,10 @@ train_data = pca.transform(sample_data)
 
 adj_mat = build_affinity_matrix_new(train_data,affinity='rbf',gamma=gamma, n_neighbors=10, neighbor_type='knearest')
 
-start_time_construct_lap_signless = time.time()
+#start_time_construct_lap_signless = time.time()
 num_nodes, m_1, degree, target_size, graph_laplacian, sym_graph_lap,rw_graph_lap, signless_laplacian, sym_signless_lap, rw_signless_lap = adj_to_laplacian_signless_laplacian(adj_mat, num_communities,m ,target_size=None)
-time_laplacian = time.time() - start_time_construct_lap_signless
-print("construct laplacian & signless laplacian:-- %.3f seconds --" % (time_laplacian))
+#time_laplacian = time.time() - start_time_construct_lap_signless
+#print("construct laplacian & signless laplacian:-- %.3f seconds --" % (time_laplacian))
 
 #del null_model
 
@@ -76,7 +76,7 @@ eigenpair_mmbo = quimb.linalg.slepc_linalg.eigs_slepc(l_mix, m, B=None,which='SA
 #    which='LA')
 time_eig_l_mix = time.time() - start_time_eigendecomposition_l_mix
 print("compute eigenvalues and eigenvectors of L_{mix} for MMBO:-- %.3f seconds --" % (time_eig_l_mix))
-#print('EPSType is krylovschur')
+print('EPSType is krylovschur')
 D_mmbo = eigenpair_mmbo[0]
 V_mmbo = eigenpair_mmbo[1]
 
