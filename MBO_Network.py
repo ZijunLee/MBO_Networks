@@ -227,8 +227,8 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
 
 
 
-def mbo_modularity_1(num_nodes,num_communities, m, dt, u_init,laplacian_mix, eigval, eigvec, tol, target_size,
-                    gamma, eps=1, max_iter=10000, initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
+def mbo_modularity_1(num_nodes,num_communities, m, dt, u_init, eigval, eigvec, tol,
+                     max_iter=10000, initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start with MMBO using the projection on the eigenvectors')
     
@@ -288,8 +288,8 @@ def mbo_modularity_1(num_nodes,num_communities, m, dt, u_init,laplacian_mix, eig
         
         #start_time_thresholding = time.time()
         # Apply thresholding 
-        u_new = apply_threshold(u_half, target_size, thresh_type)
-        #u_new = _mbo_forward_step_multiclass(u_half)
+        #u_new = apply_threshold(u_half, target_size, thresh_type)
+        u_new = _mbo_forward_step_multiclass(u_half)
         #print("compute MBO thresholding:-- %.3f seconds --" % (time.time() - start_time_thresholding))            
                     
         # Stop criterion
@@ -560,7 +560,7 @@ def mbo_modularity_given_eig(num_communities, num_nodes,degree,m,u_init, eigval,
     return u_new, n
 
 
-def mbo_modularity_inner_step(num_nodes, num_communities, m, u_init,laplacian_mix, eigval, eigvec, dt, tol,target_size,inner_step_count,
+def mbo_modularity_inner_step(num_nodes, num_communities, m, u_init, eigval, eigvec, dt, tol,inner_step_count,
                         max_iter=10000,initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start with MMBO with finite difference')
@@ -603,17 +603,16 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, u_init,laplacian_mi
 
         #start_time_diffusion = time.time()
 
-        demon = sp.sparse.spdiags([1 / (1 + dti * eigval)], [0], m, m) @ eigvec.transpose()
-
-        
         for j in range(inner_step_count):
+            demon = sp.sparse.spdiags([1 / (1 + dti * eigval)], [0], m, m) @ eigvec.transpose()
             u_half = eigvec @ (demon @ u_old)
         
         #print("compute MBO diffusion step:-- %.3f seconds --" % (time.time() - start_time_diffusion))
         
         #start_time_thresholding = time.time()
         # Apply thresholding 
-        u_new = apply_threshold(u_half, target_size, thresh_type)
+        #u_new = apply_threshold(u_half, target_size, thresh_type)
+        u_new = _mbo_forward_step_multiclass(u_half)
         #print("compute MBO thresholding:-- %.3f seconds --" % (time.time() - start_time_thresholding)) 
         
         #start_time_stop_criterion = time.time()
@@ -630,12 +629,12 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, u_init,laplacian_mi
 
 
 
-def mbo_modularity_hu_original(num_nodes, num_communities, m, degree, dt, u_init,nor_graph_laplacian, eigval, eigvec, tol, target_size, inner_step_count, 
+def mbo_modularity_hu_original(num_nodes, num_communities, m, degree, dt, u_init, eigval, eigvec, tol, inner_step_count, 
                             gamma=0.5, max_iter=10000, thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start Hu, Laurent algorithm')
     degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)
-    print('degree shape: ', degree.shape)
+    #print('degree shape: ', degree.shape)
     start_time_eigendecomposition = time.time()
     #D, V = eigsh(
     #    nor_graph_laplacian,

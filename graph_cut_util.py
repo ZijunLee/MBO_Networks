@@ -599,11 +599,11 @@ def nystrom(raw_data, num_nystrom  = 300, sigma = None): # basic implementation
     distb = cdist(sample_data,other_data,'sqeuclidean')
     if sigma == None:
         sigma = np.percentile(np.percentile(distb, axis = 1, q = 5),q = 40) # a crude automatic kernel
-    B = np.exp(-distb/sigma).astype(np.float32)    
+    B = np.exp(-distb*sigma).astype(np.float32)    
 
     # calculating A
     dista = cdist(sample_data,sample_data,'sqeuclidean')
-    A = np.exp(-dista/sigma).astype(np.float32)
+    A = np.exp(-dista*sigma).astype(np.float32)
         #A.flat[::A.shape[0]+1] = 0
 
     # normalize A and B
