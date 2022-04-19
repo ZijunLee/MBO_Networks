@@ -19,6 +19,7 @@ from MBO_Network import mbo_modularity_1, adj_to_laplacian_signless_laplacian, m
 from graph_cut_util import build_affinity_matrix_new
 from graph_mbo.utils import purity_score,inverse_purity_score,get_initial_state_1
 from graph_cut.util.nystrom import nystrom_new
+from sklearn.metrics.pairwise import rbf_kernel
 
 
 
@@ -69,12 +70,12 @@ print('train_data shape: ', train_data.shape)
 #W = gl.weightmatrix.knn(Z_training, 10)
 #print('W shape: ', W.shape)
 #print('W type: ', type(W))
-
+W = rbf_kernel(train_data, train_data, gamma=gamma_002)
 
 #del train_data
 
-adj_mat = build_affinity_matrix_new(train_data,gamma=gamma_002, affinity='rbf',n_neighbors=10, neighbor_type='knearest')
-print('adj_mat shape: ', adj_mat.shape)
+#adj_mat = build_affinity_matrix_new(train_data,gamma=gamma_002, affinity='rbf',n_neighbors=10, neighbor_type='knearest')
+#print('adj_mat shape: ', adj_mat.shape)
 #adj_mat = W.toarray()
 #print('adj_mat type: ', type(adj_mat))
 
@@ -88,7 +89,7 @@ del train_data
 
 
 start_time_construct_lap_signless = time.time()
-num_nodes, m_1, degree, target_size, graph_laplacian, sym_graph_lap,rw_graph_lap, signless_laplacian, sym_signless_lap, rw_signless_lap = adj_to_laplacian_signless_laplacian(adj_mat, num_communities,m ,target_size=None)
+num_nodes, m_1, degree, target_size, graph_laplacian, sym_graph_lap,rw_graph_lap, signless_laplacian, sym_signless_lap, rw_signless_lap = adj_to_laplacian_signless_laplacian(W, num_communities,m ,target_size=None)
 time_laplacian = time.time() - start_time_construct_lap_signless
 print("construct laplacian & signless laplacian:-- %.3f seconds --" % (time_laplacian))
 
@@ -167,7 +168,7 @@ print('HU original MBO the num_iteration: ', num_iter_HU)
 
 u_hu_label_1 = vector_to_labels(u_hu_vector)
 
-modu_hu_original_1 = skn.clustering.modularity(adj_mat,u_hu_label_1,resolution=0.5)
+modu_hu_original_1 = skn.clustering.modularity(W,u_hu_label_1,resolution=0.5)
 ARI_hu_original_1 = adjusted_rand_score(u_hu_label_1, gt_labels)
 purify_hu_original_1 = purity_score(gt_labels, u_hu_label_1)
 inverse_purify_hu_original_1 = inverse_purity_score(gt_labels, u_hu_label_1)
@@ -191,7 +192,7 @@ print('HU original MBO the num_iteration: ', num_iter_HU)
 
 u_hu_label_1 = vector_to_labels(u_hu_vector)
 
-modu_hu_original_1 = skn.clustering.modularity(adj_mat,u_hu_label_1,resolution=0.5)
+modu_hu_original_1 = skn.clustering.modularity(W,u_hu_label_1,resolution=0.5)
 ARI_hu_original_1 = adjusted_rand_score(u_hu_label_1, gt_labels)
 purify_hu_original_1 = purity_score(gt_labels, u_hu_label_1)
 inverse_purify_hu_original_1 = inverse_purity_score(gt_labels, u_hu_label_1)
@@ -254,13 +255,13 @@ print(' NMI for HU original MBO : ', NMI_hu_original_1)
 
 # Louvain
 start_time_louvain = time.time()
-G = nx.convert_matrix.from_numpy_array(adj_mat)
+G = nx.convert_matrix.from_numpy_array(W)
 partition_Louvain = community_louvain.best_partition(G, resolution=0.5)    # returns a dict
 louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
 louvain_array = np.asarray(louvain_list)
 print("Louvain:-- %.3f seconds --" % (time.time() - start_time_louvain))
 
-modularity_louvain = skn.clustering.modularity(adj_mat,louvain_array,resolution=0.5)
+modularity_louvain = skn.clustering.modularity(W,louvain_array,resolution=0.5)
 ARI_louvain = adjusted_rand_score(louvain_array, gt_labels)
 purify_louvain = purity_score(gt_labels, louvain_array)
 inverse_purify_louvain = inverse_purity_score(gt_labels, louvain_array)
@@ -276,14 +277,14 @@ print(' NMI for Louvain  : ', NMI_louvain)
 # Spectral clustering with k-means
 start_time_spectral_clustering = time.time()
 sc = SpectralClustering(n_clusters=10, affinity='precomputed')
-assignment = sc.fit_predict(adj_mat)
+assignment = sc.fit_predict(W)
 print("spectral clustering algorithm:-- %.3f seconds --" % (time.time() - start_time_spectral_clustering))
 
 ass_vec = labels_to_vector(assignment)
 ass_dict = label_to_dict (assignment)
 
 
-modularity_spectral_clustering = skn.clustering.modularity(adj_mat,assignment,resolution=0.5)
+modularity_spectral_clustering = skn.clustering.modularity(W,assignment,resolution=0.5)
 ARI_spectral_clustering = adjusted_rand_score(assignment, gt_labels)
 purify_spectral_clustering = purity_score(gt_labels, assignment)
 inverse_purify_spectral_clustering = inverse_purity_score(gt_labels, assignment)
