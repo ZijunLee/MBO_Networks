@@ -21,7 +21,7 @@ from graph_mbo.utils import vector_to_labels, purity_score,inverse_purity_score
 ## parameter setting
 dt_inner = 1
 num_nodes = 70000
-num_communities = 11
+num_communities = 12
 m = 1 * num_communities
 #m = 100
 dt = 1
@@ -167,7 +167,7 @@ start_time_louvain = time.time()
 
 # Spectral clustering with k-means
 start_time_spectral_clustering = time.time()
-#sc = SpectralClustering(n_clusters=10, affinity='precomputed')
+#sc = SpectralClustering(n_clusters=10, gamma=0.02, affinity='precomputed')
 #assignment = sc.fit_predict(W)
 #print("spectral clustering algorithm:-- %.3f seconds --" % (time.time() - start_time_spectral_clustering))
 
