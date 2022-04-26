@@ -11,8 +11,9 @@ from sklearn.metrics import adjusted_rand_score
 import sknetwork as skn
 import networkx as nx
 from community import community_louvain
+from sklearn.cluster import SpectralClustering
 from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_rand_score
-from graph_mbo.utils import purity_score,inverse_purity_score,get_initial_state_1
+from graph_mbo.utils import purity_score,inverse_purity_score,get_initial_state_1, labels_to_vector
 from graph_cut.util.nystrom import nystrom_extension, nystrom_extension_test, nystrom_new
 from MBO_Network import mbo_modularity_1, adj_to_laplacian_signless_laplacian, mbo_modularity_inner_step, mbo_modularity_hu_original,construct_null_model
 from graph_mbo.utils import vector_to_labels, purity_score,inverse_purity_score
@@ -22,7 +23,7 @@ from graph_mbo.utils import vector_to_labels, purity_score,inverse_purity_score
 ## parameter setting
 dt_inner = 1
 num_nodes = 70000
-num_communities = 12
+num_communities = 10
 m = 1 * num_communities
 #m = 100
 dt = 1
@@ -168,21 +169,21 @@ print(' NMI for Louvain  : ', NMI_louvain)
 
 # Spectral clustering with k-means
 start_time_spectral_clustering = time.time()
-#sc = SpectralClustering(n_clusters=10, gamma=0.02, affinity='precomputed')
-#assignment = sc.fit_predict(W)
-#print("spectral clustering algorithm:-- %.3f seconds --" % (time.time() - start_time_spectral_clustering))
+sc = SpectralClustering(n_clusters=num_communities, gamma=gamma, affinity='precomputed')
+assignment = sc.fit_predict(W)
+print("spectral clustering algorithm:-- %.3f seconds --" % (time.time() - start_time_spectral_clustering))
 
-#ass_vec = labels_to_vector(assignment)
+ass_vec = labels_to_vector(assignment)
 #ass_dict = label_to_dict (assignment)
 
-#modularity_spectral_clustering = skn.clustering.modularity(W,assignment,resolution=0.5)
-#ARI_spectral_clustering = adjusted_rand_score(assignment, gt_labels)
-#purify_spectral_clustering = purity_score(gt_labels, assignment)
-#inverse_purify_spectral_clustering = inverse_purity_score(gt_labels, assignment)
-#NMI_spectral_clustering = normalized_mutual_info_score(gt_labels, assignment)
+modularity_spectral_clustering = skn.clustering.modularity(W,assignment,resolution=0.5)
+ARI_spectral_clustering = adjusted_rand_score(assignment, gt_labels)
+purify_spectral_clustering = purity_score(gt_labels, assignment)
+inverse_purify_spectral_clustering = inverse_purity_score(gt_labels, assignment)
+NMI_spectral_clustering = normalized_mutual_info_score(gt_labels, assignment)
 
-#print(' modularity Spectral clustering score(K=10 and m=K): ', modularity_spectral_clustering)
-#print(' ARI Spectral clustering  score: ', ARI_spectral_clustering)
-#print(' purify for Spectral clustering : ', purify_spectral_clustering)
-#print(' inverse purify for Spectral clustering : ', inverse_purify_spectral_clustering)
-#print(' NMI for Spectral clustering: ', NMI_spectral_clustering)
+print(' modularity Spectral clustering score(K=10 and m=K): ', modularity_spectral_clustering)
+print(' ARI Spectral clustering  score: ', ARI_spectral_clustering)
+print(' purify for Spectral clustering : ', purify_spectral_clustering)
+print(' inverse purify for Spectral clustering : ', inverse_purify_spectral_clustering)
+print(' NMI for Spectral clustering: ', NMI_spectral_clustering)
