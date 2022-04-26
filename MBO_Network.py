@@ -181,7 +181,6 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
     #laplacian_mix = graph_laplacian_positive + signless_graph_laplacian  # L_{mix} = L_B^+ + Q_B^- = Lbar
 
     # compute signed laplacian
-        #graph_laplacian, degree = sp.sparse.csgraph.laplacian(A_absolute_matrix, return_diag=True)
     #degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)  # Dbar
     #sign_graph_laplacian = degree_diag - adj_matrix    # L_A = Dbar - A
 
@@ -227,8 +226,8 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
 
 
 
-def mbo_modularity_1(num_nodes,num_communities, m, dt, u_init, eigval, eigvec, tol,
-                     max_iter=10000, initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
+def mbo_modularity_1(num_nodes,num_communities, m, degree, u_init, eigval, eigvec, tol,
+                     gamma=0.5, eps=1, max_iter=10000, initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start with MMBO using the projection on the eigenvectors')
     
@@ -260,14 +259,14 @@ def mbo_modularity_1(num_nodes,num_communities, m, dt, u_init, eigval, eigvec, t
     #u = get_initial_state_1(num_nodes, num_communities, target_size)
     #print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
     
-    #start_time_timestep_selection = time.time()
+    start_time_timestep_selection = time.time()
     # Time step selection
-    #dtlow = 0.15/((gamma+1)*np.max(degree))
-    #dthigh = np.log(np.linalg.norm(u)/eps)/D_sign[0]
-    #dti = np.sqrt(dtlow*dthigh)
-    #print('dti: ',dti)
-    #print("compute time step selection:-- %.3f seconds --" % (time.time() - start_time_timestep_selection))
-    dti = dt 
+    dtlow = 0.15/((gamma+1)*np.max(degree))
+    dthigh = np.log(np.linalg.norm(u_init)/eps)/eigval[0]
+    dti = np.sqrt(dtlow*dthigh)
+    print('dti: ',dti)
+    print("compute time step selection:-- %.3f seconds --" % (time.time() - start_time_timestep_selection))
+    #dti = dt 
 
     # Perform MBO scheme
     n = 0
@@ -560,8 +559,8 @@ def mbo_modularity_given_eig(num_communities, num_nodes,degree,m,u_init, eigval,
     return u_new, n
 
 
-def mbo_modularity_inner_step(num_nodes, num_communities, m, u_init, eigval, eigvec, dt, tol,inner_step_count,
-                        max_iter=10000,initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
+def mbo_modularity_inner_step(num_nodes, num_communities, m, dt, u_init, eigval, eigvec, tol,inner_step_count,
+                        gamma=0.5, eps=1, max_iter=10000,initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start with MMBO with finite difference')
 
@@ -587,6 +586,14 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, u_init, eigval, eig
     # Initialize parameters
     #u = get_initial_state_1(num_nodes, num_communities, target_size)
     #print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
+
+    #start_time_timestep_selection = time.time()
+    # Time step selection
+    #dtlow = 0.15/((gamma+1)*np.max(degree))
+    #dthigh = np.log(np.linalg.norm(u_init)/eps)/eigval[0]
+    #dti = np.sqrt(dtlow*dthigh)
+    #print('dti: ',dti)
+    #print("compute time step selection:-- %.3f seconds --" % (time.time() - start_time_timestep_selection))
 
 
     # Perform MBO scheme
@@ -629,8 +636,8 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, u_init, eigval, eig
 
 
 
-def mbo_modularity_hu_original(num_nodes, num_communities, m, degree, dt, u_init, eigval, eigvec, tol, inner_step_count, 
-                            gamma=0.5, max_iter=10000, thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
+def mbo_modularity_hu_original(num_nodes, num_communities, m, degree,dt, u_init, eigval, eigvec, tol, inner_step_count, 
+                            gamma=0.5,eps=1, max_iter=10000, thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start Hu, Laurent algorithm')
     degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)
@@ -657,6 +664,14 @@ def mbo_modularity_hu_original(num_nodes, num_communities, m, degree, dt, u_init
     #u = get_initial_state_1(num_nodes, num_communities, target_size)
     #print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
     
+    #start_time_timestep_selection = time.time()
+    # Time step selection
+    #dtlow = 0.15/((gamma+1)*np.max(degree))
+    #dthigh = np.log(np.linalg.norm(u_init)/eps)/eigval[0]
+    #dti = np.sqrt(dtlow*dthigh)
+    #print('dti: ',dti)
+    #print("compute time step selection:-- %.3f seconds --" % (time.time() - start_time_timestep_selection))
+
 
     stop_criterion = 10
     n = 0
