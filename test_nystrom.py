@@ -21,7 +21,7 @@ from graph_mbo.utils import vector_to_labels, purity_score,inverse_purity_score
 ## parameter setting
 dt_inner = 1
 num_nodes = 70000
-num_communities = 10
+num_communities = 11
 m = 1 * num_communities
 #m = 100
 dt = 1
