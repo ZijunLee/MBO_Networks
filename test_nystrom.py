@@ -10,6 +10,7 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import adjusted_rand_score
 import sknetwork as skn
 import networkx as nx
+from community import community_louvain
 from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_rand_score
 from graph_mbo.utils import purity_score,inverse_purity_score,get_initial_state_1
 from graph_cut.util.nystrom import nystrom_extension, nystrom_extension_test, nystrom_new
@@ -143,26 +144,26 @@ print(' NMI for MMBO1 inner step with sym normalized: ', NMI_mbo_1_inner_nor_1)
 
 # Louvain
 start_time_louvain = time.time()
-#G = nx.convert_matrix.from_scipy_sparse_matrix(W)
+G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 #G = nx.convert_matrix.from_numpy_array(adj_mat)
-#partition_Louvain = community_louvain.best_partition(G, resolution=0.5)    # returns a dict
-#louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
-#louvain_array = np.asarray(louvain_list)
-#print("Louvain:-- %.3f seconds --" % (time.time() - start_time_louvain))
-#louvain_cluster = len(np.unique(louvain_array))
-#print('the cluster Louvain found: ',louvain_cluster)
+partition_Louvain = community_louvain.best_partition(G, resolution=0.5)    # returns a dict
+louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
+louvain_array = np.asarray(louvain_list)
+print("Louvain:-- %.3f seconds --" % (time.time() - start_time_louvain))
+louvain_cluster = len(np.unique(louvain_array))
+print('the cluster Louvain found: ',louvain_cluster)
 
-#modularity_louvain = skn.clustering.modularity(W,louvain_array,resolution=0.5)
-#ARI_louvain = adjusted_rand_score(louvain_array, gt_labels)
-#purify_louvain = purity_score(gt_labels, louvain_array)
-#inverse_purify_louvain = inverse_purity_score(gt_labels, louvain_array)
-#NMI_louvain = normalized_mutual_info_score(gt_labels, louvain_array)
+modularity_louvain = skn.clustering.modularity(W,louvain_array,resolution=0.5)
+ARI_louvain = adjusted_rand_score(louvain_array, gt_labels)
+purify_louvain = purity_score(gt_labels, louvain_array)
+inverse_purify_louvain = inverse_purity_score(gt_labels, louvain_array)
+NMI_louvain = normalized_mutual_info_score(gt_labels, louvain_array)
 
-#print(' modularity Louvain score: ', modularity_louvain)
-#print(' ARI Louvain  score: ', ARI_louvain)
-#print(' purify for Louvain : ', purify_louvain)
-#print(' inverse purify for Louvain : ', inverse_purify_louvain)
-#print(' NMI for Louvain  : ', NMI_louvain)
+print(' modularity Louvain score: ', modularity_louvain)
+print(' ARI Louvain  score: ', ARI_louvain)
+print(' purify for Louvain : ', purify_louvain)
+print(' inverse purify for Louvain : ', inverse_purify_louvain)
+print(' NMI for Louvain  : ', NMI_louvain)
 
 
 # Spectral clustering with k-means
