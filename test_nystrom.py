@@ -24,7 +24,7 @@ from graph_mbo.utils import vector_to_labels, purity_score,inverse_purity_score
 dt_inner = 1
 num_nodes = 70000
 num_communities = 10
-m = 1 * num_communities
+m = 5 * num_communities
 #m = 100
 dt = 1
 tol = 1e-5
@@ -88,11 +88,11 @@ purify_hu_original_1 = purity_score(gt_labels, u_hu_label_1)
 inverse_purify_hu_original_1 = inverse_purity_score(gt_labels, u_hu_label_1)
 NMI_hu_original_1 = normalized_mutual_info_score(gt_labels, u_hu_label_1)
 
-print(' modularity score for HU method: ', modu_hu_original_1)
-print(' ARI for HU method: ', ARI_hu_original_1)
-print(' purify for HU method: ', purify_hu_original_1)
-print(' inverse purify for HU method: ', inverse_purify_hu_original_1)
-print(' NMI for HU method: ', NMI_hu_original_1)
+print('modularity score for HU method: ', modu_hu_original_1)
+print('ARI for HU method: ', ARI_hu_original_1)
+print('purify for HU method: ', purify_hu_original_1)
+print('inverse purify for HU method: ', inverse_purify_hu_original_1)
+print('NMI for HU method: ', NMI_hu_original_1)
 
 
 
@@ -101,8 +101,8 @@ start_time_1_nor_Lf_Qh_1 = time.time()
 u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1 = mbo_modularity_1(num_nodes,num_communities, m, degree_W, u_init, 
                                                  D_mmbo, V_mmbo, tol)
 time_MMBO_projection_sym = time.time() - start_time_1_nor_Lf_Qh_1                                                
-print("MMBO using projection with sym normalized L_F & Q_H (K=10, m=K):-- %.3f seconds --" % (time_eig_l_mix + time_initialize_u + time_MMBO_projection_sym))
-print('the number of MBO iteration (K=10 and m=K): ', num_repeat_1_nor_Lf_Qh_1)
+print("MMBO using projection with L_{mix}:-- %.3f seconds --" % (time_eig_l_mix + time_initialize_u + time_MMBO_projection_sym))
+print('the number of MBO iteration for MMBO using projection with L_{mix}: ', num_repeat_1_nor_Lf_Qh_1)
 
 u_1_nor_Lf_Qh_individual_label_1 = vector_to_labels(u_1_nor_Lf_Qh_individual_1)
 
@@ -112,11 +112,11 @@ purify_mbo_1_nor_Lf_Qh_1 = purity_score(gt_labels, u_1_nor_Lf_Qh_individual_labe
 inverse_purify_mbo_1_nor_Lf_Qh_1 = inverse_purity_score(gt_labels, u_1_nor_Lf_Qh_individual_label_1)
 NMI_mbo_1_nor_Lf_Qh_1 = normalized_mutual_info_score(gt_labels, u_1_nor_Lf_Qh_individual_label_1)
 
-print(' modularity_1 normalized L_F & Q_H score(K=10 and m=K): ', modularity_1_nor_lf_qh)
-print(' ARI_1 normalized L_F & Q_H score: ', ARI_mbo_1_nor_Lf_Qh_1)
-print(' purify for MMBO1 normalized L_F & Q_H: ', purify_mbo_1_nor_Lf_Qh_1)
-print(' inverse purify for MMBO1 normalized L_F & Q_H: ', inverse_purify_mbo_1_nor_Lf_Qh_1)
-print(' NMI for MMBO1 normalized L_F & Q_H: ', NMI_mbo_1_nor_Lf_Qh_1)
+print('modularity for MMBO using projection with L_{mix}: ', modularity_1_nor_lf_qh)
+print('ARI for MMBO using projection with L_{mix}: ', ARI_mbo_1_nor_Lf_Qh_1)
+print('purify for MMBO using projection with L_{mix}: ', purify_mbo_1_nor_Lf_Qh_1)
+print('inverse purify for MMBO using projection with L_{mix}: ', inverse_purify_mbo_1_nor_Lf_Qh_1)
+print('NMI for MMBO using projection with L_{mix}: ', NMI_mbo_1_nor_Lf_Qh_1)
 
 
 
@@ -125,8 +125,8 @@ start_time_1_inner_nor_1 = time.time()
 u_inner_nor_1,num_repeat_inner_nor = mbo_modularity_inner_step(num_nodes, num_communities, m, dt_inner, u_init, 
                                         D_mmbo, V_mmbo, tol, inner_step_count)
 time_MMBO_inner_step = time.time() - start_time_1_inner_nor_1
-print("MMBO1 with inner step & sym normalized L_F & Q_H:-- %.3f seconds --" % ( time_eig_l_mix + time_initialize_u + time_MMBO_inner_step))
-print('MMBO1 with inner step & sym the num_repeat_inner_nor: ',num_repeat_inner_nor)
+print("MMBO using inner step with L_{mix}:-- %.3f seconds --" % ( time_eig_l_mix + time_initialize_u + time_MMBO_inner_step))
+print('the number of MBO iteration for MMBO using inner step with L_{mix}: ',num_repeat_inner_nor)
 
 u_inner_nor_label_1 = vector_to_labels(u_inner_nor_1)
 
@@ -136,35 +136,35 @@ purify_mbo_1_inner_nor_1 = purity_score(gt_labels, u_inner_nor_label_1)
 inverse_purify_mbo_1_inner_nor_1 = inverse_purity_score(gt_labels, u_inner_nor_label_1)
 NMI_mbo_1_inner_nor_1 = normalized_mutual_info_score(gt_labels, u_inner_nor_label_1)
 
-print(' modularity_1 inner step sym normalized score: ', modularity_1_inner_nor_1)
-print(' ARI_1 inner step sym normalized score: ', ARI_mbo_1_inner_nor_1)
-print(' purify for MMBO1 inner step with sym normalized: ', purify_mbo_1_inner_nor_1)
-print(' inverse purify for MMBO1 inner step with sym normalized: ', inverse_purify_mbo_1_inner_nor_1)
-print(' NMI for MMBO1 inner step with sym normalized: ', NMI_mbo_1_inner_nor_1)
+print('modularity for MMBO using inner step with L_{mix}: ', modularity_1_inner_nor_1)
+print('ARI for MMBO using inner step with L_{mix}: ', ARI_mbo_1_inner_nor_1)
+print('purify for MMBO using inner step with L_{mix}: ', purify_mbo_1_inner_nor_1)
+print('inverse purify for MMBO using inner step with L_{mix}: ', inverse_purify_mbo_1_inner_nor_1)
+print('NMI for MMBO using inner step with L_{mix}: ', NMI_mbo_1_inner_nor_1)
 
 
 # Louvain
 start_time_louvain = time.time()
-G = nx.convert_matrix.from_scipy_sparse_matrix(W)
+#G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 #G = nx.convert_matrix.from_numpy_array(adj_mat)
-partition_Louvain = community_louvain.best_partition(G, resolution=0.5)    # returns a dict
-louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
-louvain_array = np.asarray(louvain_list)
-print("Louvain:-- %.3f seconds --" % (time.time() - start_time_louvain))
-louvain_cluster = len(np.unique(louvain_array))
-print('the cluster Louvain found: ',louvain_cluster)
+#partition_Louvain = community_louvain.best_partition(G, resolution=0.5)    # returns a dict
+#louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
+#louvain_array = np.asarray(louvain_list)
+#print("Louvain:-- %.3f seconds --" % (time.time() - start_time_louvain))
+#louvain_cluster = len(np.unique(louvain_array))
+#print('the cluster Louvain found: ',louvain_cluster)
 
-modularity_louvain = skn.clustering.modularity(W,louvain_array,resolution=0.5)
-ARI_louvain = adjusted_rand_score(louvain_array, gt_labels)
-purify_louvain = purity_score(gt_labels, louvain_array)
-inverse_purify_louvain = inverse_purity_score(gt_labels, louvain_array)
-NMI_louvain = normalized_mutual_info_score(gt_labels, louvain_array)
+#modularity_louvain = skn.clustering.modularity(W,louvain_array,resolution=0.5)
+#ARI_louvain = adjusted_rand_score(louvain_array, gt_labels)
+#purify_louvain = purity_score(gt_labels, louvain_array)
+#inverse_purify_louvain = inverse_purity_score(gt_labels, louvain_array)
+#NMI_louvain = normalized_mutual_info_score(gt_labels, louvain_array)
 
-print(' modularity Louvain score: ', modularity_louvain)
-print(' ARI Louvain  score: ', ARI_louvain)
-print(' purify for Louvain : ', purify_louvain)
-print(' inverse purify for Louvain : ', inverse_purify_louvain)
-print(' NMI for Louvain  : ', NMI_louvain)
+#print(' modularity Louvain score: ', modularity_louvain)
+#print(' ARI Louvain  score: ', ARI_louvain)
+#print(' purify for Louvain : ', purify_louvain)
+#print(' inverse purify for Louvain : ', inverse_purify_louvain)
+#print(' NMI for Louvain  : ', NMI_louvain)
 
 
 # Spectral clustering with k-means
