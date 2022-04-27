@@ -12,8 +12,6 @@
 #--------------------------------------------------------------------------
 
 
-from os import PRIO_PGRP
-from joblib import PrintTime
 import scipy as sp
 import scipy.sparse as spa
 import numpy as np
@@ -25,7 +23,7 @@ from scipy.linalg import sqrtm
 from scipy.linalg import eigh
 from scipy.linalg import eig
 from scipy.linalg import svd
-from sklearn.preprocessing import normalize
+import time
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.neighbors import kneighbors_graph
 
@@ -59,22 +57,6 @@ def nystrom_extension(raw_data, num_nystrom=300, gamma=None): # basic implementa
         print("graph kernel width not specified, using default value 1")
         gamma = 1
 
-
-    #num_rows=np.shape(adj_mat)[0] 
-    #index = permutation(num_rows)
-    #other_points = num_rows - num_nystrom
-    ##index_sample_remain = np.random.choice(nXx, size=num_nystrom,replace=False)
-    #sample_remain = adj_mat[index[:num_nystrom],:]
-    ##index_sample = np.random.choice(sample_remain[0], size=num_nystrom,replace=False)
-    #print('sample_remain_tranpose shape: ', sample_remain.shape)
-    #sample_mat = sample_remain[index_sample,:]
-    #print('sample shape: ', sample_mat.shape)
-    #A = sample_remain[:,index[:num_nystrom]]     # sampling matrix A
-    #B = sample_remain[:,index[num_nystrom:]]     # remaining matrix B
-    #samples = np.shape(A)[0]
-    #print('sample_mat shape: ', A.shape)
-    #print('other_mat shape: ', B.shape)
-    #del sample_remain
     
     num_rows = raw_data.shape[0]
     index = permutation(num_rows)
@@ -92,6 +74,7 @@ def nystrom_extension(raw_data, num_nystrom=300, gamma=None): # basic implementa
     A = rbf_kernel(sample_data, sample_data, gamma=gamma)
 
     # normalize A and B of W
+    start_time_normalized_W = time.time()
     pinv_A = pinv(A)
     B_T = B.transpose()
     d1 = np.sum(A,axis = 1) + np.sum(B,axis = 1)
@@ -104,6 +87,7 @@ def nystrom_extension(raw_data, num_nystrom=300, gamma=None): # basic implementa
     B1 = np.dot(dhat[0:num_nystrom,np.newaxis], dhat[num_nystrom:num_rows,np.newaxis].transpose())
     B = B*B1
     #print('B: ', B.shape)
+    print("normalized A & B of W:-- %.3f seconds --" % (time.time() - start_time_normalized_W))
 
 
     d1_array = np.expand_dims(d1, axis=-1)
@@ -113,16 +97,16 @@ def nystrom_extension(raw_data, num_nystrom=300, gamma=None): # basic implementa
     #dergee_di_null = np.expand_dims(d_array, axis=-1)
     
     # construct A & B of null model Q (i.e. Q_A & Q_B)
-    #start_time_construct_null_model = time.time()
+    start_time_construct_null_model = time.time()
     total_degree = np.sum(d_array, dtype=np.int64)  
     A_of_null = (d1_array @ d1_array.transpose()) / total_degree
     B_of_null = (d1_array @ d2_array.transpose()) / total_degree
     #print('A_null model: ', A_of_null.shape)
     #print('B_of_null: ', B_of_null.shape)
-    #time_null_model = time.time() - start_time_construct_null_model
-    #print("construct null model:-- %.3f seconds --" % (time_null_model))
+    print("construct null model:-- %.3f seconds --" % (time.time() - start_time_construct_null_model))
 
     # normalize A and B of null model Q
+    start_time_normalized_Q = time.time()
     pinv_A_null = pinv(A_of_null)
     B_tranpose_null = B_of_null.transpose()
     d1_null = np.sum(A_of_null,axis = 1) + np.sum(B_of_null,axis = 1)
@@ -133,9 +117,10 @@ def nystrom_extension(raw_data, num_nystrom=300, gamma=None): # basic implementa
     A_of_null = A_of_null * (np.dot(dhat_null[0:num_nystrom,np.newaxis],dhat_null[0:num_nystrom,np.newaxis].transpose()))
     nor_B1 = np.dot(dhat_null[0:num_nystrom,np.newaxis], dhat_null[num_nystrom:num_rows,np.newaxis].transpose())
     B_of_null = B_of_null * nor_B1
-
+    print("normalized A & B of Q:-- %.3f seconds --" % (time.time() - start_time_normalized_Q))
 
     # do orthogonalization and eigen-decomposition of W
+    start_time_eigendecomposition_W = time.time()
     B_T = B.transpose()
     Asi = sqrtm(pinv(A))
     BBT = np.dot(B,B_T)
@@ -154,8 +139,10 @@ def nystrom_extension(raw_data, num_nystrom=300, gamma=None): # basic implementa
     V = np.real(V)
     E = 1-E
     E = E[:,np.newaxis]
+    print("orthogonalization and eigen-decomposition of W:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition_W))
 
     # do orthogonalization and eigen-decomposition of null model Q
+    start_time_eigendecomposition_Q = time.time()
     B_tranpose_null = B_of_null.transpose()
     Asi_null = sqrtm(pinv(A_of_null))
     BBT_null = np.dot(B_of_null,B_tranpose_null)
@@ -173,6 +160,7 @@ def nystrom_extension(raw_data, num_nystrom=300, gamma=None): # basic implementa
     V_null[index,:] = V_null.copy()
     V_null = np.real(V_null)
     #E_null = 1 + E_null
+    print("orthogonalization and eigen-decomposition of Q:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition_Q))
 
     E_mix = E + E_null 
     V_mix = V + V_null
@@ -226,6 +214,7 @@ def nystrom_new(raw_data, num_nystrom  = 300, gamma = None): # basic implementat
     A = rbf_kernel(sample_data, sample_data, gamma=gamma)
 
     # normalize A and B
+    start_time_normalized_W = time.time()
     pinv_A = pinv(A)
     B_T = B.transpose()
     d1 = np.sum(A,axis = 1) + np.sum(B,axis = 1)
@@ -236,8 +225,10 @@ def nystrom_new(raw_data, num_nystrom  = 300, gamma = None): # basic implementat
     #B1 = np.dot(dhat[0:num_nystrom,np.newaxis], dhat[num_nystrom:num_nystrom+other_points,np.newaxis].transpose())
     B1 = np.dot(dhat[0:num_nystrom,np.newaxis], dhat[num_nystrom:num_rows,np.newaxis].transpose())
     B = B*B1
+    print("normalized A & B of W:-- %.3f seconds --" % (time.time() - start_time_normalized_W))
 
     # do orthogonalization and eigen-decomposition
+    start_time_eigendecomposition_W = time.time()
     B_T = B.transpose()
     Asi = sqrtm(pinv(A))
     BBT = np.dot(B,B_T)
@@ -256,6 +247,8 @@ def nystrom_new(raw_data, num_nystrom  = 300, gamma = None): # basic implementat
     V = np.real(V)
     E = 1-E
     E = E[:,np.newaxis]
+    print("orthogonalization and eigen-decomposition of W:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition_W))
+
     return E,V
 
 
