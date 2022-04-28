@@ -10,6 +10,7 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import adjusted_rand_score
 import sknetwork as skn
 import networkx as nx
+import networkx.algorithms.community as nx_comm
 from community import community_louvain
 from sklearn.cluster import SpectralClustering
 from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_rand_score
@@ -24,7 +25,7 @@ from graph_mbo.utils import vector_to_labels, purity_score,inverse_purity_score
 dt_inner = 1
 num_nodes = 70000
 num_communities = 10
-m = 5 * num_communities
+m = 1 * num_communities
 #m = 100
 dt = 1
 tol = 1e-5
@@ -187,3 +188,55 @@ start_time_louvain = time.time()
 #print(' purify for Spectral clustering : ', purify_spectral_clustering)
 #print(' inverse purify for Spectral clustering : ', inverse_purify_spectral_clustering)
 #print(' NMI for Spectral clustering: ', NMI_spectral_clustering)
+
+G = nx.convert_matrix.from_scipy_sparse_matrix(W)
+# CNM algorithm (can setting resolution gamma)
+start_time_CNM = time.time()
+partition_CNM = nx_comm.greedy_modularity_communities(G)
+print("CNM:-- %.3f seconds --" % (time.time() - start_time_CNM))
+partition_CNM_list = [list(x) for x in partition_CNM]
+
+partition_CNM_expand = sum(partition_CNM_list, [])
+
+num_cluster_CNM = []
+for cluster in range(len(partition_CNM_list)):
+    for number_CNM in range(len(partition_CNM_list[cluster])):
+        num_cluster_CNM.append(cluster)
+
+#print(partition_CNM_list)
+CNM_dict = dict(zip(partition_CNM_expand, num_cluster_CNM))
+#print('CNM: ',CNM_dict)
+CNM_list = list(dict.values(CNM_dict))    #convert a dict to list
+CNM_array = np.asarray(CNM_list)
+
+modularity_CNM = skn.clustering.modularity(W,CNM_array,resolution=0.5)
+ARI_CNM = adjusted_rand_score(CNM_array, gt_labels)
+purify_CNM = purity_score(gt_labels, CNM_array)
+inverse_purify_CNM = inverse_purity_score(gt_labels, CNM_array)
+NMI_CNM = normalized_mutual_info_score(gt_labels, CNM_array)
+
+print('modularity CNM score: ', modularity_CNM)
+print('ARI CNM score: ', ARI_CNM)
+print('purify for CNM: ', purify_CNM)
+print('inverse purify for CNM: ', inverse_purify_CNM)
+print('NMI for CNM: ', NMI_CNM)
+
+
+# Girvan-Newman algorithm
+#start_time_GN = time.time()
+#partition_GN = nx_comm.girvan_newman(G)
+#print("GN:-- %.3f seconds --" % (time.time() - start_time_GN))
+
+
+#modularity_GN = skn.clustering.modularity(W,partition_GN,resolution=0.5)
+#ARI_GN = adjusted_rand_score(partition_GN, gt_labels)
+#purify_GN = purity_score(gt_labels, partition_GN)
+#inverse_purify_GN = inverse_purity_score(gt_labels, partition_GN)
+#NMI_GN = normalized_mutual_info_score(gt_labels, partition_GN)
+
+#print('modularity CNM score: ', modularity_GN)
+#print('ARI CNM score: ', ARI_GN)
+#print('purify for CNM: ', purify_GN)
+#print('inverse purify for CNM: ', inverse_purify_GN)
+#print('NMI for CNM: ', NMI_GN)
+
