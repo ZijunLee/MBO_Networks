@@ -40,7 +40,7 @@ m = 1 * num_communities
 #m = 100
 dt = 1
 tol = 1e-5
-inner_step_count = 5
+inner_step_count = 3
 gamma = 0.02
 
 gpath = '/'.join(os.getcwd().split('/')[:-1])
