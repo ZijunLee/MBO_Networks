@@ -1,4 +1,3 @@
-#from joblib import PrintTime
 import numpy as np
 import scipy as sp
 from scipy.sparse.linalg import eigs, eigsh, svds
@@ -7,7 +6,6 @@ from scipy.sparse.linalg import eigs, eigsh, svds
 #from torch import sign
 import time
 #import quimb
-
 from graph_mbo.utils import apply_threshold,_diffusion_step_eig,_mbo_forward_step_multiclass,get_initial_state_1
 #from graph_cut.util.nystrom import nystrom_extension
 #from slec4py_test2 import eigs_slepc
@@ -264,8 +262,8 @@ def mbo_modularity_1(num_nodes,num_communities, m, degree, u_init, eigval, eigve
     dtlow = 0.15/((gamma+1)*np.max(degree))
     dthigh = np.log(np.linalg.norm(u_init)/eps)/eigval[0]
     dti = np.sqrt(dtlow*dthigh)
-    print('dti: ',dti)
-    print("compute time step selection:-- %.3f seconds --" % (time.time() - start_time_timestep_selection))
+    #print('dti: ',dti)
+    #print("compute time step selection:-- %.3f seconds --" % (time.time() - start_time_timestep_selection))
     #dti = dt 
 
     # Perform MBO scheme
