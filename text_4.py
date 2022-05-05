@@ -180,6 +180,14 @@ Z_training = pca.fit_transform(data)
 #print('nystrom V_sign_1 shape: ', V_hu)
 
 
+start_time_l_sym = time.time()
+eigenvalues_hu, eigenvectors_hu, other_data, index = nystrom_QR_l_sym(Z_training, num_nystrom=500, gamma=gamma)
+D_hu = np.squeeze(eigenvalues_hu[:m])
+#print('nystrom_QR D_hu: ', D_hu)
+V_hu = eigenvectors_hu[:,:m]
+time_eig_l_sym = time.time() - start_time_l_sym
+print("nystrom extension in L_mix:-- %.3f seconds --" % (time_eig_l_sym))
+
 start_time_l_mix = time.time()
 eigenvalues_mmbo, eigenvectors_mmbo, other_data, index = nystrom_QR(Z_training, num_nystrom=500, gamma=gamma)
 D_mmbo = np.squeeze(eigenvalues_mmbo[1:m+1])
@@ -187,15 +195,6 @@ D_mmbo = np.squeeze(eigenvalues_mmbo[1:m+1])
 V_mmbo = eigenvectors_mmbo[:,1:m+1]
 time_eig_l_mix = time.time() - start_time_l_mix
 print("nystrom extension in L_mix:-- %.3f seconds --" % (time_eig_l_mix))
-
-
-#start_time_l_sym = time.time()
-#eigenvalues_hu, eigenvectors_hu, other_data, index = nystrom_QR_l_sym(Z_training, num_nystrom=500, gamma=gamma)
-#D_hu = np.squeeze(eigenvalues_hu[:m])
-#print('nystrom_QR D_hu: ', D_hu)
-#V_hu = eigenvectors_hu[:,:m]
-#time_eig_l_sym = time.time() - start_time_l_sym
-#print("nystrom extension in L_mix:-- %.3f seconds --" % (time_eig_l_sym))
 
 
 gt_labels = gt_labels[index[500:]]
@@ -238,26 +237,26 @@ print("compute initialize u:-- %.3f seconds --" % (time_initialize_u))
 
 
 # Test HU original MBO with symmetric normalized L_F
-#start_time_hu_original = time.time()
-#u_hu_vector, num_iter_HU = mbo_modularity_hu_original(num_nodes, num_communities, m, degree_W, dt_inner, u_init,
-#                             D_hu, V_hu, tol,inner_step_count) 
-#time_hu_mbo = time.time() - start_time_hu_original
-#print("total running time of HU method:-- %.3f seconds --" % (time_eig_l_sym + time_initialize_u + time_hu_mbo))
-#print('the num_iteration of HU method: ', num_iter_HU)
+start_time_hu_original = time.time()
+u_hu_vector, num_iter_HU = mbo_modularity_hu_original(num_nodes, num_communities, m, degree_W, dt_inner, u_init,
+                             D_hu, V_hu, tol,inner_step_count) 
+time_hu_mbo = time.time() - start_time_hu_original
+print("total running time of HU method:-- %.3f seconds --" % (time_eig_l_sym + time_initialize_u + time_hu_mbo))
+print('the num_iteration of HU method: ', num_iter_HU)
 
-#u_hu_label_1 = vector_to_labels(u_hu_vector)
+u_hu_label_1 = vector_to_labels(u_hu_vector)
 
-#modu_hu_original_1 = skn.clustering.modularity(W,u_hu_label_1,resolution=0.5)
-#ARI_hu_original_1 = adjusted_rand_score(u_hu_label_1, gt_labels)
-#purify_hu_original_1 = purity_score(gt_labels, u_hu_label_1)
-#inverse_purify_hu_original_1 = inverse_purity_score(gt_labels, u_hu_label_1)
-#NMI_hu_original_1 = normalized_mutual_info_score(gt_labels, u_hu_label_1)
+modu_hu_original_1 = skn.clustering.modularity(W,u_hu_label_1,resolution=0.5)
+ARI_hu_original_1 = adjusted_rand_score(u_hu_label_1, gt_labels)
+purify_hu_original_1 = purity_score(gt_labels, u_hu_label_1)
+inverse_purify_hu_original_1 = inverse_purity_score(gt_labels, u_hu_label_1)
+NMI_hu_original_1 = normalized_mutual_info_score(gt_labels, u_hu_label_1)
 
-#print('modularity score for HU method: ', modu_hu_original_1)
-#print('ARI for HU method: ', ARI_hu_original_1)
-#print('purify for HU method: ', purify_hu_original_1)
-#print('inverse purify for HU method: ', inverse_purify_hu_original_1)
-#print('NMI for HU method: ', NMI_hu_original_1)
+print('modularity score for HU method: ', modu_hu_original_1)
+print('ARI for HU method: ', ARI_hu_original_1)
+print('purify for HU method: ', purify_hu_original_1)
+print('inverse purify for HU method: ', inverse_purify_hu_original_1)
+print('NMI for HU method: ', NMI_hu_original_1)
 
 #num_communities = list(range(louvain_cluster-5, louvain_cluster+6))
 
