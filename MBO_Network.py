@@ -1,14 +1,9 @@
 import numpy as np
 import scipy as sp
 from scipy.sparse.linalg import eigs, eigsh, svds
-#from random import randrange
-#import random
-#from torch import sign
 import time
-#import quimb
-from graph_mbo.utils import apply_threshold,_diffusion_step_eig,_mbo_forward_step_multiclass,get_initial_state_1
-#from graph_cut.util.nystrom import nystrom_extension
-#from slec4py_test2 import eigs_slepc
+from graph_mbo.utils import apply_threshold,_diffusion_step_eig,_mbo_forward_step_multiclass,get_initial_state_1, vector_to_labels
+import sknetwork as skn
 
 
 
@@ -224,7 +219,7 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
 
 
 
-def mbo_modularity_1(num_nodes,num_communities, m, degree, u_init, eigval, eigvec, tol,
+def mbo_modularity_1(num_nodes,num_communities, m, degree, u_init, eigval, eigvec, tol, W,
                      gamma=0.5, eps=1, max_iter=10000, initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start with MMBO using the projection on the eigenvectors')
@@ -297,6 +292,10 @@ def mbo_modularity_1(num_nodes,num_communities, m, degree, u_init, eigval, eigve
         #print("compute stop criterion:-- %.3f seconds --" % (time.time() - start_time_stop_criterion))
 
         n = n + 1
+        #print('n: ',n)
+        #u_new_label = vector_to_labels(u_new)
+        #modularity_score_1 = skn.clustering.modularity(W,u_new_label,resolution=0.5)
+        #print('modularity for MMBO using inner step with L_{mix}: ', modularity_score_1)
     
     print("compute the whole MBO iteration:-- %.3f seconds --" % (time.time() - start_time_MBO_iteration))
     
