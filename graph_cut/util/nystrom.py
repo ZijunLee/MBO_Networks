@@ -31,7 +31,7 @@ def flatten_23(v): # short hand for the swapping axis
     return v.reshape(v.shape[0],-1, order = 'F')
 
  
-def nystrom_extension(raw_data, num_nystrom=300, gamma=None): # basic implementation
+def nystrom_extension(raw_data, num_nystrom=300, eta=0.5, gamma=None): # basic implementation
     """ Nystrom Extension
 
 
@@ -88,7 +88,7 @@ def nystrom_extension(raw_data, num_nystrom=300, gamma=None): # basic implementa
     B1 = np.dot(dhat[0:num_nystrom,np.newaxis], dhat[num_nystrom:num_rows,np.newaxis].transpose())
     B = B*B1
     #print('B: ', B.shape)
-    print("normalized A & B of F:-- %.3f seconds --" % (time.time() - start_time_normalized_W))
+    print("normalized W_11 & W_12:-- %.3f seconds --" % (time.time() - start_time_normalized_W))
 
 
     #d1_array = np.expand_dims(d1, axis=-1)
@@ -99,7 +99,7 @@ def nystrom_extension(raw_data, num_nystrom=300, gamma=None): # basic implementa
     
     # construct A & B of null model Q (i.e. Q_A & Q_B)
     #start_time_construct_null_model = time.time()
-    total_degree = 1. / np.sum(d_array, dtype=np.int64) 
+    total_degree = eta / np.sum(d_array, dtype=np.int64) 
     #A_of_null = (d1_array @ d1_array.transpose()) / total_degree
     #B_of_null = (d1_array @ d2_array.transpose()) / total_degree
     #print('A_null model: ', A_of_null.shape)
@@ -119,11 +119,11 @@ def nystrom_extension(raw_data, num_nystrom=300, gamma=None): # basic implementa
     #nor_B1 = np.dot(dhat_null[0:num_nystrom,np.newaxis], dhat_null[num_nystrom:num_rows,np.newaxis].transpose())
     #B_of_null = B_of_null * nor_B1
     #print("normalized A & B of H:-- %.3f seconds --" % (time.time() - start_time_normalized_Q))
-    dhat_null = np.sqrt(d_c)
+    dhat_null = np.sqrt(d_array)
     A_of_null = total_degree * (np.dot(dhat_null[0:num_nystrom,np.newaxis],dhat_null[0:num_nystrom,np.newaxis].transpose()))
     nor_B1 = np.dot(dhat_null[0:num_nystrom,np.newaxis], dhat_null[num_nystrom:num_rows,np.newaxis].transpose())
     B_of_null = total_degree * nor_B1
-    print("normalized A & B of H:-- %.3f seconds --" % (time.time() - start_time_normalized_Q))
+    print("normalized P_11 & P_12:-- %.3f seconds --" % (time.time() - start_time_normalized_Q))
 
     # do orthogonalization and eigen-decomposition of W
     start_time_eigendecomposition_W = time.time()
@@ -145,7 +145,7 @@ def nystrom_extension(raw_data, num_nystrom=300, gamma=None): # basic implementa
     V = np.real(V)
     E = 1-E
     E = E[:,np.newaxis]
-    print("orthogonalization and eigen-decomposition of F:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition_W))
+    print("orthogonalization and eigen-decomposition of W:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition_W))
 
     # do orthogonalization and eigen-decomposition of null model Q
     start_time_eigendecomposition_Q = time.time()
@@ -166,7 +166,7 @@ def nystrom_extension(raw_data, num_nystrom=300, gamma=None): # basic implementa
     V_null[index,:] = V_null.copy()
     V_null = np.real(V_null)
     #E_null = 1 + E_null
-    print("orthogonalization and eigen-decomposition of H:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition_Q))
+    print("orthogonalization and eigen-decomposition of P:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition_Q))
 
     E_mix = E + E_null 
     V_mix = V + V_null
@@ -209,12 +209,7 @@ def nystrom_new(raw_data, num_nystrom  = 300, gamma = None): # basic implementat
 
 
     # calculating B
-    other_points = num_rows - num_nystrom
     B = rbf_kernel(sample_data, other_data, gamma=gamma)
-    #distance_matrix = kneighbors_graph(raw_data, n_neighbors=n_neighbors, include_self=True, mode = 'distance')
-    #distance_matrix = distance_matrix*distance_matrix # square the distance
-    #dist_matrix = 0.5 * (distance_matrix + distance_matrix.T)
-    #B = np.exp(-gamma*dist_matrix)
 
     # calculating A
     A = rbf_kernel(sample_data, sample_data, gamma=gamma)
@@ -231,30 +226,40 @@ def nystrom_new(raw_data, num_nystrom  = 300, gamma = None): # basic implementat
     #B1 = np.dot(dhat[0:num_nystrom,np.newaxis], dhat[num_nystrom:num_nystrom+other_points,np.newaxis].transpose())
     B1 = np.dot(dhat[0:num_nystrom,np.newaxis], dhat[num_nystrom:num_rows,np.newaxis].transpose())
     B = B*B1
-    print("normalized A & B of F:-- %.3f seconds --" % (time.time() - start_time_normalized_W))
+    print("normalized W_11 & W_12:-- %.3f seconds --" % (time.time() - start_time_normalized_W))
 
     # do orthogonalization and eigen-decomposition
-    start_time_eigendecomposition_W = time.time()
+    start_time_contruct_S = time.time()
     B_T = B.transpose()
     Asi = sqrtm(pinv(A))
     BBT = np.dot(B,B_T)
     W = np.concatenate((A,B_T), axis = 0)
     R = A + np.dot(np.dot(Asi,BBT),Asi)
     R = (R+R.transpose())/2.
+    print("construct matrix S:-- %.3f seconds --" % (time.time() - start_time_contruct_S))
+    
+    start_time_eigendecomposition_W = time.time()
     E, U = eigh(R)
+    print("eigen-decomposition (using SVD):-- %.3f seconds --" % (time.time() - start_time_eigendecomposition_W))
+    
     E = np.real(E)
     ind = np.argsort(E)[::-1]
     U = U[:,ind]
     E = E[ind]
+
+    start_time_compute_eigenvectors = time.time()  
     W = np.dot(W,Asi)
     V = np.dot(W, U)
     V = V / np.linalg.norm(V, axis = 0)
     V[index,:] = V.copy()
+    print("compute eigenvectors:-- %.3f seconds --" % (time.time() - start_time_compute_eigenvectors))
+
+    start_time_compute_eigenvalues = time.time() 
     V = np.real(V)
     E = 1-E
     E = E[:,np.newaxis]
-    print("orthogonalization and eigen-decomposition of F:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition_W))
-
+    print("compute eigenvalues:-- %.3f seconds --" % (time.time() - start_time_compute_eigenvalues))
+    
     return E,V
 
 
@@ -295,28 +300,26 @@ def nystrom_extension_test(raw_data, num_nystrom=300, gamma=None): # basic imple
     # calculating B
     start_time_calculating_B = time.time()
     B = rbf_kernel(sample_data, other_data, gamma=gamma)
-    print("calculating B of F:-- %.3f seconds --" % (time.time() - start_time_calculating_B))
+    print("calculating W_12:-- %.3f seconds --" % (time.time() - start_time_calculating_B))
 
     # calculating A
     start_time_calculating_A = time.time()
     A = rbf_kernel(sample_data, sample_data, gamma=gamma)
-    print("calculating A of F:-- %.3f seconds --" % (time.time() - start_time_calculating_A))
+    print("calculating W_11:-- %.3f seconds --" % (time.time() - start_time_calculating_A))
 
     start_time_normalized_W = time.time()
     # normalize A and B of W
     pinv_A = pinv(A)
     B_T = B.transpose()
     d1 = np.sum(A,axis = 1) + np.sum(B,axis = 1)
-    #print('d1: ', d1.shape)
     d2 = np.sum(B_T,axis = 1) + np.dot(B_T, np.dot(pinv_A, np.sum(B,axis = 1)))
-    #print('d2 shape: ', d2.shape)
     d_c = np.concatenate((d1,d2),axis = 0)
     dhat = np.sqrt(1./d_c)
     A = A*(np.dot(dhat[0:num_nystrom,np.newaxis],dhat[0:num_nystrom,np.newaxis].transpose()))
     #B1 = np.dot(dhat[0:num_nystrom,np.newaxis], dhat[num_nystrom:num_nystrom+other_points,np.newaxis].transpose())
     B1 = np.dot(dhat[0:num_nystrom,np.newaxis], dhat[num_nystrom:num_rows,np.newaxis].transpose())
     B = B*B1    
-    print("normalized A & B of F:-- %.3f seconds --" % (time.time() - start_time_normalized_W))
+    print("normalized W_11 & W_12:-- %.3f seconds --" % (time.time() - start_time_normalized_W))
 
 
     #d1_array = np.expand_dims(d1, axis=-1)
@@ -325,7 +328,7 @@ def nystrom_extension_test(raw_data, num_nystrom=300, gamma=None): # basic imple
     #print('d_array: ', type(d_array))
     #dergee_di_null = np.expand_dims(d_array, axis=-1)
     
-    # construct A & B of null model Q (i.e. Q_A & Q_B)
+    # construct A & B of null model P (i.e. P_A & P_B)
     #start_time_construct_null_model = time.time()
     total_degree = 1. / np.sum(d_array, dtype=np.int64)
     #A_of_null = (d1_array @ d1_array.transpose()) / total_degree
@@ -352,11 +355,11 @@ def nystrom_extension_test(raw_data, num_nystrom=300, gamma=None): # basic imple
     A_of_null = total_degree * (np.dot(dhat_null[0:num_nystrom,np.newaxis],dhat_null[0:num_nystrom,np.newaxis].transpose()))
     nor_B1 = np.dot(dhat_null[0:num_nystrom,np.newaxis], dhat_null[num_nystrom:num_rows,np.newaxis].transpose())
     B_of_null = total_degree * nor_B1
-    print("normalized A & B of H:-- %.3f seconds --" % (time.time() - start_time_normalized_Q))
+    print("normalized P_11 & P_12:-- %.3f seconds --" % (time.time() - start_time_normalized_Q))
 
     start_time_construct_new_R11_R12 = time.time()
-    A =  A + A_of_null
-    B =  B + B_of_null
+    A =  A - A_of_null
+    B =  B - B_of_null
     print("construct R_11 & R_12:-- %.3f seconds --" % (time.time() - start_time_construct_new_R11_R12))
 
     # do orthogonalization and eigen-decomposition of W
@@ -377,13 +380,10 @@ def nystrom_extension_test(raw_data, num_nystrom=300, gamma=None): # basic imple
     #vt = vt[:k, :]
     print("eigen-decomposition (using SVD):-- %.3f seconds --" % (time.time() - start_time_eigendecomposition_W))
 
-    start_time_compute_eigenvalues = time.time() 
     E = np.real(E)
     ind = np.argsort(E)[::-1]
     U = U[:,ind]
-    #print('U shape: ',U.shape)
     E = E[ind]
-    #print('E shape: ',E.shape)
     print("compute eigenvalues:-- %.3f seconds --" % (time.time() - start_time_compute_eigenvalues))
 
     start_time_compute_eigenvectors = time.time()    
@@ -396,8 +396,11 @@ def nystrom_extension_test(raw_data, num_nystrom=300, gamma=None): # basic imple
     V = np.real(V)
     print("compute eigenvectors:-- %.3f seconds --" % (time.time() - start_time_compute_eigenvectors))
     
+    start_time_compute_eigenvalues = time.time() 
     E = 2-E
     E = E[:,np.newaxis]
+    print("compute eigenvalues:-- %.3f seconds --" % (time.time() - start_time_compute_eigenvalues))
+
     return E, V
 
 
@@ -429,50 +432,65 @@ def nystrom_QR(raw_data, num_nystrom  = 300, gamma = None): # basic implementati
 
     num_rows = raw_data.shape[0]
     index = permutation(num_rows)
-    #print('index: ', index.shape)
     if num_nystrom == None:
         raise ValueError("Please Provide the number of sample points in num_nystrom")
     sample_data = raw_data[index[:num_nystrom]]
     other_data = raw_data[index[num_nystrom:]]
 
 
-    # calculating B
-    other_points = num_rows - num_nystrom
+    # calculating W_21
+    start_time_calculating_B = time.time()
     B = rbf_kernel(sample_data, other_data, gamma=gamma)
+    print("calculating W_21:-- %.3f seconds --" % (time.time() - start_time_calculating_B))
 
-    # calculating A
+    # calculating W_11
+    start_time_calculating_A = time.time()
     A = rbf_kernel(sample_data, sample_data, gamma=gamma)
+    print("calculating W_11:-- %.3f seconds --" % (time.time() - start_time_calculating_A))
 
-    # normalize A and B
-    #start_time_normalized_W = time.time()
+    # construct null model P
+    start_time_construct_P = time.time()
     pinv_A = pinv(A)
     B_T = B.transpose()
     d1 = np.sum(A,axis = 1) + np.sum(B,axis = 1)
     d2 = np.dot(B_T, np.dot(pinv_A, np.sum(B,axis = 1)))
     d_array = np.concatenate((d1,d2), axis=None)
     
-    total_degree = 1. / (2 * np.sum(d_array, dtype=np.int64))
+    total_degree = 1. / np.sum(d_array, dtype=np.int64)
     dhat_null = np.sqrt(d_array)
     A_of_null = total_degree * (np.dot(dhat_null[0:num_nystrom,np.newaxis],dhat_null[0:num_nystrom,np.newaxis].transpose()))
     nor_B1 = np.dot(dhat_null[0:num_nystrom,np.newaxis], dhat_null[num_nystrom:num_rows,np.newaxis].transpose())
     B_of_null = total_degree * nor_B1
+    print("construct null model P:-- %.3f seconds --" % (time.time() - start_time_construct_P))
     
+    # compute B = W -P
+    start_time_construct_B = time.time()
     A = A - A_of_null
     B_T = B_T - B_of_null.transpose()
+    print("compute B:-- %.3f seconds --" % (time.time() - start_time_construct_B))
     
+    # computing the approximation of B
+    start_time_approximation_B = time.time()
     pinv_A_new = pinv(A)
     d2_new = np.dot(B_T, np.dot(pinv_A_new, np.sum(B_T.transpose(),axis = 1)))
     d_inverse = np.sqrt(1./d2_new)
     d_inverse = np.expand_dims(d_inverse, axis=-1)
-    #dhat = np.diag(d_inverse)
-    #print('d_inverse shape: ', d_inverse.shape)
     B_T = B_T * d_inverse
-    Q, R = np.linalg.qr(B_T,mode='reduced')
-    #print('Q shape: ',Q.shape)
-    S = np.dot(R, np.dot(pinv_A_new, R.transpose()))
-    #print('S shape: ',S.shape)
-    S = (S+S.transpose())/2.
+    print("computing the approximation of W_21:-- %.3f seconds --" % (time.time() - start_time_approximation_B))
 
+    # QR decomposition for the approximation of B
+    start_time_QR_decomposition_approximation_B = time.time()
+    Q, R = np.linalg.qr(B_T,mode='reduced')
+    print("QR decomposition for the approximation of B:-- %.3f seconds --" % (time.time() - start_time_QR_decomposition_approximation_B))
+    
+    # construct S
+    start_time_construct_S = time.time()  
+    S = np.dot(R, np.dot(pinv_A_new, R.transpose()))
+    S = (S+S.transpose())/2.
+    print("construct S:-- %.3f seconds --" % (time.time() - start_time_construct_S))
+    
+    # do orthogonalization and eigen-decomposition of S
+    start_time_eigendecomposition_S = time.time()
     
     #d_c = np.concatenate((d1,d2),axis = 0)
     #dhat = np.sqrt(1./d_c)
@@ -491,19 +509,114 @@ def nystrom_QR(raw_data, num_nystrom  = 300, gamma = None): # basic implementati
     #R = A + np.dot(np.dot(Asi,BBT),Asi)
     #R = (R+R.transpose())/2.
     E, U = eigh(S)
+    print("do eigen-decomposition of S:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition_S))
+
     E = np.real(E)
     ind = np.argsort(E)[::-1]
+
+    # calculating eigenvectors
+    start_time_compute_eigenvectors = time.time()
     U = U[:,ind]
     E = E[ind]
     V = np.dot(Q, U)
     V = V / np.linalg.norm(V, axis = 0)
-    #print('V shape: ', V.shape)
-    #new_index = index[num_nystrom:]
-    #print('new_index length: ',new_index.shape)
-    #V[new_index,:] = V.copy()
+    print("calculating eigenvectors:-- %.3f seconds --" % (time.time() - start_time_compute_eigenvectors))
     V = np.real(V)
+
+    # calculating eigenvalues
+    start_time_compute_eigenvalues = time.time()
     E = 2-E
     E = E[:,np.newaxis]
-    #print("orthogonalization and eigen-decomposition of F:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition_W))
+    print("calculating eigenvalues:-- %.3f seconds --" % (time.time() - start_time_compute_eigenvalues))
+    
+    return E,V, other_data, index
+
+
+def nystrom_QR_l_sym(raw_data, num_nystrom  = 300, gamma = None): # basic implementation
+    """ Nystrom Extension
+
+
+    Parameters
+    -----------
+    raw_data : ndarray, shape (n_samples, n_features)
+        Raw input data.
+
+    sigma : width of the rbf kernel
+
+    num_nystrom : int, 
+            number of sample points 
+
+    Return 
+    ----------
+    V : eigenvectors
+    E : eigenvalues    
+    """
+    
+
+    if gamma is None:
+        print("graph kernel width not specified, using default value 1")
+        gamma = 1
+
+    num_rows = raw_data.shape[0]
+    index = permutation(num_rows)
+    if num_nystrom == None:
+        raise ValueError("Please Provide the number of sample points in num_nystrom")
+    sample_data = raw_data[index[:num_nystrom]]
+    other_data = raw_data[index[num_nystrom:]]
+
+
+    # calculating W_21
+    start_time_calculating_B = time.time()
+    B = rbf_kernel(sample_data, other_data, gamma=gamma)
+    print("calculating W_21:-- %.3f seconds --" % (time.time() - start_time_calculating_B))
+
+    # calculating W_11
+    start_time_calculating_A = time.time()
+    A = rbf_kernel(sample_data, sample_data, gamma=gamma)
+    print("calculating W_11:-- %.3f seconds --" % (time.time() - start_time_calculating_A))
+
+    # computing the approximation of W_21
+    start_time_approximation_W21 = time.time()
+    pinv_A = pinv(A)
+    B_T = B.transpose()
+    d2 = np.dot(B_T, np.dot(pinv_A, np.sum(B,axis = 1)))
+    d_inverse = np.sqrt(1./d2)
+    d_inverse = np.expand_dims(d_inverse, axis=-1)
+    B_T = B_T * d_inverse
+    print("computing the approximation of W_21:-- %.3f seconds --" % (time.time() - start_time_approximation_W21))
+    
+    # QR decomposition for the approximation of W_21
+    start_time_QR_decomposition_approximation_W21 = time.time()
+    Q, R = np.linalg.qr(B_T,mode='reduced')
+    print("QR decomposition for the approximation of W_21:-- %.3f seconds --" % (time.time() - start_time_QR_decomposition_approximation_W21))
+    
+    # construct S
+    start_time_construct_S = time.time()    
+    S = np.dot(R, np.dot(pinv_A, R.transpose()))
+    S = (S+S.transpose())/2.
+    print("construct S:-- %.3f seconds --" % (time.time() - start_time_construct_S))
+    
+    # do orthogonalization and eigen-decomposition of S
+    start_time_eigendecomposition_S = time.time()
+    E, U = eigh(S)
+    print("do eigen-decomposition of S:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition_S))
+    
+    E = np.real(E)
+    ind = np.argsort(E)[::-1]
+
+    # calculating eigenvectors
+    start_time_compute_eigenvectors = time.time()
+    U = U[:,ind]
+    E = E[ind]
+    V = np.dot(Q, U)
+    V = V / np.linalg.norm(V, axis = 0)
+    print("calculating eigenvectors:-- %.3f seconds --" % (time.time() - start_time_compute_eigenvectors))
+    V = np.real(V)
+
+    # calculating eigenvalues
+    start_time_compute_eigenvalues = time.time()
+    E = 1-E
+    E = E[:,np.newaxis]
+    print("calculating eigenvalues:-- %.3f seconds --" % (time.time() - start_time_compute_eigenvalues))
 
     return E,V, other_data, index
