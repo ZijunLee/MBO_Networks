@@ -20,13 +20,12 @@ import time
 from MBO_Network import mbo_modularity_1, adj_to_laplacian_signless_laplacian, mbo_modularity_inner_step, mbo_modularity_hu_original,mbo_modularity_given_eig
 from graph_mbo.utils import vector_to_labels, labels_to_vector,label_to_dict, purity_score,inverse_purity_score, dict_to_list_set
 from community import community_louvain
-from graph_cut.util.nystrom import nystrom_extension, nystrom_extension_test, nystrom_new
+from graph_cut.util.nystrom import nystrom_extension, nystrom_extension_test, nystrom_new, nystrom_QR
 from sklearn.neighbors import kneighbors_graph
-from sklearn.cluster import KMeans, SpectralClustering
+from sklearn.cluster import SpectralClustering
 import networkx.algorithms.community as nx_comm
-import quimb
+from sknetwork.clustering import Louvain
 from sklearn.kernel_approximation import Nystroem
-from sklearn import datasets, svm
 from VNSC import SpectralNystrom, SpectralNystrom_new, SpectralNystrom_old
 import graphlearning as gl
 
@@ -35,15 +34,15 @@ import graphlearning as gl
 ## parameter setting
 dt_inner = 1
 num_nodes = 70000
-num_communities = 260
+num_communities = 120
 m = 1 * num_communities
 #m = 100
 dt = 1
 tol = 1e-5
-inner_step_count = 3
+inner_step_count = 5
 gamma = 0.02
 
-gpath = '/'.join(os.getcwd().split('/')[:-1])
+#gpath = '/'.join(os.getcwd().split('/')[:-1])
 
 #raw_data, labels = Read_mnist(digits = [4,9],path = gpath+'/MBO_signed_graphs/graph_cut/data') 
 #raw_data = raw_data/255.
@@ -86,10 +85,8 @@ W = gl.weightmatrix.knn(Z_training, 10)
 degree_W = np.array(np.sum(W, axis=-1)).flatten()
 #adj_mat = W.toarray()
 
-#start_time_eigendecomposition_l_sym = time.time()
-#eigenvalues_2, eigenvectors_2 = SpectralNystrom_old(train_data, 0.02,n_neighbors=10)
-#time_eig_l_sym = time.time() - start_time_eigendecomposition_l_sym
-#print('distance_mat: ', distance_mat.shape)
+
+
 
 #D_hu = np.squeeze(eigenvalues_2[:m])
 #V_hu = eigenvectors_2[:,:m]
@@ -110,9 +107,9 @@ degree_W = np.array(np.sum(W, axis=-1)).flatten()
 
 
 # Initialize u
-start_time_initialize = time.time()
+#start_time_initialize = time.time()
 #u_init = get_initial_state_1(num_nodes, num_communities)
-u_init = generate_initial_value_multiclass('rd', n_samples=num_nodes, n_class=num_communities)
+#u_init = generate_initial_value_multiclass('rd', n_samples=num_nodes, n_class=num_communities)
 #time_initialize_u = time.time() - start_time_initialize
 #print("compute initialize u:-- %.3f seconds --" % (time_initialize_u))
 
@@ -199,16 +196,54 @@ start_time_l_sym = time.time()
 
 
 start_time_l_mix = time.time()
-eigenvalues_1, eigenvectors_1 = nystrom_extension_test(Z_training, num_nystrom=500, gamma=gamma)
-#D_mmbo = np.squeeze(eigenvalues_1[:m])
-#V_mmbo = eigenvectors_1[:,:m]
-#time_eig_l_mix = time.time() - start_time_l_mix
-#print("nystrom extension in L_mix:-- %.3f seconds --" % (time_eig_l_mix))
+eigenvalues_mmbo, eigenvectors_mmbo = nystrom_extension_test(Z_training, num_nystrom=500, gamma=gamma)
+#D_mmbo = np.squeeze(eigenvalues_1[1:m+1])
+#V_mmbo = eigenvectors_1[:,1:m+1]
+time_eig_l_mix = time.time() - start_time_l_mix
+print("nystrom extension in L_mix:-- %.3f seconds --" % (time_eig_l_mix))
 #print('nystrom D_sign_1 shape: ', D_mmbo)
 #print('nystrom V_sign_1 shape: ', V_hu)
 
 
+#start_time_l_mix = time.time()
+#eigenvalues_mmbo, eigenvectors_mmbo, other_data, index = nystrom_QR(Z_training, num_nystrom=500, gamma=gamma)
+#D_mmbo = np.squeeze(eigenvalues_hu[1:m+1])
+#print('nystrom_QR D_hu shape: ', D_mmbo)
+#V_mmbo = eigenvectors_hu[:,1:m+1]
+#time_eig_l_mix = time.time() - start_time_l_mix
+#print("nystrom extension in L_sym:-- %.3f seconds --" % (time_eig_l_mix))
 
+#gt_labels = gt_labels[index[500:]]
+#W = gl.weightmatrix.knn(other_data, 10)
+#degree_W = np.array(np.sum(W, axis=-1)).flatten()
+
+
+# Louvain
+start_time_louvain = time.time()
+G = nx.convert_matrix.from_scipy_sparse_matrix(W)
+#G = nx.convert_matrix.from_numpy_array(adj_mat)
+partition_Louvain = community_louvain.best_partition(G, resolution=1)    # returns a dict
+#louvain = Louvain(modularity='newman')
+#louvain_array = louvain.fit_transform(W)
+louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
+louvain_array = np.asarray(louvain_list)
+print("Louvain:-- %.3f seconds --" % (time.time() - start_time_louvain))
+louvain_cluster = len(np.unique(louvain_array))
+print('the cluster Louvain found: ',louvain_cluster)
+
+modularity_louvain = skn.clustering.modularity(W,louvain_array,resolution=0.5)
+#ARI_louvain = adjusted_rand_score(louvain_array, gt_labels)
+#purify_louvain = purity_score(gt_labels, louvain_array)
+#inverse_purify_louvain = inverse_purity_score(gt_labels, louvain_array)
+#NMI_louvain = normalized_mutual_info_score(gt_labels, louvain_array)
+
+print(' modularity Louvain score: ', modularity_louvain)
+#print(' ARI Louvain  score: ', ARI_louvain)
+#print(' purify for Louvain : ', purify_louvain)
+#print(' inverse purify for Louvain : ', inverse_purify_louvain)
+#print(' NMI for Louvain  : ', NMI_louvain)
+
+m = 1 * louvain_cluster
 
 # Test HU original MBO with symmetric normalized L_F
 #start_time_hu_original = time.time()
@@ -232,50 +267,60 @@ eigenvalues_1, eigenvectors_1 = nystrom_extension_test(Z_training, num_nystrom=5
 #print('inverse purify for HU method: ', inverse_purify_hu_original_1)
 #print('NMI for HU method: ', NMI_hu_original_1)
 
-#num_communities = list(range(255, 265))
+#num_communities = list(range(louvain_cluster-5, louvain_cluster+6))
 
 ## Test MMBO using the projection on the eigenvectors with symmetric normalized L_F & Q_H
 #start_time_1_nor_Lf_Qh_1 = time.time()
 #for i in num_communities:
 #    print('num_clusters: ',i)
 #    m = i
-#    u_init = generate_initial_value_multiclass('rd', n_samples=num_nodes, n_class=i)
-    #u_init = get_initial_state_1(num_nodes, i)
-    #D_hu = np.squeeze(eigenvalues_hu[:m])
-    #V_hu = eigenvectors_hu[:,:m]
-    #u_hu_vector, num_iter_HU = mbo_modularity_hu_original(num_nodes, i, m, degree_W, dt_inner, u_init,
-    #                            D_hu, V_hu, tol,inner_step_count) 
-    #print('the num_iteration of HU method: ', num_iter_HU)
-    #u_hu_label_1 = vector_to_labels(u_hu_vector)
-    #modu_hu_original_1 = skn.clustering.modularity(W,u_hu_label_1,resolution=0.5)
-    #print('modularity score for HU method: ', modu_hu_original_1)
+start_time_initialize = time.time()
+u_init = generate_initial_value_multiclass('rd', n_samples=num_nodes, n_class=louvain_cluster)
+time_initialize_u = time.time() - start_time_initialize
+print("compute initialize u:-- %.3f seconds --" % (time_initialize_u))
+
+#D_hu = np.squeeze(eigenvalues_hu[:m])
+#print('nystrom_QR D_hu shape: ', D_hu)
+#V_hu = eigenvectors_hu[:,:m]
+#u_hu_vector, num_iter_HU = mbo_modularity_hu_original(num_nodes, num_communities, m, degree_W, dt_inner, u_init,
+#                            D_hu, V_hu, tol,inner_step_count) 
+#print('the num_iteration of HU method: ', num_iter_HU)
+#u_hu_label_1 = vector_to_labels(u_hu_vector)
+#modu_hu_original_1 = skn.clustering.modularity(W,u_hu_label_1,resolution=0.5)
+#print('modularity score for HU method: ', modu_hu_original_1)
     
-D_mmbo = np.squeeze(eigenvalues_1[:m])
-V_mmbo = eigenvectors_1[:,:m]
-u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1 = mbo_modularity_1(num_nodes,num_communities, m, degree_W, u_init, 
-                                                D_mmbo, V_mmbo, tol)
+
+D_mmbo = np.squeeze(eigenvalues_mmbo[1:m+1])
+V_mmbo = eigenvectors_mmbo[:,1:m+1]
+
+start_time_1_nor_Lf_Qh_1 = time.time()
+u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1 = mbo_modularity_1(num_nodes,louvain_cluster, m, degree_W, u_init, 
+                                            D_mmbo, V_mmbo, tol)
+
+time_MMBO_projection_sym = time.time() - start_time_1_nor_Lf_Qh_1
+print("MMBO using projection with L_{mix}:-- %.3f seconds --" % (time_eig_l_mix + time_initialize_u + time_MMBO_projection_sym))
 print('the number of MBO iteration for MMBO using projection with L_{mix}: ', num_repeat_1_nor_Lf_Qh_1)
 u_1_nor_Lf_Qh_individual_label_1 = vector_to_labels(u_1_nor_Lf_Qh_individual_1)
 
-modularity_1_nor_lf_qh = skn.clustering.modularity(W,u_1_nor_Lf_Qh_individual_label_1,resolution=0.5)
-print('modularity for MMBO using projection with L_{mix}: ', modularity_1_nor_lf_qh)
+#modularity_1_nor_lf_qh = skn.clustering.modularity(W,u_1_nor_Lf_Qh_individual_label_1,resolution=0.5)
+#print('modularity for MMBO using projection with L_{mix}: ', modularity_1_nor_lf_qh)
 #time_MMBO_projection_sym = time.time() - start_time_1_nor_Lf_Qh_1                                                
 #print("MMBO using projection with L_{mix}:-- %.3f seconds --" % (time_eig_l_mix + time_initialize_u + time_MMBO_projection_sym))
 #print('the number of MBO iteration for MMBO using projection with L_{mix}: ', num_repeat_1_nor_Lf_Qh_1)
 
 #u_1_nor_Lf_Qh_individual_label_1 = vector_to_labels(u_1_nor_Lf_Qh_individual_1)
 
-#modularity_1_nor_lf_qh = skn.clustering.modularity(W,u_1_nor_Lf_Qh_individual_label_1,resolution=0.5)
-#ARI_mbo_1_nor_Lf_Qh_1 = adjusted_rand_score(u_1_nor_Lf_Qh_individual_label_1, gt_labels)
-#purify_mbo_1_nor_Lf_Qh_1 = purity_score(gt_labels, u_1_nor_Lf_Qh_individual_label_1)
-#inverse_purify_mbo_1_nor_Lf_Qh_1 = inverse_purity_score(gt_labels, u_1_nor_Lf_Qh_individual_label_1)
-#NMI_mbo_1_nor_Lf_Qh_1 = normalized_mutual_info_score(gt_labels, u_1_nor_Lf_Qh_individual_label_1)
+modularity_1_nor_lf_qh = skn.clustering.modularity(W,u_1_nor_Lf_Qh_individual_label_1,resolution=0.5)
+ARI_mbo_1_nor_Lf_Qh_1 = adjusted_rand_score(u_1_nor_Lf_Qh_individual_label_1, gt_labels)
+purify_mbo_1_nor_Lf_Qh_1 = purity_score(gt_labels, u_1_nor_Lf_Qh_individual_label_1)
+inverse_purify_mbo_1_nor_Lf_Qh_1 = inverse_purity_score(gt_labels, u_1_nor_Lf_Qh_individual_label_1)
+NMI_mbo_1_nor_Lf_Qh_1 = normalized_mutual_info_score(gt_labels, u_1_nor_Lf_Qh_individual_label_1)
 
-#print('modularity for MMBO using projection with L_{mix}: ', modularity_1_nor_lf_qh)
-#print('ARI for MMBO using projection with L_{mix}: ', ARI_mbo_1_nor_Lf_Qh_1)
-#print('purify for MMBO using projection with L_{mix}: ', purify_mbo_1_nor_Lf_Qh_1)
-#print('inverse purify for MMBO using projection with L_{mix}: ', inverse_purify_mbo_1_nor_Lf_Qh_1)
-#print('NMI for MMBO using projection with L_{mix}: ', NMI_mbo_1_nor_Lf_Qh_1)
+print('modularity for MMBO using projection with L_{mix}: ', modularity_1_nor_lf_qh)
+print('ARI for MMBO using projection with L_{mix}: ', ARI_mbo_1_nor_Lf_Qh_1)
+print('purify for MMBO using projection with L_{mix}: ', purify_mbo_1_nor_Lf_Qh_1)
+print('inverse purify for MMBO using projection with L_{mix}: ', inverse_purify_mbo_1_nor_Lf_Qh_1)
+print('NMI for MMBO using projection with L_{mix}: ', NMI_mbo_1_nor_Lf_Qh_1)
 
 
 # MMBO1 with inner step & sym normalized L_F & Q_H
@@ -300,28 +345,8 @@ start_time_1_inner_nor_1 = time.time()
 #print('inverse purify for MMBO using inner step with L_{mix}: ', inverse_purify_mbo_1_inner_nor_1)
 #print('NMI for MMBO using inner step with L_{mix}: ', NMI_mbo_1_inner_nor_1)
 
-# Louvain
-start_time_louvain = time.time()
-#G = nx.convert_matrix.from_scipy_sparse_matrix(W)
-#G = nx.convert_matrix.from_numpy_array(adj_mat)
-#partition_Louvain = community_louvain.best_partition(G, resolution=0.5)    # returns a dict
-#louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
-#louvain_array = np.asarray(louvain_list)
-#print("Louvain:-- %.3f seconds --" % (time.time() - start_time_louvain))
-#louvain_cluster = len(np.unique(louvain_array))
-#print('the cluster Louvain found: ',louvain_cluster)
 
-#modularity_louvain = skn.clustering.modularity(W,louvain_array,resolution=0.5)
-#ARI_louvain = adjusted_rand_score(louvain_array, gt_labels)
-#purify_louvain = purity_score(gt_labels, louvain_array)
-#inverse_purify_louvain = inverse_purity_score(gt_labels, louvain_array)
-#NMI_louvain = normalized_mutual_info_score(gt_labels, louvain_array)
 
-#print(' modularity Louvain score: ', modularity_louvain)
-#print(' ARI Louvain  score: ', ARI_louvain)
-#print(' purify for Louvain : ', purify_louvain)
-#print(' inverse purify for Louvain : ', inverse_purify_louvain)
-#print(' NMI for Louvain  : ', NMI_louvain)
 
 
 # Spectral clustering with k-means
