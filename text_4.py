@@ -31,7 +31,7 @@ import graphlearning as gl
 
 ## parameter setting
 dt_inner = 1
-num_nodes = 69500
+num_nodes = 70000
 num_communities = 120
 m = 1 * num_communities
 #m = 100
@@ -77,10 +77,9 @@ Z_training = pca.fit_transform(data)
 
 #gamma = 1. / p
 
-#W = gl.weightmatrix.knn(Z_training, 10)
-#W = rbf_kernel(Z_training, Z_training, gamma=gamma)
+W = gl.weightmatrix.knn(Z_training, 10)
 #print('W type: ', type(W))
-#degree_W = np.array(np.sum(W, axis=-1)).flatten()
+degree_W = np.array(np.sum(W, axis=-1)).flatten()
 #adj_mat = W.toarray()
 
 
@@ -105,46 +104,11 @@ Z_training = pca.fit_transform(data)
 
 
 # Initialize u
-#start_time_initialize = time.time()
+start_time_initialize = time.time()
 #u_init = get_initial_state_1(num_nodes, num_communities)
-#u_init = generate_initial_value_multiclass('rd', n_samples=num_nodes, n_class=num_communities)
-#time_initialize_u = time.time() - start_time_initialize
-#print("compute initialize u:-- %.3f seconds --" % (time_initialize_u))
-
-
-#start_time_eigendecomposition = time.time()
-#D_sign, V_sign = eigsh(
-#    sym_graph_lap,
-#    k=m+1,
-#    sigma=0,
-#    v0=np.ones((laplacian_mix.shape[0], 1)),
-#    which='SA')
-
-
-#D_sign_signless, V_sign_signless = eigsh(
-#    sym_signless_lap,
-#    k=m+1,
-#    sigma=0,
-#    v0=np.ones((laplacian_mix.shape[0], 1)),
-#    which='SA')
-#print('D_sign signless shape: ', D_sign_signless)
-#print('V_sign signless shape: ', V_sign_signless)
-
-#D_sign_mix, V_sign_mix = eigsh(
-#    l_mix,
-#    k=m,
-#    sigma=0,
-#    v0=np.ones((laplacian_mix.shape[0], 1)),
-#    which='SA')
-#print('D_sign l_mix shape: ', D_sign_mix)
-#print('V_sign l_mix shape: ', V_sign_mix)
-
-
-#D_mix = D_sign + D_sign_signless
-#V_mix = V_sign + V_sign_signless
-#print('D_mix: ', D_mix)
-#print('V_mix: ', V_mix)
-
+u_init = generate_initial_value_multiclass('rd', n_samples=num_nodes, n_class=num_communities)
+time_initialize_u = time.time() - start_time_initialize
+print("compute initialize u:-- %.3f seconds --" % (time_initialize_u))
 
 
 #start_time_eigendecomposition = time.time()
@@ -158,46 +122,47 @@ Z_training = pca.fit_transform(data)
 #print('nystrom D_sign_1 shape: ', D_hu)
 #print('nystrom V_sign_1 shape: ', V_hu)
 
-#start_time_l_sym = time.time()
-#eigenvalues_hu, eigenvectors_hu = nystrom_new(Z_training, num_nystrom=500, gamma=gamma)
-#D_hu = np.squeeze(eigenvalues_hu[:m])
-#V_hu = eigenvectors_hu[:,:m]
-#time_eig_l_sym = time.time() - start_time_l_sym
-#print("nystrom extension in L_sym:-- %.3f seconds --" % (time_eig_l_sym))
+
+start_time_l_sym = time.time()
+eigenvalues_hu, eigenvectors_hu = nystrom_new(Z_training, num_nystrom=500, gamma=gamma)
+D_hu = np.squeeze(eigenvalues_hu[:m])
+V_hu = eigenvectors_hu[:,:m]
+time_eig_l_sym = time.time() - start_time_l_sym
+print("nystrom extension in L_sym:-- %.3f seconds --" % (time_eig_l_sym))
 #print('nystrom D_sign_1 shape: ', D_hu)
 #print('nystrom V_sign_1 shape: ', V_hu.shape)
 
 
-#start_time_l_mix = time.time()
-#eigenvalues_mmbo, eigenvectors_mmbo = nystrom_extension_test(Z_training, num_nystrom=500, gamma=gamma)
-#D_mmbo = np.squeeze(eigenvalues_1[1:m+1])
-#V_mmbo = eigenvectors_1[:,1:m+1]
-#time_eig_l_mix = time.time() - start_time_l_mix
-#print("nystrom extension in L_mix:-- %.3f seconds --" % (time_eig_l_mix))
+start_time_l_mix = time.time()
+eigenvalues_mmbo, eigenvectors_mmbo = nystrom_extension_test(Z_training, num_nystrom=500, gamma=gamma)
+D_mmbo = np.squeeze(eigenvalues_mmbo[1:m+1])
+V_mmbo = eigenvectors_mmbo[:,1:m+1]
+time_eig_l_mix = time.time() - start_time_l_mix
+print("nystrom extension in L_mix:-- %.3f seconds --" % (time_eig_l_mix))
 #print('nystrom D_sign_1 shape: ', D_mmbo)
 #print('nystrom V_sign_1 shape: ', V_hu)
 
 
-start_time_l_sym = time.time()
-eigenvalues_hu, eigenvectors_hu, other_data, index = nystrom_QR_l_sym(Z_training, num_nystrom=500, gamma=gamma)
-D_hu = np.squeeze(eigenvalues_hu[:m])
+#start_time_l_sym = time.time()
+#eigenvalues_hu, eigenvectors_hu, other_data, index = nystrom_QR_l_sym(Z_training, num_nystrom=500, gamma=gamma)
+#D_hu = np.squeeze(eigenvalues_hu[:m])
 #print('nystrom_QR D_hu: ', D_hu)
-V_hu = eigenvectors_hu[:,:m]
-time_eig_l_sym = time.time() - start_time_l_sym
-print("nystrom extension in L_sym:-- %.3f seconds --" % (time_eig_l_sym))
+#V_hu = eigenvectors_hu[:,:m]
+#time_eig_l_sym = time.time() - start_time_l_sym
+#print("nystrom extension in L_sym:-- %.3f seconds --" % (time_eig_l_sym))
 
-start_time_l_mix = time.time()
-eigenvalues_mmbo, eigenvectors_mmbo, other_data, index = nystrom_QR(Z_training, num_nystrom=500, gamma=gamma)
-D_mmbo = np.squeeze(eigenvalues_mmbo[1:m+1])
+#start_time_l_mix = time.time()
+#eigenvalues_mmbo, eigenvectors_mmbo, other_data, index = nystrom_QR(Z_training, num_nystrom=500, gamma=gamma)
+#D_mmbo = np.squeeze(eigenvalues_mmbo[1:m+1])
 #print('nystrom_QR D_mmbo: ', D_mmbo)
-V_mmbo = eigenvectors_mmbo[:,1:m+1]
-time_eig_l_mix = time.time() - start_time_l_mix
-print("nystrom extension in L_mix:-- %.3f seconds --" % (time_eig_l_mix))
+#V_mmbo = eigenvectors_mmbo[:,1:m+1]
+#time_eig_l_mix = time.time() - start_time_l_mix
+#print("nystrom extension in L_mix:-- %.3f seconds --" % (time_eig_l_mix))
 
 
-gt_labels = gt_labels[index[500:]]
-W = gl.weightmatrix.knn(other_data, 10)
-degree_W = np.array(np.sum(W, axis=-1)).flatten()
+#gt_labels = gt_labels[index[500:]]
+#W = gl.weightmatrix.knn(other_data, 10)
+#degree_W = np.array(np.sum(W, axis=-1)).flatten()
 
 
 # Louvain
