@@ -25,8 +25,6 @@ from sklearn.neighbors import kneighbors_graph
 from sklearn.cluster import SpectralClustering
 import networkx.algorithms.community as nx_comm
 from sknetwork.clustering import Louvain
-from sklearn.kernel_approximation import Nystroem
-from VNSC import SpectralNystrom, SpectralNystrom_new, SpectralNystrom_old
 import graphlearning as gl
 
 
@@ -186,7 +184,7 @@ D_hu = np.squeeze(eigenvalues_hu[:m])
 #print('nystrom_QR D_hu: ', D_hu)
 V_hu = eigenvectors_hu[:,:m]
 time_eig_l_sym = time.time() - start_time_l_sym
-print("nystrom extension in L_mix:-- %.3f seconds --" % (time_eig_l_sym))
+print("nystrom extension in L_sym:-- %.3f seconds --" % (time_eig_l_sym))
 
 start_time_l_mix = time.time()
 eigenvalues_mmbo, eigenvectors_mmbo, other_data, index = nystrom_QR(Z_training, num_nystrom=500, gamma=gamma)
