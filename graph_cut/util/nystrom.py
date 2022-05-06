@@ -384,7 +384,6 @@ def nystrom_extension_test(raw_data, num_nystrom=300, gamma=None): # basic imple
     ind = np.argsort(E)[::-1]
     U = U[:,ind]
     E = E[ind]
-    print("compute eigenvalues:-- %.3f seconds --" % (time.time() - start_time_compute_eigenvalues))
 
     start_time_compute_eigenvectors = time.time()    
     W = np.dot(W,Asi)
@@ -476,7 +475,7 @@ def nystrom_QR(raw_data, num_nystrom  = 300, gamma = None): # basic implementati
     d_inverse = np.sqrt(1./d2_new)
     d_inverse = np.expand_dims(d_inverse, axis=-1)
     B_T = B_T * d_inverse
-    print("computing the approximation of W_21:-- %.3f seconds --" % (time.time() - start_time_approximation_B))
+    print("computing the approximation of B_21:-- %.3f seconds --" % (time.time() - start_time_approximation_B))
 
     # QR decomposition for the approximation of B
     start_time_QR_decomposition_approximation_B = time.time()
