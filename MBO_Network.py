@@ -228,7 +228,7 @@ def mbo_modularity_1(num_nodes,num_communities, m, degree, u_init, eigval, eigve
     #laplacian_mix = graph_lap + signless_lap
     #print("compute l_{mix}:-- %.3f seconds --" % (time.time() - start_time_l_mix))
 
-    start_time_eigendecomposition = time.time()
+    #start_time_eigendecomposition = time.time()
     # compute eigenvalues and eigenvectors
     #D_sign, V_sign = eigsh(
     #    laplacian_mix,
@@ -260,6 +260,11 @@ def mbo_modularity_1(num_nodes,num_communities, m, degree, u_init, eigval, eigve
     #print('dti: ',dti)
     #print("compute time step selection:-- %.3f seconds --" % (time.time() - start_time_timestep_selection))
     #dti = dt 
+    
+    #start_time_exponiantial = time.time()
+    demon = sp.sparse.spdiags([np.exp(- 0.5 * eigval * dti)],[0],m,m) @ eigvec.transpose()
+    #demon_1 = eigvec @ (demon @ eigvec.transpose())
+    #print("compute exponiantil:-- %.3f seconds --" % (time.time() - start_time_exponiantial))
 
     # Perform MBO scheme
     n = 0
@@ -273,9 +278,11 @@ def mbo_modularity_1(num_nodes,num_communities, m, degree, u_init, eigval, eigve
 
         # Diffusion step
         #start_time_diffusion = time.time()
-        demon = sp.sparse.spdiags([np.exp(- 0.5 * eigval * dti)],[0],m,m) @ eigvec.transpose()
+        #demon = sp.sparse.spdiags([np.exp(- 0.5 * eigval * dti)],[0],m,m) @ eigvec.transpose()
         # Solve system (apply CG or pseudospectral)
-        u_half = eigvec @ (demon @ u_old)  # Project back into normal space
+        #u_half = eigvec @ (demon @ u_old)  # Project back into normal space
+        #u_half = np.dot(eigvec, np.dot(demon, u_old))
+        u_half = eigvec @ (demon @ u_old)
         #print("compute MBO diffusion step:-- %.3f seconds --" % (time.time() - start_time_diffusion))
         
         #start_time_thresholding = time.time()
@@ -591,7 +598,9 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, dt, u_init, eigval,
     #dti = np.sqrt(dtlow*dthigh)
     #print('dti: ',dti)
     #print("compute time step selection:-- %.3f seconds --" % (time.time() - start_time_timestep_selection))
-
+    
+    dti = dt / (2 * inner_step_count)
+    demon = sp.sparse.spdiags([1 / (1 + dti * eigval)], [0], m, m) @ eigvec.transpose()
 
     # Perform MBO scheme
     n = 0
@@ -603,12 +612,8 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, dt, u_init, eigval,
     #for i in range(50):
         u_old = u_new.copy()
 
-        dti = dt / (2 * inner_step_count)
-
         #start_time_diffusion = time.time()
-
         for j in range(inner_step_count):
-            demon = sp.sparse.spdiags([1 / (1 + dti * eigval)], [0], m, m) @ eigvec.transpose()
             u_half = eigvec @ (demon @ u_old)
         
         #print("compute MBO diffusion step:-- %.3f seconds --" % (time.time() - start_time_diffusion))
