@@ -12,7 +12,6 @@
 #--------------------------------------------------------------------------
 
 
-from regex import P
 import scipy as sp
 import scipy.sparse as spa
 import numpy as np
