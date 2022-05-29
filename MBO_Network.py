@@ -64,7 +64,7 @@ def construct_null_model(adj_matrix):
     
 
 
-def adj_to_laplacian_signless_laplacian(adj_matrix, num_communities, m, target_size=None):
+def adj_to_laplacian_signless_laplacian(adj_matrix, num_communities, target_size=None):
         
     A_absolute_matrix = np.abs(adj_matrix)
     degree = np.array(np.sum(A_absolute_matrix, axis=-1)).flatten()
@@ -83,7 +83,7 @@ def adj_to_laplacian_signless_laplacian(adj_matrix, num_communities, m, target_s
 
     del A_absolute_matrix, dergee_di_null
         
-    m = min(num_nodes - 2, m)  # Number of eigenvalues to use for pseudospectral
+    #m = min(num_nodes - 2, m)  # Number of eigenvalues to use for pseudospectral
 
     if target_size is None:
         target_size = [num_nodes // num_communities for i in range(num_communities)]
@@ -129,11 +129,11 @@ def adj_to_laplacian_signless_laplacian(adj_matrix, num_communities, m, target_s
 
     del signless_degree_inv
 
-    return num_nodes,m, degree, target_size,graph_laplacian, nor_graph_laplacian,random_walk_nor_lap, signless_laplacian_null_model, nor_signless_laplacian, rw_signless_lapclacian
+    return num_nodes, degree, target_size,graph_laplacian, nor_graph_laplacian,random_walk_nor_lap, signless_laplacian_null_model, nor_signless_laplacian, rw_signless_lapclacian
     
 
 
-def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
+def MMBO2_preliminary(adj_matrix, num_communities,m, target_size=None):
     
     A_absolute_matrix = np.abs(adj_matrix)
     degree = np.array(np.sum(A_absolute_matrix, axis=1)).flatten()
@@ -146,7 +146,7 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
     null_model = np.zeros((len(degree), len(degree)))
     total_degree = np.sum(A_absolute_matrix)
     total_degree_int = total_degree.astype(int)
-    print('total_degree_int: ', type(total_degree_int))
+    #print('total_degree_int: ', type(total_degree_int))
     #print('length of degree: ', len(degree))
 
     #for i in range(len(degree)):
@@ -214,12 +214,12 @@ def MMBO2_preliminary(adj_matrix, num_communities,m,gamma, target_size=None):
         target_size[-1] = num_nodes_mix_mat - sum(target_size[:-1])
 
 
-    return num_nodes, m, target_size, graph_laplacian_positive, sym_graph_laplacian_positive, random_walk_nor_lap_positive, signless_graph_laplacian_neg, sym_signless_laplacian_negative, random_walk_signless_lap_negative
+    return num_nodes, m, degree, target_size, graph_laplacian_positive, sym_graph_laplacian_positive, random_walk_nor_lap_positive, signless_graph_laplacian_neg, sym_signless_laplacian_negative, random_walk_signless_lap_negative
 
 
 
 
-def mbo_modularity_1(num_nodes,num_communities, m, degree, u_init, eigval, eigvec, tol, W,
+def mbo_modularity_1(num_nodes,num_communities, m, degree, u_init, eigval, eigvec, tol, adj_mat,
                      gamma=0.5, eps=1, max_iter=10000, initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start with MMBO using the projection on the eigenvectors')
@@ -262,7 +262,12 @@ def mbo_modularity_1(num_nodes,num_communities, m, degree, u_init, eigval, eigve
     #dti = dt 
     
     #start_time_exponiantial = time.time()
+    #demon_1 = sp.sparse.spdiags([np.exp(- 0.5 * eigval * dti)],[0],m,m)
+    #eigenvec_T = eigvec.transpose()
+    #print('demon_1: ', demon_1.shape)
+    #print('eigenvec_T: ', eigenvec_T.shape)
     demon = sp.sparse.spdiags([np.exp(- 0.5 * eigval * dti)],[0],m,m) @ eigvec.transpose()
+
     #demon_1 = eigvec @ (demon @ eigvec.transpose())
     #print("compute exponiantil:-- %.3f seconds --" % (time.time() - start_time_exponiantial))
 
@@ -270,9 +275,11 @@ def mbo_modularity_1(num_nodes,num_communities, m, degree, u_init, eigval, eigve
     n = 0
     stop_criterion = 10
     u_new = u_init.copy()
+    modularity_score_list = []
     
     start_time_MBO_iteration = time.time()
-    while (n < max_iter) and (stop_criterion > tol):
+    #while (n < max_iter) and (stop_criterion > tol):
+    for i in range(180):
 
         u_old = u_new.copy()
 
@@ -300,13 +307,14 @@ def mbo_modularity_1(num_nodes,num_communities, m, degree, u_init, eigval, eigve
 
         n = n + 1
         #print('n: ',n)
-        #u_new_label = vector_to_labels(u_new)
-        #modularity_score_1 = skn.clustering.modularity(W,u_new_label,resolution=0.5)
+        u_new_label = vector_to_labels(u_new)
+        modularity_score_1 = skn.clustering.modularity(adj_mat,u_new_label,resolution=0.5)
+        modularity_score_list.append(modularity_score_1)
         #print('modularity for MMBO using inner step with L_{mix}: ', modularity_score_1)
     
     print("compute the whole MBO iteration:-- %.3f seconds --" % (time.time() - start_time_MBO_iteration))
     
-    return u_new, n
+    return u_new, n, modularity_score_list
 
 
 # generate a random graph with community structure by the signed stochastic block model 
@@ -396,6 +404,7 @@ def mbo_modularity_2(num_nodes, num_communities, m,dti, tol, graph_laplacian_pos
     u_new = u.copy()
     #for n in range(max_iter):
     while (n < max_iter) and (stop_criterion > tol):
+    #for i in range(10):
 
         u_old = u_new.copy()
     
@@ -563,7 +572,7 @@ def mbo_modularity_given_eig(num_communities, num_nodes,degree,m,u_init, eigval,
     return u_new, n
 
 
-def mbo_modularity_inner_step(num_nodes, num_communities, m, dt, u_init, eigval, eigvec, tol,inner_step_count,
+def mbo_modularity_inner_step(num_nodes, num_communities, m,degree, dt, u_init, eigval, eigvec, tol,inner_step_count,adj_mat,
                         gamma=0.5, eps=1, max_iter=10000,initial_state_type="random", thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start with MMBO with finite difference')
@@ -593,23 +602,24 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, dt, u_init, eigval,
 
     #start_time_timestep_selection = time.time()
     # Time step selection
-    #dtlow = 0.15/((gamma+1)*np.max(degree))
-    #dthigh = np.log(np.linalg.norm(u_init)/eps)/eigval[0]
-    #dti = np.sqrt(dtlow*dthigh)
+    dtlow = 0.15/((gamma+1)*np.max(degree))
+    dthigh = np.log(np.linalg.norm(u_init)/eps)/eigval[0]
+    dti = np.sqrt(dtlow*dthigh)
     #print('dti: ',dti)
     #print("compute time step selection:-- %.3f seconds --" % (time.time() - start_time_timestep_selection))
     
-    dti = dt / (2 * inner_step_count)
+    dti = dti / (2 * inner_step_count)
     demon = sp.sparse.spdiags([1 / (1 + dti * eigval)], [0], m, m) @ eigvec.transpose()
 
     # Perform MBO scheme
     n = 0
     stop_criterion = 10
     u_new = u_init.copy()
+    modularity_score_list =[]
     
     start_time_MBO_iteration = time.time()
-    while (n < max_iter) and (stop_criterion > tol):
-    #for i in range(50):
+    #while (n < max_iter) and (stop_criterion > tol):
+    for i in range(180):
         u_old = u_new.copy()
 
         #start_time_diffusion = time.time()
@@ -631,14 +641,19 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m, dt, u_init, eigval,
         #print("compute stop criterion:-- %.3f seconds --" % (time.time() - start_time_stop_criterion)) 
 
         n = n+1
+        
+        u_new_label = vector_to_labels(u_new)
+        modularity_score_1 = skn.clustering.modularity(adj_mat,u_new_label,resolution=0.5)
+        modularity_score_list.append(modularity_score_1)
+        #print('modularity for MMBO using inner step with L_{mix}: ', modularity_score_1)
     print("compute the whole MBO iteration:-- %.3f seconds --" % (time.time() - start_time_MBO_iteration))
 
-    return u_new, n
+    return u_new, n, modularity_score_list
 
 
 
 
-def mbo_modularity_hu_original(num_nodes, num_communities, m, degree,dt, u_init, eigval, eigvec, tol, inner_step_count, 
+def mbo_modularity_hu_original(num_nodes, num_communities, m, degree,dt, u_init, eigval, eigvec, tol, inner_step_count, adj_mat, 
                             gamma=0.5,eps=1, max_iter=10000, thresh_type="max"): # inner stepcount is actually important! and can't be set to 1...
     
     print('Start Hu, Laurent algorithm')
@@ -677,12 +692,13 @@ def mbo_modularity_hu_original(num_nodes, num_communities, m, degree,dt, u_init,
 
     stop_criterion = 10
     n = 0
-    u_new = u_init.copy()        
+    u_new = u_init.copy()   
+    modularity_score_list =[]     
     
     start_time_MBO_iteration = time.time()
     # Perform MBO scheme
-    while (n < max_iter) and (stop_criterion > tol):
-    #for i in range(50):
+    #while (n < max_iter) and (stop_criterion > tol):
+    for i in range(180):
         u_old = u_new.copy()
         vv = u_old.copy()
         #print('vv shape: ', vv.shape)
@@ -716,6 +732,11 @@ def mbo_modularity_hu_original(num_nodes, num_communities, m, degree,dt, u_init,
         #print("compute stop criterion:-- %.3f seconds --" % (time.time() - start_time_stop_criterion))
         
         n = n+1
+        
+        u_new_label = vector_to_labels(u_new)
+        modularity_score_1 = skn.clustering.modularity(adj_mat,u_new_label,resolution=0.5)
+        modularity_score_list.append(modularity_score_1)
+        #print('modularity for MMBO using inner step with L_{mix}: ', modularity_score_1)
     print("compute the whole MBO iteration:-- %.3f seconds --" % (time.time() - start_time_MBO_iteration))
 
-    return u_new, n
+    return u_new, n, modularity_score_list
