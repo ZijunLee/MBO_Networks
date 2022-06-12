@@ -217,7 +217,8 @@ u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_cl
 
 
 # CNM algorithm (can setting resolution gamma)
-G = nx.from_scipy_sparse_array(W)
+#G = nx.from_scipy_sparse_matrix(W)
+G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 
 sum_time_CNM =0
 sum_modularity_CNM =0
@@ -227,9 +228,9 @@ sum_inverse_purify_CNM =0
 sum_NMI_CNM =0
 
 #for _ in range(5):
-
+print('Start CNM')
 start_time_CNM = time.time()
-partition_CNM = nx_comm.greedy_modularity_communities(G,resolution=0.5)
+partition_CNM = nx_comm.greedy_modularity_communities(G)
 time_CNM = time.time() - start_time_CNM
 print("CNM algorithm:-- %.3f seconds --" % (time_CNM))
 
