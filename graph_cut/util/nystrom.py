@@ -1382,7 +1382,6 @@ def nystrom_QR_1_sym_rw(raw_data, num_nystrom  = 300, gamma = None): # basic imp
         raise ValueError("Please Provide the number of sample points in num_nystrom")
     sample_data = raw_data[index[:num_nystrom]]
     other_data = raw_data[index[num_nystrom:]]
-    other_rows = num_rows - num_nystrom
 
 
     # calculating W_21
@@ -1795,3 +1794,113 @@ def nystrom_QR_1_signed_sym_rw(raw_data, num_nystrom  = 300, gamma = None): # ba
     print("random walk L_{mix} (B^+ & B^-):-- %.3f seconds --" % (time.time() - start_time_random_walk))
 
     return E_rw, V_rw, E_sym, V_sym, other_data, index
+
+
+def nystrom_QR_signless_lap_sym(raw_data, num_nystrom  = 300, gamma = None): # basic implementation
+    """ Nystrom Extension
+
+
+    Parameters
+    -----------
+    raw_data : ndarray, shape (n_samples, n_features)
+        Raw input data.
+
+    sigma : width of the rbf kernel
+
+    num_nystrom : int, 
+            number of sample points 
+
+    Return 
+    ----------
+    V : eigenvectors
+    E : eigenvalues    
+    """
+    print('start Nystrom QR decomposition for signless Laplacian Q_sym')    
+
+    if gamma is None:
+        print("graph kernel width not specified, using default value 1")
+        gamma = 1
+
+    num_rows = raw_data.shape[0]
+    index = permutation(num_rows)
+    if num_nystrom == None:
+        raise ValueError("Please Provide the number of sample points in num_nystrom")
+    sample_data = raw_data[index[:num_nystrom]]
+    other_data = raw_data[index[num_nystrom:]]
+
+
+    # calculating W_21
+    start_time_calculating_B = time.time()
+    B = rbf_kernel(sample_data, other_data, gamma=gamma)
+    print("calculating W_21:-- %.3f seconds --" % (time.time() - start_time_calculating_B))
+
+    # calculating W_11
+    start_time_calculating_A = time.time()
+    A = rbf_kernel(sample_data, sample_data, gamma=gamma)
+    print("calculating W_11:-- %.3f seconds --" % (time.time() - start_time_calculating_A))
+
+    pinv_A = pinv(A)
+    B_T = B.transpose()
+    d1 = np.sum(A,axis = 1) + np.sum(B,axis = 1)
+    d2 = np.sum(B_T,axis = 1) + np.dot(B_T, np.dot(pinv_A, np.sum(B,axis = 1)))
+    #d_c = np.concatenate((d1,d2),axis = 0)
+    d_c = np.concatenate((d1,d2), axis=None)
+    
+    total_degree = 1. / np.sum(d_c, dtype=np.int64)
+    A_of_null = total_degree * (d_c[0:num_nystrom,np.newaxis] @ d_c[0:num_nystrom,np.newaxis].transpose()) 
+    B_of_null = total_degree * (d_c[0:num_nystrom,np.newaxis] @ d_c[num_nystrom:num_rows,np.newaxis].transpose())
+
+    # computing the approximation of W_21
+    #start_time_approximation_W21 = time.time()
+    #pinv_A = pinv(A)
+    #B_T = B.transpose()
+    #d2 = np.dot(B_T, np.dot(pinv_A, np.sum(B,axis = 1)))
+    #d2_expand = np.expand_dims(d2, axis=-1)
+    #d_inverse = np.sqrt(1./d2)
+    #d_inverse = np.expand_dims(d_inverse, axis=-1)
+    #B_T = B_T * d_inverse
+    #print("computing the approximation of W_21:-- %.3f seconds --" % (time.time() - start_time_approximation_W21))
+
+    dhat = np.sqrt(1./d_c)
+    #A_of_null_sym = A_of_null * (np.dot(dhat[0:num_nystrom,np.newaxis],dhat[0:num_nystrom,np.newaxis].transpose()))
+    nor_B1 = np.dot(dhat[0:num_nystrom,np.newaxis], dhat[num_nystrom:num_rows,np.newaxis].transpose())
+    B_of_null_sym = B_of_null * nor_B1
+    B_T = B_of_null_sym.transpose()
+    
+    # QR decomposition for the approximation of W_21
+    start_time_QR_decomposition_approximation_W21 = time.time()
+    Q, R = np.linalg.qr(B_T,mode='reduced')
+    print("QR decomposition for the approximation of W_21:-- %.3f seconds --" % (time.time() - start_time_QR_decomposition_approximation_W21))
+    
+    # construct S
+    start_time_construct_S = time.time() 
+    pinv_A_null = pinv(A_of_null)
+    S = np.dot(R, np.dot(pinv_A_null, R.transpose()))
+    S = (S+S.transpose())/2.
+    print("construct S:-- %.3f seconds --" % (time.time() - start_time_construct_S))
+    
+    # do orthogonalization and eigen-decomposition of S
+    start_time_eigendecomposition_S = time.time()
+    E, U = eigh(S)
+    print("do eigen-decomposition of S:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition_S))
+    
+    E = np.real(E)
+    ind = np.argsort(E)
+
+    # calculating eigenvectors
+    start_time_compute_eigenvectors = time.time()
+    U = U[:,ind]
+    E = E[ind]
+    E = 1+E
+    E = E[:,np.newaxis]
+    V = np.dot(Q, U)
+    V = V / np.linalg.norm(V, axis = 0)
+    print("calculating eigenvectors:-- %.3f seconds --" % (time.time() - start_time_compute_eigenvectors))
+    V = np.real(V)
+
+    #start_time_compute_eigenvector_rw = time.time()
+    #rw_left_eigvec = V * d_inverse
+    #rw_right_eugvec = V * np.sqrt(d2_expand)
+    #print("calculating rw eigenvectors:-- %.3f seconds --" % (time.time() - start_time_compute_eigenvector_rw))
+
+    return E,V
