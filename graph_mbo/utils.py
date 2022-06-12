@@ -230,28 +230,28 @@ def vector_to_labels(V):
 
 
 #def get_modularity(network, community_dict):
-    '''
-    Calculate the modularity. Edge weights are ignored.
+#    '''
+#    Calculate the modularity. Edge weights are ignored.
 
-    Undirected:
-    .. math:: Q = \frac{1}{2m}\sum_{i,j} \(A_ij - \frac{k_i k_j}{2m}\) * \detal_(c_i, c_j)
+#    Undirected:
+#    .. math:: Q = \frac{1}{2m}\sum_{i,j} \(A_ij - \frac{k_i k_j}{2m}\) * \detal_(c_i, c_j)
 
-    Directed:
-    .. math:: Q = \frac{1}{m}\sum_{i,j} \(A_ij - \frac{k_i^{in} k_j^{out}}{m}\) * \detal_{c_i, c_j}
+#    Directed:
+#    .. math:: Q = \frac{1}{m}\sum_{i,j} \(A_ij - \frac{k_i^{in} k_j^{out}}{m}\) * \detal_{c_i, c_j}
 
-    Parameters
-    ----------
-    network : nx.Graph or nx.DiGraph
-        The network of interest
-    community_dict : dict
-        A dictionary to store the membership of each node
-        Key is node and value is community index
+#    Parameters
+#    ----------
+#    network : nx.Graph or nx.DiGraph
+#        The network of interest
+#    community_dict : dict
+#        A dictionary to store the membership of each node
+#        Key is node and value is community index
 
-    Returns
-    -------
-    float
-        The modularity of `network` given `community_dict`
-    '''
+#    Returns
+#    -------
+#    float
+#        The modularity of `network` given `community_dict`
+#    '''
 
     #Q = 0
     #G = network.copy()
