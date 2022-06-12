@@ -21,7 +21,7 @@ import time
 from MBO_Network import mbo_modularity_1, adj_to_laplacian_signless_laplacian, mbo_modularity_inner_step, mbo_modularity_hu_original,mbo_modularity_given_eig
 from graph_mbo.utils import vector_to_labels, labels_to_vector,label_to_dict, purity_score,inverse_purity_score, dict_to_list_set
 from community import community_louvain
-from graph_cut.util.nystrom import nystrom_extension_test, nystrom_new, nystrom_QR, nystrom_QR_l_sym, nystrom_QR_B_signed, nystrom_QR_1, nystrom_QR_1_signed, nystrom_QR_1_random_walk, nystrom_QR_1_sym_rw, nystrom_QR_1_signed_sym_rw
+from graph_cut.util.nystrom import nystrom_QR_l_sym, nystrom_QR_1_sym_rw, nystrom_QR_1_signed_sym_rw, nystrom_QR_signless_lap_sym
 from sklearn.neighbors import kneighbors_graph
 from sklearn.cluster import SpectralClustering
 import networkx.algorithms.community as nx_comm
@@ -35,7 +35,7 @@ dt_inner = 1
 num_nodes = 69500
 num_communities = 125
 #m = 1 * num_communities
-m = 180
+m = 110
 dt = 1
 tol = 1e-5
 inner_step_count = 5
@@ -84,11 +84,11 @@ Z_training = pca.fit_transform(data)
 
 
 # Initialize u
-start_time_initialize = time.time()
+#start_time_initialize = time.time()
 #u_init = get_initial_state_1(num_nodes, num_communities)
 u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
-time_initialize_u = time.time() - start_time_initialize
-print("compute initialize u:-- %.3f seconds --" % (time_initialize_u))
+#time_initialize_u = time.time() - start_time_initialize
+#print("compute initialize u:-- %.3f seconds --" % (time_initialize_u))
 
 
 #start_time_eigendecomposition = time.time()
@@ -124,14 +124,14 @@ print("compute initialize u:-- %.3f seconds --" % (time_initialize_u))
 
 
 #start_time_l_sym = time.time()
-eigenvalues_hu_2, eigenvectors_hu_2, other_data, index, rw_left_eigvec, rw_right_eigvec = nystrom_QR_l_sym(Z_training, num_nystrom=500, gamma=gamma)
+#eigenvalues_hu_2, eigenvectors_hu_2, other_data, index, rw_left_eigvec, rw_right_eigvec = nystrom_QR_l_sym(Z_training, num_nystrom=500, gamma=gamma)
 #time_eig_l_sym = time.time() - start_time_l_sym
 #print("nystrom extension in L_sym:-- %.3f seconds --" % (time_eig_l_sym))
-D_hu_2 = np.squeeze(eigenvalues_hu_2[:m])
+#D_hu_2 = np.squeeze(eigenvalues_hu_2[:m])
 #D_hu_2 = np.where(D_hu_2 > 0, D_hu_2, 0)
 #print('nystrom_QR D_hu: ', D_hu_2)
-V_hu = eigenvectors_hu_2[:,:m]
-V_hu_rw_left = rw_left_eigvec[:,:m]
+#V_hu = eigenvectors_hu_2[:,:m]
+#V_hu_rw_left = rw_left_eigvec[:,:m]
 #V_hu_rw_right = rw_right_eugvec[:,:m]
 #V_multi_1 = V_hu_rw_left * V_hu_rw_right
 #V_multi_2 = V_hu_rw_right * V_hu_rw_left
@@ -143,9 +143,15 @@ V_hu_rw_left = rw_left_eigvec[:,:m]
 #print('nystrom_QR V_hu multi_2: ', V_multi_2)
 #print('nystrom_QR V_hu right shape: ', V_hu_rw_right.shape)
 
-gt_labels_HU = gt_labels[index[500:]]
-W_HU = gl.weightmatrix.knn(other_data, 10)
-degree_W_HU = np.array(np.sum(W_HU, axis=-1)).flatten()
+#gt_labels_HU = gt_labels[index[500:]]
+#W_HU = gl.weightmatrix.knn(other_data, 10)
+#degree_W_HU = np.array(np.sum(W_HU, axis=-1)).flatten()
+
+
+#eigval_signless, eigvec_signless = nystrom_QR_signless_lap_sym(Z_training, num_nystrom=500, gamma=gamma)
+#D_signless = np.squeeze(eigval_signless[:m])
+#V_signless = eigvec_signless[:,:m]
+#print('D_signless: ', D_signless)
 
 
 #start_time_l_mix = time.time()
@@ -167,23 +173,18 @@ degree_W_HU = np.array(np.sum(W_HU, axis=-1)).flatten()
 #time_eig_l_mix = time.time() - start_time_l_mix
 #print("nystrom extension in L_mix:-- %.3f seconds --" % (time_eig_l_mix))
 
-#gt_labels_sym = gt_labels[index[500:]]
-#W = gl.weightmatrix.knn(other_data, 10)
-#degree_W = np.array(np.sum(W, axis=-1)).flatten()
-
 
 #start_time_l_mix = time.time()
 eigenvalues_mmbo_rw, eigenvectors_mmbo_rw, eigenvalues_mmbo_sym, eigenvectors_mmbo_sym, other_data_rw, index_rw = nystrom_QR_1_sym_rw(Z_training, num_nystrom=500, gamma=gamma)
 #time_eig_l_mix = time.time() - start_time_l_mix
 #print("nystrom extension in L_mix:-- %.3f seconds --" % (time_eig_l_mix))
 #print('eigenvalues_mmbo_sym: ', eigenvalues_mmbo_sym.shape)
-D_mmbo_rw = np.squeeze(eigenvalues_mmbo_rw[:m])
+#D_mmbo_rw = np.squeeze(eigenvalues_mmbo_rw[:m])
 #D_mmbo_rw = np.insert(D_mmbo_rw,0,0)
 #print('nystrom_QR D_mmbo_rw: ', D_mmbo_rw)
-V_mmbo_rw = eigenvectors_mmbo_rw[:,:m]
+#V_mmbo_rw = eigenvectors_mmbo_rw[:,:m]
 #print('nystrom_QR V_mmbo_1: ', V_mmbo_1)
 D_mmbo_sym = np.squeeze(eigenvalues_mmbo_sym[:m])
-#D_mmbo_sym = np.insert(D_mmbo_sym,0,0)
 #print('nystrom_QR D_mmbo_sym: ', D_mmbo_sym)
 V_mmbo_sym = eigenvectors_mmbo_sym[:,:m]
 #print('nystrom_QR V_mmbo_1: ', V_mmbo_1)
@@ -195,39 +196,51 @@ degree_W_rw = np.array(np.sum(W_rw, axis=-1)).flatten()
 
 
 #start_time_l_mix = time.time()
-eigenvalues_mmbo_B_rw, eigenvectors_mmbo_B_rw, eigenvalues_mmbo_B_sym, eigenvectors_mmbo_B_sym, other_data_B, index_B = nystrom_QR_1_signed_sym_rw(Z_training, num_nystrom=500, gamma=gamma)
+#eigenvalues_mmbo_B_rw, eigenvectors_mmbo_B_rw, eigenvalues_mmbo_B_sym, eigenvectors_mmbo_B_sym, other_data_B, index_B = nystrom_QR_1_signed_sym_rw(Z_training, num_nystrom=500, gamma=gamma)
 #time_eig_l_mix = time.time() - start_time_l_mix
 #print("nystrom extension in L_mix:-- %.3f seconds --" % (time_eig_l_mix))
-D_mmbo_B_rw = np.squeeze(eigenvalues_mmbo_B_rw[:m])
+#D_mmbo_B_rw = np.squeeze(eigenvalues_mmbo_B_rw[:m])
 #D_mmbo_B_rw = np.where(D_mmbo_B_rw > 0, D_mmbo_B_rw, 0)
 #D_mmbo_B_rw = np.insert(D_mmbo_B_rw,0,0)
 #print('nystrom_QR D_mmbo_rw (B^+/B^-): ', D_mmbo_B_rw)
 #D_mmbo_B_rw = np.insert(D_mmbo_B_rw,0,0)
-V_mmbo_B_rw = eigenvectors_mmbo_rw[:,:m]
+#V_mmbo_B_rw = eigenvectors_mmbo_B_rw[:,:m]
 #print('nystrom_QR V_mmbo_1: ', V_mmbo_1)
-D_mmbo_B_sym = np.squeeze(eigenvalues_mmbo_B_sym[:m])
-#D_mmbo_B_sym = np.where(D_mmbo_B_sym > 0, D_mmbo_B_sym, 0)
-#D_mmbo_B_sym = np.insert(D_mmbo_B_sym,0,0)
+#D_mmbo_B_sym = np.squeeze(eigenvalues_mmbo_B_sym[:m])
 #print('nystrom_QR D_mmbo_sym (B^+/B^-): ', D_mmbo_B_sym)
-V_mmbo_B_sym = eigenvectors_mmbo_sym[:,:m]
+#V_mmbo_B_sym = eigenvectors_mmbo_B_sym[:,:m]
 #print('nystrom_QR V_mmbo_1: ', V_mmbo_1)
 
 
-gt_labels_B = gt_labels[index_B[500:]]
-W_B = gl.weightmatrix.knn(other_data_B, 10)
-degree_W_B = np.array(np.sum(W_B, axis=-1)).flatten()
+#gt_labels_B = gt_labels[index_B[500:]]
+#W_B = gl.weightmatrix.knn(other_data_B, 10)
+#degree_W_B = np.array(np.sum(W_B, axis=-1)).flatten()
 
+
+
+sum_modularity_hu_sym =0
+sum_ARI_hu_original_sym = 0
+sum_purify_hu_original_sym =0
+sum_inverse_purify_hu_original_sym =0
+sum_NMI_hu_original_sym =0
+sum_num_iter_HU_sym = 0
+sum_time_hu_mbo =0
+sum_time_eig_l_sym =0
 
 # Louvain
 #start_time_louvain = time.time()
-#G = nx.convert_matrix.from_scipy_sparse_matrix(W)
-#G = nx.convert_matrix.from_numpy_array(W)
+#G = nx.from_scipy_sparse_array(W)
+
+#for _ in range(5):
+#start_time_louvain = time.time()
 #partition_Louvain = community_louvain.best_partition(G, resolution=1)    # returns a dict
 #louvain = Louvain(modularity='newman')
 #louvain_array = louvain.fit_transform(W)
+
 #louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
 #louvain_array = np.asarray(louvain_list)
-#print("Louvain:-- %.3f seconds --" % (time.time() - start_time_louvain))
+#time_louvain = time.time() - start_time_louvain
+#print("Louvain:-- %.3f seconds --" % (time_louvain))
 #louvain_cluster = len(np.unique(louvain_array))
 #print('the cluster Louvain found: ',louvain_cluster)
 
@@ -243,26 +256,133 @@ degree_W_B = np.array(np.sum(W_B, axis=-1)).flatten()
 #print(' inverse purify for Louvain : ', inverse_purify_louvain)
 #print(' NMI for Louvain  : ', NMI_louvain)
 
-#m = 1 * louvain_cluster
+#sum_time_hu_mbo += time_louvain
+#sum_modularity_hu_sym += modularity_louvain
+#sum_ARI_hu_original_sym += ARI_louvain
+#sum_purify_hu_original_sym += purify_louvain
+#sum_inverse_purify_hu_original_sym += inverse_purify_louvain
+#sum_NMI_hu_original_sym += NMI_louvain
+
+#average_time_hu_mbo = sum_time_hu_mbo / 5
+#average_num_iter_HU_sym = sum_num_iter_HU_sym / 5
+#average_modularity_hu_sym = sum_modularity_hu_sym / 5
+#average_ARI_hu_original_sym = sum_ARI_hu_original_sym / 5
+#average_purify_hu_original_sym = sum_purify_hu_original_sym / 5
+#average_inverse_purify_hu_original_sym = sum_inverse_purify_hu_original_sym / 5
+#average_NMI_hu_original_sym = sum_NMI_hu_original_sym / 5
+
+#print('average_time_hu_mbo: ', average_time_hu_mbo)
+#print('average_num_iter_HU_sym: ', average_num_iter_HU_sym)
+#print('average_modularity_hu_sym: ', average_modularity_hu_sym)
+#print('average_ARI_hu_original_sym: ', average_ARI_hu_original_sym)
+#print('average_purify_hu_original_sym: ', average_purify_hu_original_sym)
+#print('average_inverse_purify_hu_original_sym: ', average_inverse_purify_hu_original_sym)
+#print('average_NMI_hu_original_sym: ', average_NMI_hu_original_sym)
+
+
+
+
 
 
 
 # Test HU original MBO with symmetric normalized L_F
-u_hu_vector, num_iter_HU, HU_modularity_list = mbo_modularity_hu_original(num_nodes, num_communities, m, degree_W_HU, dt_inner, u_init,
-                             D_hu_2, V_hu, tol,inner_step_count, W_HU)
 
-u_hu_label_1 = vector_to_labels(u_hu_vector)
+sum_modularity_hu_sym =0
+sum_ARI_hu_original_sym = 0
+sum_purify_hu_original_sym =0
+sum_inverse_purify_hu_original_sym =0
+sum_NMI_hu_original_sym =0
+sum_num_iter_HU_sym = 0
+sum_time_hu_mbo =0
+sum_time_eig_l_sym =0
+
+#for _ in range(5):
+# MMBO1 with normalized L_F & Q_H and gamma=1
+#    u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
+
+#    start_time_l_sym = time.time()
+#    eigenvalues_hu_2, eigenvectors_hu_2, other_data, index, rw_left_eigvec, rw_right_eigvec = nystrom_QR_l_sym(Z_training, num_nystrom=500, gamma=gamma)
+#    time_eig_l_sym = time.time() - start_time_l_sym
+    #print("nystrom extension in L_sym:-- %.3f seconds --" % (time_eig_l_sym))
+#    D_hu_2 = np.squeeze(eigenvalues_hu_2[:m])
+    #V_hu = eigenvectors_hu_2[:,:m]
+#    V_hu_rw_left = rw_left_eigvec[:,:m]
+
+#    gt_labels_HU = gt_labels[index[500:]]
+#    W_HU = gl.weightmatrix.knn(other_data, 10)
+#    degree_W_HU = np.array(np.sum(W_HU, axis=-1)).flatten()
+
+#    start_time_hu_original = time.time()
+#    u_hu_sym_vector, num_iter_HU_sym, HU_sym_modularity_list = mbo_modularity_hu_original(num_nodes, num_communities, m, degree_W_HU, dt_inner, u_init,
+#                                 D_hu_2, V_hu_rw_left, tol,inner_step_count, W_HU)
+#    time_hu_mbo = time.time() - start_time_hu_original
+    #print("total running time of HU method:-- %.3f seconds --" % (time_eig_l_sym + time_initialize_u + time_hu_mbo))
+#    u_hu_label_sym = vector_to_labels(u_hu_sym_vector)
+
+    #HU_cluster = len(np.unique(u_hu_label_1))
+    #print('the cluster Hu method found: ', HU_cluster)
+
+#    modu_hu_original_sym = skn.clustering.modularity(W_HU,u_hu_label_sym,resolution=0.5)
+#    ARI_hu_original_sym = adjusted_rand_score(u_hu_label_sym, gt_labels_HU)
+#    purify_hu_original_sym = purity_score(gt_labels_HU, u_hu_label_sym)
+#    inverse_purify_hu_original_sym = inverse_purity_score(gt_labels_HU, u_hu_label_sym)
+#    NMI_hu_original_sym = normalized_mutual_info_score(gt_labels_HU, u_hu_label_sym)
+
+#    print('modularity score for HU method: ', modu_hu_original_sym)
+#    print('ARI for HU method: ', ARI_hu_original_sym)
+#    print('purify for HU method: ', purify_hu_original_sym)
+#    print('inverse purify for HU method: ', inverse_purify_hu_original_sym)
+#    print('NMI for HU method: ', NMI_hu_original_sym)
+
+    #modularity_hu_sym_list_20.append(modu_hu_original_sym)
+    #ARI_hu_sym_list_20.append(ARI_hu_original_sym)
+    #purity_hu_sym_list_20.append(purify_hu_original_sym)
+    #inverse_purity_hu_sym_list_20.append(inverse_purify_hu_original_sym)
+    #nmi_hu_sym_list_20.append(NMI_hu_original_sym)
+
+#    sum_time_eig_l_sym += time_eig_l_sym
+#    sum_time_hu_mbo += time_hu_mbo
+#    sum_num_iter_HU_sym += num_iter_HU_sym 
+#    sum_modularity_hu_sym += modu_hu_original_sym
+#    sum_ARI_hu_original_sym += ARI_hu_original_sym
+#    sum_purify_hu_original_sym += purify_hu_original_sym
+#    sum_inverse_purify_hu_original_sym += inverse_purify_hu_original_sym
+#    sum_NMI_hu_original_sym += NMI_hu_original_sym
+
+#average_time_eig_l_sym = sum_time_eig_l_sym / 5
+#average_time_hu_mbo = sum_time_hu_mbo / 5
+#average_num_iter_HU_sym = sum_num_iter_HU_sym / 5
+#average_modularity_hu_sym = sum_modularity_hu_sym / 5
+#average_ARI_hu_original_sym = sum_ARI_hu_original_sym / 5
+#average_purify_hu_original_sym = sum_purify_hu_original_sym / 5
+#average_inverse_purify_hu_original_sym = sum_inverse_purify_hu_original_sym / 5
+#average_NMI_hu_original_sym = sum_NMI_hu_original_sym / 5
+
+#print('average_time_eig_l_sym: ', average_time_eig_l_sym)
+#print('average_time_hu_mbo: ', average_time_hu_mbo)
+#print('average_num_iter_HU_sym: ', average_num_iter_HU_sym)
+#print('average_modularity_hu_sym: ', average_modularity_hu_sym)
+#print('average_ARI_hu_original_sym: ', average_ARI_hu_original_sym)
+#print('average_purify_hu_original_sym: ', average_purify_hu_original_sym)
+#print('average_inverse_purify_hu_original_sym: ', average_inverse_purify_hu_original_sym)
+#print('average_NMI_hu_original_sym: ', average_NMI_hu_original_sym)
+
+
+#u_hu_vector, num_iter_HU, HU_modularity_list = mbo_modularity_hu_original(num_nodes, num_communities, m, degree_W_HU, dt_inner, u_init,
+#                             D_hu_2, V_hu, tol,inner_step_count, W_HU)
+
+#u_hu_label_1 = vector_to_labels(u_hu_vector)
 
 #HU_cluster = len(np.unique(u_hu_label_1))
 #print('the cluster Hu method found: ', HU_cluster)
 
-modu_hu_original_1 = skn.clustering.modularity(W_HU,u_hu_label_1,resolution=0.5)
+#modu_hu_original_1 = skn.clustering.modularity(W_HU,u_hu_label_1,resolution=0.5)
 #ARI_hu_original_1 = adjusted_rand_score(u_hu_label_1, gt_labels)
 #purify_hu_original_1 = purity_score(gt_labels, u_hu_label_1)
 #inverse_purify_hu_original_1 = inverse_purity_score(gt_labels, u_hu_label_1)
 #NMI_hu_original_1 = normalized_mutual_info_score(gt_labels, u_hu_label_1)
 
-print('modularity score for HU method: ', modu_hu_original_1)
+#print('modularity score for HU method: ', modu_hu_original_1)
 #print('ARI for HU method: ', ARI_hu_original_1)
 #print('purify for HU method: ', purify_hu_original_1)
 #print('inverse purify for HU method: ', inverse_purify_hu_original_1)
@@ -312,11 +432,11 @@ print('modularity score for HU method: ', modu_hu_original_1)
 
 
 
-num_communities = list(range(120, 131))
-m_range = list(range(5, 21))
-modularity_MMBO_projection_sym_list =[]
-modularity_MMBO_inner_sym_list = []
-modularity_hu_sym_list=[]
+#num_communities = list(range(120, 131))
+#m_range = list(range(5, 21))
+#modularity_MMBO_projection_sym_list =[]
+#modularity_MMBO_inner_sym_list = []
+#modularity_hu_sym_list=[]
 
 # Test MMBO using the projection on the eigenvectors with symmetric normalized L_F & Q_H
 #start_time_MMBO_for_loop = time.time()
@@ -325,10 +445,8 @@ modularity_hu_sym_list=[]
 #for i in m_range:
 #    print('number of eigenvalues to use: ', i)
 #    m=i
-#    start_time_initialize = time.time()
+#    
 #    u_init = generate_initial_value_multiclass('rd', n_samples=num_nodes, n_class=i)
-#    time_initialize_u = time.time() - start_time_initialize
-#    print("compute initialize u:-- %.3f seconds --" % (time_initialize_u))
 
 #    D_hu_2 = np.squeeze(eigenvalues_hu_2[:m])
 #    V_hu = eigenvectors_hu_2[:,:m]
@@ -345,21 +463,298 @@ modularity_hu_sym_list=[]
 #    print('modularity score for HU method: ', modu_hu_original_1)
 
 
-u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1, MMBO_projection_modularity_list = mbo_modularity_1(num_nodes,num_communities, m, degree_W_rw, u_init, 
+sum_time_MMBO_projection_sym =0
+sum_num_repeat_1_nor_Lf_Qh_1 =0
+sum_modularity_1_nor_lf_qh =0
+sum_ARI_mbo_1_nor_Lf_Qh_1 =0
+sum_purify_mbo_1_nor_Lf_Qh_1 =0
+sum_inverse_purify_mbo_1_nor_Lf_Qh_1 =0
+sum_NMI_mbo_1_nor_Lf_Qh_1 =0
+sum_time_eig_l_mix =0
+
+#for _ in range(10):
+#    u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
+
+#    start_time_l_mix = time.time()
+#    eigenvalues_mmbo_B_rw, eigenvectors_mmbo_B_rw, eigenvalues_mmbo_B_sym, eigenvectors_mmbo_B_sym, other_data_B, index_B = nystrom_QR_1_signed_sym_rw(Z_training, num_nystrom=500, gamma=gamma)
+#    time_eig_l_mix = time.time() - start_time_l_mix
+#    #print("nystrom extension in L_mix:-- %.3f seconds --" % (time_eig_l_mix))
+#    D_mmbo_B_rw = np.squeeze(eigenvalues_mmbo_B_rw[:m])
+#    V_mmbo_B_rw = eigenvectors_mmbo_B_rw[:,:m]
+    #print('nystrom_QR V_mmbo_1: ', V_mmbo_1)
+    #D_mmbo_B_sym = np.squeeze(eigenvalues_mmbo_B_sym[:m])
+    #V_mmbo_B_sym = eigenvectors_mmbo_B_sym[:,:m]
+
+#    gt_labels_B = gt_labels[index_B[500:]]
+#    W_B = gl.weightmatrix.knn(other_data_B, 10)
+#    degree_W_B = np.array(np.sum(W_B, axis=-1)).flatten()
+
+#    start_time_1_nor_Lf_Qh_1 = time.time()
+#    u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1, MMBO_projection_modularity_list = mbo_modularity_1(num_nodes,num_communities, m, degree_W_B, u_init, 
+#                                            D_mmbo_B_rw, V_mmbo_B_rw, tol, W_B)
+#    time_MMBO_projection_sym = time.time() - start_time_1_nor_Lf_Qh_1
+    #print("MMBO using projection with L_W&P:-- %.3f seconds --" % (time_eig_l_mix + time_initialize_u + time_MMBO_projection_sym))
+    #print('the number of MBO iteration for MMBO using projection with L_W&P: ', num_repeat_1_nor_Lf_Qh_1)
+
+#    u_1_nor_Lf_Qh_individual_label_1 = vector_to_labels(u_1_nor_Lf_Qh_individual_1)
+#    modularity_1_nor_lf_qh = skn.clustering.modularity(W_B,u_1_nor_Lf_Qh_individual_label_1,resolution=0.5)
+#    ARI_mbo_1_nor_Lf_Qh_1 = adjusted_rand_score(u_1_nor_Lf_Qh_individual_label_1, gt_labels_B)
+#    purify_mbo_1_nor_Lf_Qh_1 = purity_score(gt_labels_B, u_1_nor_Lf_Qh_individual_label_1)
+#    inverse_purify_mbo_1_nor_Lf_Qh_1 = inverse_purity_score(gt_labels_B, u_1_nor_Lf_Qh_individual_label_1)
+#    NMI_mbo_1_nor_Lf_Qh_1 = normalized_mutual_info_score(gt_labels_B, u_1_nor_Lf_Qh_individual_label_1)
+
+    #modularity_MMBO_projection_sym_list.append(modularity_1_nor_lf_qh)
+    
+#    print('modularity for MMBO using projection with L_W&P: ', modularity_1_nor_lf_qh)
+#    print('ARI for MMBO using projection with L_W&P: ', ARI_mbo_1_nor_Lf_Qh_1)
+#    print('purify for MMBO using projection with L_W&P: ', purify_mbo_1_nor_Lf_Qh_1)
+#    print('inverse purify for MMBO using projection with L_W&P: ', inverse_purify_mbo_1_nor_Lf_Qh_1)
+#    print('NMI for MMBO using projection with L_W&P: ', NMI_mbo_1_nor_Lf_Qh_1)
+
+#    sum_time_eig_l_mix += time_eig_l_mix
+#    sum_time_MMBO_projection_sym += time_MMBO_projection_sym
+#    sum_num_repeat_1_nor_Lf_Qh_1 += num_repeat_1_nor_Lf_Qh_1 
+#    sum_modularity_1_nor_lf_qh += modularity_1_nor_lf_qh
+#    sum_ARI_mbo_1_nor_Lf_Qh_1 += ARI_mbo_1_nor_Lf_Qh_1
+#    sum_purify_mbo_1_nor_Lf_Qh_1 += purify_mbo_1_nor_Lf_Qh_1
+#    sum_inverse_purify_mbo_1_nor_Lf_Qh_1 += inverse_purify_mbo_1_nor_Lf_Qh_1
+#    sum_NMI_mbo_1_nor_Lf_Qh_1 += NMI_mbo_1_nor_Lf_Qh_1
+
+#average_sum_time_eig_l_mix = sum_time_eig_l_mix / 10
+#average_time_hu_mbo = sum_time_MMBO_projection_sym / 10
+#average_num_iter_HU_sym = sum_num_repeat_1_nor_Lf_Qh_1 / 10
+#average_modularity_hu_sym = sum_modularity_1_nor_lf_qh / 10
+#average_ARI_hu_original_sym = sum_ARI_mbo_1_nor_Lf_Qh_1 / 10
+#average_purify_hu_original_sym = sum_purify_mbo_1_nor_Lf_Qh_1 / 10
+#average_inverse_purify_hu_original_sym = sum_inverse_purify_mbo_1_nor_Lf_Qh_1 / 10
+#average_NMI_hu_original_sym = sum_NMI_mbo_1_nor_Lf_Qh_1 / 10
+
+#print('average_average_sum_time_eig_l_mix: ', average_sum_time_eig_l_mix)
+#print('average_time_hu_mbo: ', average_time_hu_mbo)
+#print('average_num_iter_HU_sym: ', average_num_iter_HU_sym)
+#print('average_modularity_hu_sym: ', average_modularity_hu_sym)
+#print('average_ARI_hu_original_sym: ', average_ARI_hu_original_sym)
+#print('average_purify_hu_original_sym: ', average_purify_hu_original_sym)
+#print('average_inverse_purify_hu_original_sym: ', average_inverse_purify_hu_original_sym)
+#print('average_NMI_hu_original_sym: ', average_NMI_hu_original_sym)
+
+
+
+
+#start_time_1_nor_Lf_Qh_rw = time.time()
+u_1_nor_Lf_Qh_individual_rw,num_repeat_1_nor_Lf_Qh_rw, MMBO_projection_rw_modularity_list = mbo_modularity_1(num_nodes,num_communities, m, degree_W_rw, u_init, 
                                         D_mmbo_sym, V_mmbo_sym, tol, W_rw)
+#time_MMBO_projection_rw = time.time() - start_time_1_nor_Lf_Qh_rw
+#print("MMBO using projection with L_W&P:-- %.3f seconds --" % (time_eig_l_mix + time_initialize_u + time_MMBO_projection_rw))
+print('the number of MBO iteration for MMBO using projection with L_W&P_rw: ', num_repeat_1_nor_Lf_Qh_rw)
 
-u_1_nor_Lf_Qh_individual_label_1 = vector_to_labels(u_1_nor_Lf_Qh_individual_1)
-modularity_1_nor_lf_qh = skn.clustering.modularity(W_rw,u_1_nor_Lf_Qh_individual_label_1,resolution=0.5)
-modularity_MMBO_projection_sym_list.append(modularity_1_nor_lf_qh)
-print('modularity for MMBO using projection with L_{mix}: ', modularity_1_nor_lf_qh)
+u_1_nor_Lf_Qh_individual_label_rw = vector_to_labels(u_1_nor_Lf_Qh_individual_rw)
+modularity_mmbo_proj_lwq_rw = skn.clustering.modularity(W_rw,u_1_nor_Lf_Qh_individual_label_rw,resolution=0.5)
+#ARI_mmbo_proj_lwq_rw = adjusted_rand_score(u_1_nor_Lf_Qh_individual_label_rw, gt_labels_rw)
+#purify_mmbo_proj_lwq_rw = purity_score(gt_labels_rw, u_1_nor_Lf_Qh_individual_label_rw)
+#inverse_purify_mmbo_proj_lwq_rw = inverse_purity_score(gt_labels_rw, u_1_nor_Lf_Qh_individual_label_rw)
+#NMI_mmbo_proj_lwq_rw = normalized_mutual_info_score(gt_labels_rw, u_1_nor_Lf_Qh_individual_label_rw)
 
-u_inner_nor_1,num_repeat_inner_nor, MMBO_inner_modularity_list = mbo_modularity_inner_step(num_nodes, num_communities, m,degree_W_rw, dt_inner, u_init, 
-                                    D_mmbo_sym, V_mmbo_sym, tol, inner_step_count, W_rw)
+#modularity_MMBO_projection_sym_list.append(modularity_1_nor_lf_qh)
+print('modularity for MMBO using projection with L_W&P_rw: ', modularity_mmbo_proj_lwq_rw)
+#print('ARI for MMBO using projection with L_W&P_rw: ', ARI_mmbo_proj_lwq_rw)
+#print('purify for MMBO using projection with L_W&P_rw: ', purify_mmbo_proj_lwq_rw)
+#print('inverse purify for MMBO using projection with L_W&P_rw: ', inverse_purify_mmbo_proj_lwq_rw)
+#print('NMI for MMBO using projection with L_W&P_rw: ', NMI_mmbo_proj_lwq_rw)
 
-u_inner_nor_label_1 = vector_to_labels(u_inner_nor_1)
-modularity_1_inner_nor_1 = skn.clustering.modularity(W_rw,u_inner_nor_label_1,resolution=0.5)
-modularity_MMBO_inner_sym_list.append(modularity_1_inner_nor_1)
-print('modularity for MMBO using inner step with L_{mix}: ', modularity_1_inner_nor_1)
+
+sum_time_MMBO_inner_step_rw =0
+sum_num_repeat_inner_nor =0
+sum_modularity_1_inner_nor_1=0
+sum_ARI_mbo_1_inner_nor_1 =0
+sum_purify_mbo_1_inner_nor_1 =0
+sum_inverse_purify_mbo_1_inner_nor_1 =0
+sum_NMI_mbo_1_inner_nor_1 =0
+
+#for _ in range(10):
+#    u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
+
+#    start_time_l_mix = time.time()
+#    eigenvalues_mmbo_B_rw, eigenvectors_mmbo_B_rw, eigenvalues_mmbo_B_sym, eigenvectors_mmbo_B_sym, other_data_B, index_B = nystrom_QR_1_signed_sym_rw(Z_training, num_nystrom=500, gamma=gamma)
+#    time_eig_l_mix = time.time() - start_time_l_mix
+    #print("nystrom extension in L_mix:-- %.3f seconds --" % (time_eig_l_mix))
+#    D_mmbo_B_rw = np.squeeze(eigenvalues_mmbo_B_rw[:m])
+#    V_mmbo_B_rw = eigenvectors_mmbo_B_rw[:,:m]
+    #print('nystrom_QR V_mmbo_1: ', V_mmbo_1)
+    #D_mmbo_B_sym = np.squeeze(eigenvalues_mmbo_B_sym[:m])
+    #V_mmbo_B_sym = eigenvectors_mmbo_B_sym[:,:m]
+
+#    gt_labels_B = gt_labels[index_B[500:]]
+#    W_B = gl.weightmatrix.knn(other_data_B, 10)
+#    degree_W_B = np.array(np.sum(W_B, axis=-1)).flatten()
+
+#    start_time_1_inner_nor_1 = time.time()
+#u_inner_nor_1,num_repeat_inner_nor, MMBO_inner_modularity_list = mbo_modularity_inner_step(num_nodes, num_communities, m,degree_W_B, dt_inner, u_init, 
+#                                        D_mmbo_B_sym, V_mmbo_B_sym, tol, inner_step_count, W_B)
+#    time_MMBO_inner_step_rw = time.time() - start_time_1_inner_nor_1
+    #print("MMBO using inner step with L_W&P:-- %.3f seconds --" % (time_eig_l_mix + time_initialize_u + time_MMBO_inner_step_rw))
+#print('the number of MBO iteration for MMBO using inner step with L_W&P: ',num_repeat_inner_nor)
+
+#u_inner_nor_label_1 = vector_to_labels(u_inner_nor_1)
+#modularity_1_inner_nor_1 = skn.clustering.modularity(W_B,u_inner_nor_label_1,resolution=0.5)
+#    ARI_mbo_1_inner_nor_1 = adjusted_rand_score(u_inner_nor_label_1, gt_labels_B)
+#    purify_mbo_1_inner_nor_1 = purity_score(gt_labels_B, u_inner_nor_label_1)
+#    inverse_purify_mbo_1_inner_nor_1 = inverse_purity_score(gt_labels_B, u_inner_nor_label_1)
+#    NMI_mbo_1_inner_nor_1 = normalized_mutual_info_score(gt_labels_B, u_inner_nor_label_1)
+
+    #modularity_MMBO_inner_sym_list.append(modularity_1_inner_nor_1)
+    
+#print('modularity for MMBO using inner step with L_W&P: ', modularity_1_inner_nor_1)
+#    print('ARI for MMBO using inner step with L_W&P: ', ARI_mbo_1_inner_nor_1)
+#    print('purify for MMBO using inner step with L_W&P: ', purify_mbo_1_inner_nor_1)
+#    print('inverse purify for MMBO using inner step with L_W&P: ', inverse_purify_mbo_1_inner_nor_1)
+#    print('NMI for MMBO using inner step with L_W&P: ', NMI_mbo_1_inner_nor_1)
+
+    #sum_time_eig_l_mix += time_eig_l_mix
+#    sum_time_MMBO_inner_step_rw += time_MMBO_inner_step_rw
+#    sum_num_repeat_inner_nor += num_repeat_inner_nor 
+#    sum_modularity_1_inner_nor_1 += modularity_1_inner_nor_1
+#    sum_ARI_mbo_1_inner_nor_1 += ARI_mbo_1_inner_nor_1
+#    sum_purify_mbo_1_inner_nor_1 += purify_mbo_1_inner_nor_1
+#    sum_inverse_purify_mbo_1_inner_nor_1 += inverse_purify_mbo_1_inner_nor_1
+#    sum_NMI_mbo_1_inner_nor_1 += NMI_mbo_1_inner_nor_1
+
+#average_sum_time_eig_l_mix = sum_time_eig_l_mix / 10
+#average_time_hu_mbo = sum_time_MMBO_inner_step_rw / 10
+#average_num_iter_HU_sym = sum_num_repeat_inner_nor / 10
+#average_modularity_hu_sym = sum_modularity_1_inner_nor_1 / 10
+#average_ARI_hu_original_sym = sum_ARI_mbo_1_inner_nor_1 / 10
+#average_purify_hu_original_sym = sum_purify_mbo_1_inner_nor_1 / 10
+#average_inverse_purify_hu_original_sym = sum_inverse_purify_mbo_1_inner_nor_1 / 10
+#average_NMI_hu_original_sym = sum_NMI_mbo_1_inner_nor_1 / 10
+
+#print('average_average_sum_time_eig_l_mix: ', average_sum_time_eig_l_mix)
+#print('average_time_hu_mbo: ', average_time_hu_mbo)
+#print('average_num_iter_HU_sym: ', average_num_iter_HU_sym)
+#print('average_modularity_hu_sym: ', average_modularity_hu_sym)
+#print('average_ARI_hu_original_sym: ', average_ARI_hu_original_sym)
+#print('average_purify_hu_original_sym: ', average_purify_hu_original_sym)
+#print('average_inverse_purify_hu_original_sym: ', average_inverse_purify_hu_original_sym)
+#print('average_NMI_hu_original_sym: ', average_NMI_hu_original_sym)
+
+
+
+#start_time_1_inner_nor_rw = time.time()
+#u_inner_nor_rw, num_repeat_inner_rw, MMBO_inner_rw_modularity_list = mbo_modularity_inner_step(num_nodes, num_communities, m,degree_W_rw, dt_inner, u_init, 
+#                                    D_mmbo_rw, V_mmbo_rw, tol, inner_step_count, W_rw)
+#time_MMBO_inner_step_rw = time.time() - start_time_1_inner_nor_rw
+#print("MMBO using inner step with L_W&P:-- %.3f seconds --" % (time_eig_l_mix + time_initialize_u + time_MMBO_inner_step_rw))
+#print('the number of MBO iteration for MMBO using inner step with L_W&P_rw: ',num_repeat_inner_rw)
+
+#u_inner_nor_label_rw = vector_to_labels(u_inner_nor_rw)
+#modularity_mmbo_inner_lwq_rw = skn.clustering.modularity(W_rw,u_inner_nor_label_rw,resolution=0.5)
+#ARI_mmbo_inner_lwq_rw = adjusted_rand_score(u_inner_nor_label_rw, gt_labels_rw)
+#purify_mmbo_inner_lwq_rw = purity_score(gt_labels_rw, u_inner_nor_label_rw)
+#inverse_purify_mmbo_inner_lwq_rw = inverse_purity_score(gt_labels_rw, u_inner_nor_label_rw)
+#NMI_mmbo_inner_lwq_rw = normalized_mutual_info_score(gt_labels_rw, u_inner_nor_label_rw)
+
+#modularity_MMBO_inner_sym_list.append(modularity_1_inner_nor_1)
+#print('modularity for MMBO using inner step with L_W&P_rw: ', modularity_mmbo_inner_lwq_rw)
+#print('ARI for MMBO using inner step with L_W&P_rw: ', ARI_mmbo_inner_lwq_rw)
+#print('purify for MMBO using inner step with L_W&P_rw: ', purify_mmbo_inner_lwq_rw)
+#print('inverse purify for MMBO using inner step with L_W&P_rw: ', inverse_purify_mmbo_inner_lwq_rw)
+#print('NMI for MMBO using inner step with L_W&P_rw: ', NMI_mmbo_inner_lwq_rw)
+
+
+
+# Signed B
+#start_time_1_nor_Lf_Qh_1 = time.time()
+#u_mmbo_proj_B_sym, num_repeat_mmbo_proj_B_sym, MMBO_projection_B_sym_modularity_list = mbo_modularity_1(num_nodes,num_communities, m, degree_W_B, u_init, 
+#                                        D_mmbo_B_sym, V_mmbo_B_sym, tol, W_B)
+#time_MMBO_projection_sym = time.time() - start_time_1_nor_Lf_Qh_1
+#print("MMBO using projection with L_W&P:-- %.3f seconds --" % (time_eig_l_mix + time_initialize_u + time_MMBO_projection_sym))
+#print('the number of MBO iteration for MMBO using projection with L_B_sym: ', num_repeat_mmbo_proj_B_sym)
+
+#u_mmbo_proj_B_sym_label = vector_to_labels(u_mmbo_proj_B_sym)
+#modularity_mmbo_proj_B_sym = skn.clustering.modularity(W_B,u_mmbo_proj_B_sym_label,resolution=0.5)
+#ARI_mmbo_proj_B_sym = adjusted_rand_score(u_mmbo_proj_B_sym_label, gt_labels_B)
+#purify_mmbo_proj_B_sym = purity_score(gt_labels_B, u_mmbo_proj_B_sym_label)
+#inverse_purify_mmbo_proj_B_sym = inverse_purity_score(gt_labels_B, u_mmbo_proj_B_sym_label)
+#NMI_mmbo_proj_B_sym = normalized_mutual_info_score(gt_labels_B, u_mmbo_proj_B_sym_label)
+
+#modularity_MMBO_projection_sym_list.append(modularity_1_nor_lf_qh)
+#print('modularity for MMBO using projection with L_B_sym: ', modularity_mmbo_proj_B_sym)
+#print('ARI for MMBO using projection with L_B_sym: ', ARI_mmbo_proj_B_sym)
+#print('purify for MMBO using projection with L_B_sym: ', purify_mmbo_proj_B_sym)
+#print('inverse purify for MMBO using projection with L_B_sym: ', inverse_purify_mmbo_proj_B_sym)
+#print('NMI for MMBO using projection with L_B_sym: ', NMI_mmbo_proj_B_sym)
+
+
+
+#start_time_1_nor_Lf_Qh_rw = time.time()
+#u_mmbo_proj_B_rw, num_repeat_mmbo_proj_B_rw, MMBO_projection_B_rw_modularity_list = mbo_modularity_1(num_nodes,num_communities, m, degree_W_B, u_init, 
+#                                        D_mmbo_B_rw, V_mmbo_B_rw, tol, W_B)
+#time_MMBO_projection_rw = time.time() - start_time_1_nor_Lf_Qh_rw
+#print("MMBO using projection with L_W&P:-- %.3f seconds --" % (time_eig_l_mix + time_initialize_u + time_MMBO_projection_rw))
+#print('the number of MBO iteration for MMBO using projection with L_B_rw: ', num_repeat_mmbo_proj_B_rw)
+
+#u_mmbo_proj_B_rw_label = vector_to_labels(u_mmbo_proj_B_rw)
+#modularity_mmbo_proj_B_rw = skn.clustering.modularity(W_B,u_mmbo_proj_B_rw_label,resolution=0.5)
+#ARI_mmbo_proj_B_rw = adjusted_rand_score(u_mmbo_proj_B_rw_label, gt_labels_B)
+#purify_mmbo_proj_B_rw = purity_score(gt_labels_B, u_mmbo_proj_B_rw_label)
+#inverse_purify_mmbo_proj_B_rw = inverse_purity_score(gt_labels_B, u_mmbo_proj_B_rw_label)
+#NMI_mmbo_proj_B_rw = normalized_mutual_info_score(gt_labels_B, u_mmbo_proj_B_rw_label)
+
+#modularity_MMBO_projection_sym_list.append(modularity_1_nor_lf_qh)
+#print('modularity for MMBO using projection with L_B_rw: ', modularity_mmbo_proj_B_rw)
+#print('ARI for MMBO using projection with L_B_rw: ', ARI_mmbo_proj_B_rw)
+#print('purify for MMBO using projection with L_B_rw: ', purify_mmbo_proj_B_rw)
+#print('inverse purify for MMBO using projection with L_B_rw: ', inverse_purify_mmbo_proj_B_rw)
+#print('NMI for MMBO using projection with L_B_rw: ', NMI_mmbo_proj_B_rw)
+
+
+
+#start_time_1_inner_nor_1 = time.time()
+#u_inner_nor_B_sym, num_repeat_inner_nor_B_sym, MMBO_inner_B_sym_modularity_list = mbo_modularity_inner_step(num_nodes, num_communities, m,degree_W_B, dt_inner, u_init, 
+#                                    D_mmbo_B_sym, V_mmbo_B_sym, tol, inner_step_count, W_B)
+#time_MMBO_inner_step_rw = time.time() - start_time_1_inner_nor_1
+#print("MMBO using inner step with L_W&P:-- %.3f seconds --" % (time_eig_l_mix + time_initialize_u + time_MMBO_inner_step_rw))
+#print('the number of MBO iteration for MMBO using inner step with L_B_sym: ',num_repeat_inner_nor_B_sym)
+
+#u_inner_nor_label_B_sym = vector_to_labels(u_inner_nor_B_sym)
+#modularity_mmbo_inner_B_sym = skn.clustering.modularity(W_B,u_inner_nor_label_B_sym,resolution=0.5)
+#ARI_mmbo_inner_B_sym = adjusted_rand_score(u_inner_nor_label_B_sym, gt_labels_B)
+#purify_mmbo_inner_B_sym = purity_score(gt_labels_B, u_inner_nor_label_B_sym)
+#inverse_purify_mmbo_inner_B_sym = inverse_purity_score(gt_labels_B, u_inner_nor_label_B_sym)
+#NMI_mmbo_inner_B_sym = normalized_mutual_info_score(gt_labels_B, u_inner_nor_label_B_sym)
+
+#modularity_MMBO_inner_sym_list.append(modularity_1_inner_nor_1)
+
+#print('modularity for MMBO using inner step with L_B_sym: ', modularity_mmbo_inner_B_sym)
+#print('ARI for MMBO using inner step with L_B_sym: ', ARI_mmbo_inner_B_sym)
+#print('purify for MMBO using inner step with L_B_sym: ', purify_mmbo_inner_B_sym)
+#print('inverse purify for MMBO using inner step with L_B_sym: ', inverse_purify_mmbo_inner_B_sym)
+#print('NMI for MMBO using inner step with L_B_sym: ', NMI_mmbo_inner_B_sym)
+
+
+
+#start_time_1_inner_nor_rw = time.time()
+#u_inner_nor_B_rw, num_repeat_inner_B_rw, MMBO_inner_B_rw_modularity_list = mbo_modularity_inner_step(num_nodes, num_communities, m,degree_W_B, dt_inner, u_init, 
+#                                    D_mmbo_B_rw, V_mmbo_B_rw, tol, inner_step_count, W_B)
+#time_MMBO_inner_step_rw = time.time() - start_time_1_inner_nor_rw
+#print("MMBO using inner step with L_W&P:-- %.3f seconds --" % (time_eig_l_mix + time_initialize_u + time_MMBO_inner_step_rw))
+#print('the number of MBO iteration for MMBO using inner step with L_B_rw: ',num_repeat_inner_B_rw)
+
+#u_inner_nor_label_B_rw = vector_to_labels(u_inner_nor_B_rw)
+#modularity_mmbo_inner_B_rw = skn.clustering.modularity(W_B,u_inner_nor_label_B_rw,resolution=0.5)
+#ARI_mmbo_inner_B_rw = adjusted_rand_score(u_inner_nor_label_B_rw, gt_labels_B)
+#purify_mmbo_inner_B_rw = purity_score(gt_labels_B, u_inner_nor_label_B_rw)
+#inverse_purify_mmbo_inner_B_rw = inverse_purity_score(gt_labels_B, u_inner_nor_label_B_rw)
+#NMI_mmbo_inner_B_rw = normalized_mutual_info_score(gt_labels_B, u_inner_nor_label_B_rw)
+
+#modularity_MMBO_inner_sym_list.append(modularity_1_inner_nor_1)
+#print('modularity for MMBO using inner step with L_B_rw: ', modularity_mmbo_inner_B_rw)
+#print('ARI for MMBO using inner step with L_B_rw: ', ARI_mmbo_inner_B_rw)
+#print('purify for MMBO using inner step with L_B_rw: ', purify_mmbo_inner_B_rw)
+#print('inverse purify for MMBO using inner step with L_B_rw: ', inverse_purify_mmbo_inner_B_rw)
+#print('NMI for MMBO using inner step with L_B_rw: ', NMI_mmbo_inner_B_rw)
+
+
 
 #num_communities = 125
 #iteration_proxy = num_communities
@@ -377,26 +772,26 @@ print('modularity for MMBO using inner step with L_{mix}: ', modularity_1_inner_
     #D_mmbo_1 = np.squeeze(eigenvalues_mmbo_sym[:m])
     #V_mmbo_1 = eigenvectors_mmbo_sym[:,:m]
 
-u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1, MMBO_projection_modularity_list_B = mbo_modularity_1(num_nodes,num_communities, m, degree_W_B, u_init, 
-                                            D_mmbo_B_sym, V_mmbo_B_sym, tol, W_B)
+#u_1_nor_Lf_Qh_individual_1,num_repeat_1_nor_Lf_Qh_1, MMBO_projection_modularity_list_B = mbo_modularity_1(num_nodes,num_communities, m, degree_W_B, u_init, 
+#                                            D_mmbo_B_sym, V_mmbo_B_sym, tol, W_B)
     #time_MMBO_projection_sym = time.time() - start_time_1_nor_Lf_Qh_1
     #print("MMBO using projection with L_{mix}:-- %.3f seconds --" % (time_eig_l_mix + time_initialize_u + time_MMBO_projection_sym))
 #print('the number of MBO iteration for MMBO using projection with L_{mix}: ', num_repeat_1_nor_Lf_Qh_1)
 
-u_1_nor_Lf_Qh_individual_label_1 = vector_to_labels(u_1_nor_Lf_Qh_individual_1)
+#u_1_nor_Lf_Qh_individual_label_1 = vector_to_labels(u_1_nor_Lf_Qh_individual_1)
 
 #    MMBO_projection_cluster_list = np.unique(u_1_nor_Lf_Qh_individual_label_1)
 #    print('MMBO_projection_cluster list: ', MMBO_projection_cluster_list)
 #    MMBO_projection_cluster = len(MMBO_projection_cluster_list)
 #    print('the cluster MMBO using projection found: ',MMBO_projection_cluster)
 
-modularity_1_nor_lf_qh = skn.clustering.modularity(W_rw,u_1_nor_Lf_Qh_individual_label_1,resolution=0.5)
+#modularity_1_nor_lf_qh = skn.clustering.modularity(W_B,u_1_nor_Lf_Qh_individual_label_1,resolution=0.5)
 #    ARI_mbo_1_nor_Lf_Qh_1 = adjusted_rand_score(u_1_nor_Lf_Qh_individual_label_1, gt_labels_rw)
 #    purify_mbo_1_nor_Lf_Qh_1 = purity_score(gt_labels_rw, u_1_nor_Lf_Qh_individual_label_1)
 #    inverse_purify_mbo_1_nor_Lf_Qh_1 = inverse_purity_score(gt_labels_rw, u_1_nor_Lf_Qh_individual_label_1)
 #    NMI_mbo_1_nor_Lf_Qh_1 = normalized_mutual_info_score(gt_labels_rw, u_1_nor_Lf_Qh_individual_label_1)
 
-print('modularity for MMBO using projection with L_{mix}: ', modularity_1_nor_lf_qh)
+#print('modularity for MMBO using projection with L_{mix}: ', modularity_1_nor_lf_qh)
 #    print('ARI for MMBO using projection with L_{mix}: ', ARI_mbo_1_nor_Lf_Qh_1)
 #    print('purify for MMBO using projection with L_{mix}: ', purify_mbo_1_nor_Lf_Qh_1)
 #    print('inverse purify for MMBO using projection with L_{mix}: ', inverse_purify_mbo_1_nor_Lf_Qh_1)
@@ -432,23 +827,23 @@ print('modularity for MMBO using projection with L_{mix}: ', modularity_1_nor_lf
 
 # MMBO1 with inner step & sym normalized L_F & Q_H
 #start_time_1_inner_nor_1 = time.time()
-u_inner_nor_1,num_repeat_inner_nor, MMBO_inner_modularity_list_B = mbo_modularity_inner_step(num_nodes, num_communities, m,degree_W_B, dt_inner, u_init, 
-                                        D_mmbo_B_sym, V_mmbo_B_sym, tol, inner_step_count, W_B)
+#u_inner_nor_1,num_repeat_inner_nor, MMBO_inner_modularity_list_B = mbo_modularity_inner_step(num_nodes, num_communities, m,degree_W_B, dt_inner, u_init, 
+#                                        D_mmbo_B_sym, V_mmbo_B_sym, tol, inner_step_count, W_B)
 #time_MMBO_inner_step = time.time() - start_time_1_inner_nor_1
 #print("MMBO using inner step with L_{mix}:-- %.3f seconds --" % ( time_eig_l_mix + time_initialize_u + time_MMBO_inner_step))
 #print('the number of MBO iteration for MMBO using inner step with L_{mix}: ',num_repeat_inner_nor)
 
-u_inner_nor_label_1 = vector_to_labels(u_inner_nor_1)
+#u_inner_nor_label_1 = vector_to_labels(u_inner_nor_1)
 #MMBO_finite_cluster = len(np.unique(u_inner_nor_label_1))
 #print('the cluster MMBO using finite difference found: ', MMBO_finite_cluster)
 
-modularity_1_inner_nor_1 = skn.clustering.modularity(W_rw,u_inner_nor_label_1,resolution=0.5)
+#modularity_1_inner_nor_1 = skn.clustering.modularity(W_B,u_inner_nor_label_1,resolution=0.5)
 #ARI_mbo_1_inner_nor_1 = adjusted_rand_score(u_inner_nor_label_1, gt_labels_rw)
 #purify_mbo_1_inner_nor_1 = purity_score(gt_labels_rw, u_inner_nor_label_1)
 #inverse_purify_mbo_1_inner_nor_1 = inverse_purity_score(gt_labels_rw, u_inner_nor_label_1)
 #NMI_mbo_1_inner_nor_1 = normalized_mutual_info_score(gt_labels_rw, u_inner_nor_label_1)
 
-print('modularity for MMBO using inner step with L_{mix}: ', modularity_1_inner_nor_1)
+#print('modularity for MMBO using inner step with L_{mix}: ', modularity_1_inner_nor_1)
 #print('ARI for MMBO using inner step with L_{mix}: ', ARI_mbo_1_inner_nor_1)
 #print('purify for MMBO using inner step with L_{mix}: ', purify_mbo_1_inner_nor_1)
 #print('inverse purify for MMBO using inner step with L_{mix}: ', inverse_purify_mbo_1_inner_nor_1)
@@ -501,6 +896,8 @@ print('modularity for MMBO using inner step with L_{mix}: ', modularity_1_inner_
 #print(' inverse purify for Spectral clustering : ', inverse_purify_spectral_clustering)
 #print(' NMI for Spectral clustering: ', NMI_spectral_clustering)
 
+
+
 # CNM algorithm (can setting resolution gamma)
 #partition_CNM = nx_comm.greedy_modularity_communities(G)
 #partition_CNM_list = [list(x) for x in partition_CNM]
@@ -549,14 +946,21 @@ print('modularity for MMBO using inner step with L_{mix}: ', modularity_1_inner_
 #print('NMI for CNM: ', NMI_GN)
 
 
+numbers = []
+for i in range(1, 151):
+    numbers.append(i)
 
-#plt.plot(D_hu_2, ':',color='C1', label = "$L_{W_{sym}}$")
-#plt.plot(D_hu_2, ':',color='C2', label = "$L_{W_{rw}}$")
-#plt.plot(D_mmbo_sym, '--',color='C3', label = "$L_{W_{sym}}$ and $Q_{P_{sym}}$")
-#plt.plot(D_mmbo_rw, '--',color='C4', label = "$L_{W_{rw}}$ and $Q_{P_{rw}}$")
-#plt.plot(D_mmbo_B_sym, '-.',color='C5', label = "$L_{B_{sym}^+}$ and $Q_{B_{sym}^-}$")
-#plt.plot(D_mmbo_B_rw, '-.',color='C6', label = "$L_{B_{rw}^+}$ and $Q_{B_{rw}^-}$")
+x_range = [1, 20, 40, 60, 80, 100, 120, 140]
+
+#plt.plot(numbers, D_hu_2, ':',color='C2', label = "$L_{W_{rw}}$")
+#plt.plot(numbers, D_hu_2, ':',color='C1', label = "$L_{W_{sym}}$")
+#plt.plot(numbers, D_signless, ':',color='C7', label = "$Q_{P_{sym}}$")
+#plt.plot(numbers, D_mmbo_rw, '--',color='C4', label = "$L_{W_{rw}} + Q_{P_{rw}}$")
+#plt.plot(numbers, D_mmbo_sym, '--',color='C3', label = "$L_{W_{sym}} + Q_{P_{sym}}$")
+#plt.plot(numbers, D_mmbo_B_rw, '-.',color='C6', label = "$L_{B_{rw}^+} + Q_{B_{rw}^-}$")
+#plt.plot(numbers, D_mmbo_B_sym, '-.',color='C5', label = "$L_{B_{sym}^+} + Q_{B_{sym}^-}$")
 #plt.title('Comparison of spectra.')
+#plt.xticks(x_range)
 #plt.xlabel('Index')
 #plt.ylabel('Eigenvalue')
 #plt.legend()
@@ -564,22 +968,19 @@ print('modularity for MMBO using inner step with L_{mix}: ', modularity_1_inner_
 #plt.show()
 
 
-numbers = []
-for i in range(1, 181):
-    numbers.append(i)
 
 # plot number of iteration -- modularuty 
-plt.plot(numbers, HU_modularity_list, '-',color='C1', label = "Hu's method with $L_{W_{sym}}$")
-plt.plot(numbers, MMBO_projection_modularity_list, '--',color='C2', label = "MMBO using projection with $L_{W_{sym}},Q_{P_{sym}}$")
-plt.plot(numbers, MMBO_projection_modularity_list_B, '--',color='C3', label = "MMBO using projection with $L_{B_{sym}^+},Q_{B_{sym}^-}$")
-plt.plot(numbers, MMBO_inner_modularity_list, ':',color='C4', label = "MMBO using finite difference with $L_{W_{sym}},Q_{P_{sym}}$")
-plt.plot(numbers, MMBO_inner_modularity_list_B, ':',color='C5', label = "MMBO using finite difference with $L_{B_{sym}^+},Q_{B_{sym}^-}$")
-plt.title('Modularity Score.')
-plt.xlabel('Number of iterations')
-plt.ylabel('Modularity')
-plt.legend()
-plt.savefig('Modularity_MNIST.png')
-plt.show()
+#plt.plot(numbers, HU_modularity_list, '-',color='C1', label = "Hu's method with $L_{W_{sym}}$")
+#plt.plot(numbers, MMBO_projection_modularity_list, '--',color='C2', label = "MMBO using projection with $L_{W_{sym}},Q_{P_{sym}}$")
+#plt.plot(numbers, MMBO_projection_modularity_list_B, '--',color='C3', label = "MMBO using projection with $L_{B_{sym}^+},Q_{B_{sym}^-}$")
+#plt.plot(numbers, MMBO_inner_modularity_list, ':',color='C4', label = "MMBO using finite difference with $L_{W_{sym}},Q_{P_{sym}}$")
+#plt.plot(numbers, MMBO_inner_modularity_list_B, ':',color='C5', label = "MMBO using finite difference with $L_{B_{sym}^+},Q_{B_{sym}^-}$")
+#plt.title('Modularity Score.')
+#plt.xlabel('Number of iterations')
+#plt.ylabel('Modularity')
+#plt.legend()
+#plt.savefig('Modularity_MNIST.png')
+#plt.show()
 
 
 # plot m -- modularity
