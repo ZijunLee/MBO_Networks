@@ -227,61 +227,59 @@ sum_purify_CNM =0
 sum_inverse_purify_CNM =0
 sum_NMI_CNM =0
 
-#for _ in range(5):
-print('Start CNM')
-start_time_CNM = time.time()
-partition_CNM = nx_comm.greedy_modularity_communities(G)
-time_CNM = time.time() - start_time_CNM
-print("CNM algorithm:-- %.3f seconds --" % (time_CNM))
+for _ in range(5):
+#print('Start CNM')
+    start_time_CNM = time.time()
+    partition_CNM = nx_comm.greedy_modularity_communities(G)
+    time_CNM = time.time() - start_time_CNM
+    print("CNM algorithm:-- %.3f seconds --" % (time_CNM))
 
-partition_CNM_list = [list(x) for x in partition_CNM]
-#print(type(partition_CNM_list))
+    partition_CNM_list = [list(x) for x in partition_CNM]
+    #print(type(partition_CNM_list))
 
-partition_CNM_expand = sum(partition_CNM_list, [])
-num_cluster_CNM = []
-for cluster in range(len(partition_CNM_list)):
-    for number_CNM in range(len(partition_CNM_list[cluster])):
-        num_cluster_CNM.append(cluster)
+    partition_CNM_expand = sum(partition_CNM_list, [])
+    num_cluster_CNM = []
+    for cluster in range(len(partition_CNM_list)):
+        for number_CNM in range(len(partition_CNM_list[cluster])):
+            num_cluster_CNM.append(cluster)
 
-CNM_dict = dict(zip(partition_CNM_expand, num_cluster_CNM))
-CNM_list = list(dict.values(CNM_dict))    #convert a dict to list
-CNM_array = np.asarray(CNM_list)
-
-
-modularity_CNM = skn.clustering.modularity(W, CNM_array,resolution=0.5)
-#    ARI_CNM = adjusted_rand_score(CNM_array, gt_labels)
-#    purify_CNM = purity_score(gt_labels, CNM_array)
-#    inverse_purify_CNM = inverse_purity_score(gt_labels, CNM_array)
-#    NMI_CNM = normalized_mutual_info_score(gt_labels, CNM_array)
-
-print('modularity score CNM: ', modularity_CNM)
-#    print('ARI CNM: ', ARI_CNM)
-#    print('purify for CNM: ', purify_CNM)
-#    print('inverse purify for CNM: ', inverse_purify_CNM)
-#    print('NMI for CNM: ', NMI_CNM)
-
-#    sum_time_CNM += time_CNM
-#    sum_modularity_CNM += modularity_spectral_clustering
-#    sum_ARI_CNM += ARI_spectral_clustering
-#    sum_purify_CNM += purify_spectral_clustering
-#    sum_inverse_purify_CNM += inverse_purify_spectral_clustering
-#    sum_NMI_CNM += NMI_spectral_clustering
+    CNM_dict = dict(zip(partition_CNM_expand, num_cluster_CNM))
+    CNM_list = list(dict.values(CNM_dict))    #convert a dict to list
+    CNM_array = np.asarray(CNM_list)
 
 
-#average_time_CNM = sum_time_CNM / 5
-#average_modularity_CNM = sum_modularity_CNM / 5
-#average_ARI_CNM = sum_ARI_CNM / 5
-#average_purify_CNM = sum_purify_spectral_clustering / 5
-#average_inverse_purify_CNM = sum_inverse_purify_CNM / 5
-#average_NMI_CNM = sum_NMI_CNM / 5
+    modularity_CNM = skn.clustering.modularity(W, CNM_array,resolution=0.5)
+    ARI_CNM = adjusted_rand_score(CNM_array, gt_labels)
+    purify_CNM = purity_score(gt_labels, CNM_array)
+    inverse_purify_CNM = inverse_purity_score(gt_labels, CNM_array)
+    NMI_CNM = normalized_mutual_info_score(gt_labels, CNM_array)
 
+    #print('modularity score CNM: ', modularity_CNM)
+    #print('ARI CNM: ', ARI_CNM)
+    #print('purify for CNM: ', purify_CNM)
+    #print('inverse purify for CNM: ', inverse_purify_CNM)
+    #print('NMI for CNM: ', NMI_CNM)
 
-#print('average_time_CNM: ', average_time_CNM)
-#print('average_modularity_CNM: ', average_modularity_CNM)
-#print('average_ARI_CNM: ', average_ARI_CNM)
-#print('average_purify_CNM: ', average_purify_CNM)
-#print('average_inverse_purify_CNM: ', average_inverse_purify_CNM)
-#print('average_NMI_CNM: ', average_NMI_CNM)
+    sum_time_CNM += time_CNM
+    sum_modularity_CNM += modularity_CNM
+    sum_ARI_CNM += ARI_CNM
+    sum_purify_CNM += purify_CNM
+    sum_inverse_purify_CNM += inverse_purify_CNM
+    sum_NMI_CNM += NMI_CNM
+
+average_time_CNM = sum_time_CNM / 5
+average_modularity_CNM = sum_modularity_CNM / 5
+average_ARI_CNM = sum_ARI_CNM / 5
+average_purify_CNM = sum_purify_CNM / 5
+average_inverse_purify_CNM = sum_inverse_purify_CNM / 5
+average_NMI_CNM = sum_NMI_CNM / 5
+
+print('average_time_CNM: ', average_time_CNM)
+print('average_modularity_CNM: ', average_modularity_CNM)
+print('average_ARI_CNM: ', average_ARI_CNM)
+print('average_purify_CNM: ', average_purify_CNM)
+print('average_inverse_purify_CNM: ', average_inverse_purify_CNM)
+print('average_NMI_CNM: ', average_NMI_CNM)
 
 
 
