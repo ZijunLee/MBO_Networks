@@ -308,11 +308,11 @@ for _ in range(5):
     inverse_purify_spectral_clustering = inverse_purity_score(gt_labels, assignment)
     NMI_spectral_clustering = normalized_mutual_info_score(gt_labels, assignment)
 
-#    print('modularity Spectral clustering score(K=10 and m=K): ', modularity_spectral_clustering)
-#    print('ARI Spectral clustering  score: ', ARI_spectral_clustering)
-#    print('purify for Spectral clustering : ', purify_spectral_clustering)
-#    print('inverse purify for Spectral clustering : ', inverse_purify_spectral_clustering)
-#    print('NMI for Spectral clustering: ', NMI_spectral_clustering)
+    print('modularity Spectral clustering score(K=10 and m=K): ', modularity_spectral_clustering)
+    print('ARI Spectral clustering  score: ', ARI_spectral_clustering)
+    print('purify for Spectral clustering : ', purify_spectral_clustering)
+    print('inverse purify for Spectral clustering : ', inverse_purify_spectral_clustering)
+    print('NMI for Spectral clustering: ', NMI_spectral_clustering)
 
     sum_time_spectral_clustering += time_spectral_clustering
     sum_modularity_spectral_clustering += modularity_spectral_clustering
