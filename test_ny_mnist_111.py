@@ -194,31 +194,66 @@ u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_cl
 # Louvain
 #start_time_louvain = time.time()
 #G = nx.from_scipy_sparse_array(W)
-#partition_Louvain = community_louvain.best_partition(G, resolution=1)    # returns a dict
-#louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
-#louvain_array = np.asarray(louvain_list)
-#time_louvain = time.time() - start_time_louvain
-#print("Louvain:-- %.3f seconds --" % (time_louvain))
-#louvain_cluster = len(np.unique(louvain_array))
-#print('the cluster Louvain found: ',louvain_cluster)
+G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 
-#modularity_louvain = skn.clustering.modularity(W,louvain_array,resolution=0.5)
-#ARI_louvain = adjusted_rand_score(louvain_array, gt_labels)
-#purify_louvain = purity_score(gt_labels, louvain_array)
-#inverse_purify_louvain = inverse_purity_score(gt_labels, louvain_array)
-#NMI_louvain = normalized_mutual_info_score(gt_labels, louvain_array)
+sum_modularity_hu_sym =0
+sum_ARI_hu_original_sym = 0
+sum_purify_hu_original_sym =0
+sum_inverse_purify_hu_original_sym =0
+sum_NMI_hu_original_sym =0
+sum_num_iter_HU_sym = 0
+sum_time_hu_mbo =0
+sum_time_eig_l_sym =0
 
-#print(' modularity Louvain score: ', modularity_louvain)
-#print(' ARI Louvain  score: ', ARI_louvain)
-#print(' purify for Louvain : ', purify_louvain)
-#print(' inverse purify for Louvain : ', inverse_purify_louvain)
-#print(' NMI for Louvain  : ', NMI_louvain)
+for _ in range(5):
+    start_time_louvain = time.time()
+    partition_Louvain = community_louvain.best_partition(G, resolution=1, randomize=True)    # returns a dict
+    louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
+    louvain_array = np.asarray(louvain_list)
+    time_louvain = time.time() - start_time_louvain
+    print("Louvain:-- %.3f seconds --" % (time_louvain))
+    #louvain_cluster = len(np.unique(louvain_array))
+    #print('the cluster Louvain found: ',louvain_cluster)
+
+    modularity_louvain = skn.clustering.modularity(W,louvain_array,resolution=0.5)
+    ARI_louvain = adjusted_rand_score(louvain_array, gt_labels)
+    purify_louvain = purity_score(gt_labels, louvain_array)
+    inverse_purify_louvain = inverse_purity_score(gt_labels, louvain_array)
+    NMI_louvain = normalized_mutual_info_score(gt_labels, louvain_array)
+
+    print(' modularity Louvain score: ', modularity_louvain)
+    print(' ARI Louvain  score: ', ARI_louvain)
+    print(' purify for Louvain : ', purify_louvain)
+    print(' inverse purify for Louvain : ', inverse_purify_louvain)
+    print(' NMI for Louvain  : ', NMI_louvain)
+
+    sum_time_hu_mbo += time_louvain
+    sum_modularity_hu_sym += modularity_louvain
+    sum_ARI_hu_original_sym += ARI_louvain
+    sum_purify_hu_original_sym += purify_louvain
+    sum_inverse_purify_hu_original_sym += inverse_purify_louvain
+    sum_NMI_hu_original_sym += NMI_louvain
+
+average_time_hu_mbo = sum_time_hu_mbo / 5
+average_num_iter_HU_sym = sum_num_iter_HU_sym / 5
+average_modularity_hu_sym = sum_modularity_hu_sym / 5
+average_ARI_hu_original_sym = sum_ARI_hu_original_sym / 5
+average_purify_hu_original_sym = sum_purify_hu_original_sym / 5
+average_inverse_purify_hu_original_sym = sum_inverse_purify_hu_original_sym / 5
+average_NMI_hu_original_sym = sum_NMI_hu_original_sym / 5
+
+print('average_time_hu_mbo: ', average_time_hu_mbo)
+print('average_num_iter_HU_sym: ', average_num_iter_HU_sym)
+print('average_modularity_hu_sym: ', average_modularity_hu_sym)
+print('average_ARI_hu_original_sym: ', average_ARI_hu_original_sym)
+print('average_purify_hu_original_sym: ', average_purify_hu_original_sym)
+print('average_inverse_purify_hu_original_sym: ', average_inverse_purify_hu_original_sym)
+print('average_NMI_hu_original_sym: ', average_NMI_hu_original_sym)
 
 
 
 # CNM algorithm (can setting resolution gamma)
 #G = nx.from_scipy_sparse_matrix(W)
-G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 
 sum_time_CNM =0
 sum_modularity_CNM =0
@@ -227,58 +262,56 @@ sum_purify_CNM =0
 sum_inverse_purify_CNM =0
 sum_NMI_CNM =0
 
-#for _ in range(5):
-#print('Start CNM')
-#    start_time_CNM = time.time()
-#    partition_CNM = nx_comm.greedy_modularity_communities(G)
-#    time_CNM = time.time() - start_time_CNM
-#    print("CNM algorithm:-- %.3f seconds --" % (time_CNM))
+for _ in range(5):
+    print('Start CNM')
+    start_time_CNM = time.time()
+    partition_CNM = nx_comm.greedy_modularity_communities(G)
+    time_CNM = time.time() - start_time_CNM
+    print("CNM algorithm:-- %.3f seconds --" % (time_CNM))
 
-#    partition_CNM_list = [list(x) for x in partition_CNM]
-    #print(type(partition_CNM_list))
+    partition_CNM_list = [list(x) for x in partition_CNM]
+    partition_CNM_expand = sum(partition_CNM_list, [])
+    num_cluster_CNM = []
+    for cluster in range(len(partition_CNM_list)):
+        for number_CNM in range(len(partition_CNM_list[cluster])):
+            num_cluster_CNM.append(cluster)
 
-#    partition_CNM_expand = sum(partition_CNM_list, [])
-#    num_cluster_CNM = []
-#    for cluster in range(len(partition_CNM_list)):
-#        for number_CNM in range(len(partition_CNM_list[cluster])):
-#            num_cluster_CNM.append(cluster)
+    CNM_dict = dict(zip(partition_CNM_expand, num_cluster_CNM))
+    CNM_list = list(dict.values(CNM_dict))    #convert a dict to list
+    CNM_array = np.asarray(CNM_list)
 
-#    CNM_dict = dict(zip(partition_CNM_expand, num_cluster_CNM))
-#    CNM_list = list(dict.values(CNM_dict))    #convert a dict to list
-#    CNM_array = np.asarray(CNM_list)
+    modularity_CNM = skn.clustering.modularity(W, CNM_array,resolution=0.5)
+    ARI_CNM = adjusted_rand_score(CNM_array, gt_labels)
+    purify_CNM = purity_score(gt_labels, CNM_array)
+    inverse_purify_CNM = inverse_purity_score(gt_labels, CNM_array)
+    NMI_CNM = normalized_mutual_info_score(gt_labels, CNM_array)
 
-#    modularity_CNM = skn.clustering.modularity(W, CNM_array,resolution=0.5)
-#    ARI_CNM = adjusted_rand_score(CNM_array, gt_labels)
-#    purify_CNM = purity_score(gt_labels, CNM_array)
-#    inverse_purify_CNM = inverse_purity_score(gt_labels, CNM_array)
-#    NMI_CNM = normalized_mutual_info_score(gt_labels, CNM_array)
+    print('modularity score CNM: ', modularity_CNM)
+    print('ARI CNM: ', ARI_CNM)
+    print('purify for CNM: ', purify_CNM)
+    print('inverse purify for CNM: ', inverse_purify_CNM)
+    print('NMI for CNM: ', NMI_CNM)
 
-    #print('modularity score CNM: ', modularity_CNM)
-    #print('ARI CNM: ', ARI_CNM)
-    #print('purify for CNM: ', purify_CNM)
-    #print('inverse purify for CNM: ', inverse_purify_CNM)
-    #print('NMI for CNM: ', NMI_CNM)
+    sum_time_CNM += time_CNM
+    sum_modularity_CNM += modularity_CNM
+    sum_ARI_CNM += ARI_CNM
+    sum_purify_CNM += purify_CNM
+    sum_inverse_purify_CNM += inverse_purify_CNM
+    sum_NMI_CNM += NMI_CNM
 
-#    sum_time_CNM += time_CNM
-#    sum_modularity_CNM += modularity_CNM
-#    sum_ARI_CNM += ARI_CNM
-#    sum_purify_CNM += purify_CNM
-#    sum_inverse_purify_CNM += inverse_purify_CNM
-#    sum_NMI_CNM += NMI_CNM
+average_time_CNM = sum_time_CNM / 5
+average_modularity_CNM = sum_modularity_CNM / 5
+average_ARI_CNM = sum_ARI_CNM / 5
+average_purify_CNM = sum_purify_CNM / 5
+average_inverse_purify_CNM = sum_inverse_purify_CNM / 5
+average_NMI_CNM = sum_NMI_CNM / 5
 
-#average_time_CNM = sum_time_CNM / 5
-#average_modularity_CNM = sum_modularity_CNM / 5
-#average_ARI_CNM = sum_ARI_CNM / 5
-#average_purify_CNM = sum_purify_CNM / 5
-#average_inverse_purify_CNM = sum_inverse_purify_CNM / 5
-#average_NMI_CNM = sum_NMI_CNM / 5
-
-#print('average_time_CNM: ', average_time_CNM)
-#print('average_modularity_CNM: ', average_modularity_CNM)
-#print('average_ARI_CNM: ', average_ARI_CNM)
-#print('average_purify_CNM: ', average_purify_CNM)
-#print('average_inverse_purify_CNM: ', average_inverse_purify_CNM)
-#print('average_NMI_CNM: ', average_NMI_CNM)
+print('average_time_CNM: ', average_time_CNM)
+print('average_modularity_CNM: ', average_modularity_CNM)
+print('average_ARI_CNM: ', average_ARI_CNM)
+print('average_purify_CNM: ', average_purify_CNM)
+print('average_inverse_purify_CNM: ', average_inverse_purify_CNM)
+print('average_NMI_CNM: ', average_NMI_CNM)
 
 
 
@@ -292,34 +325,34 @@ sum_purify_spectral_clustering =0
 sum_inverse_purify_spectral_clustering =0
 sum_NMI_spectral_clustering =0
 
-for _ in range(5):
-    start_time_spectral_clustering = time.time()
-    sc = SpectralClustering(n_clusters=10,n_components=m,gamma=gamma, affinity='precomputed', eigen_tol=tol)
-    assignment = sc.fit_predict(W)
-    time_spectral_clustering = time.time() - start_time_spectral_clustering
-    print("spectral clustering algorithm:-- %.3f seconds --" % (time.time() - start_time_spectral_clustering))
+#for _ in range(5):
+#    start_time_spectral_clustering = time.time()
+#    sc = SpectralClustering(n_clusters=10,n_components=m,gamma=gamma, affinity='precomputed', eigen_tol=tol)
+#    assignment = sc.fit_predict(W)
+#    time_spectral_clustering = time.time() - start_time_spectral_clustering
+#    print("spectral clustering algorithm:-- %.3f seconds --" % (time.time() - start_time_spectral_clustering))
 
-    ass_vec = labels_to_vector(assignment)
+#    ass_vec = labels_to_vector(assignment)
     #ass_dict = label_to_dict (assignment)
 
-    modularity_spectral_clustering = skn.clustering.modularity(W,assignment,resolution=0.5)
-    ARI_spectral_clustering = adjusted_rand_score(assignment, gt_labels)
-    purify_spectral_clustering = purity_score(gt_labels, assignment)
-    inverse_purify_spectral_clustering = inverse_purity_score(gt_labels, assignment)
-    NMI_spectral_clustering = normalized_mutual_info_score(gt_labels, assignment)
+#    modularity_spectral_clustering = skn.clustering.modularity(W,assignment,resolution=0.5)
+#    ARI_spectral_clustering = adjusted_rand_score(assignment, gt_labels)
+#    purify_spectral_clustering = purity_score(gt_labels, assignment)
+#    inverse_purify_spectral_clustering = inverse_purity_score(gt_labels, assignment)
+#    NMI_spectral_clustering = normalized_mutual_info_score(gt_labels, assignment)
 
-    print('modularity Spectral clustering score(K=10 and m=K): ', modularity_spectral_clustering)
-    print('ARI Spectral clustering  score: ', ARI_spectral_clustering)
-    print('purify for Spectral clustering : ', purify_spectral_clustering)
-    print('inverse purify for Spectral clustering : ', inverse_purify_spectral_clustering)
-    print('NMI for Spectral clustering: ', NMI_spectral_clustering)
+#    print('modularity Spectral clustering score(K=10 and m=K): ', modularity_spectral_clustering)
+#    print('ARI Spectral clustering  score: ', ARI_spectral_clustering)
+#    print('purify for Spectral clustering : ', purify_spectral_clustering)
+#    print('inverse purify for Spectral clustering : ', inverse_purify_spectral_clustering)
+#    print('NMI for Spectral clustering: ', NMI_spectral_clustering)
 
-    sum_time_spectral_clustering += time_spectral_clustering
-    sum_modularity_spectral_clustering += modularity_spectral_clustering
-    sum_ARI_spectral_clustering += ARI_spectral_clustering
-    sum_purify_spectral_clustering += purify_spectral_clustering
-    sum_inverse_purify_spectral_clustering += inverse_purify_spectral_clustering
-    sum_NMI_spectral_clustering += NMI_spectral_clustering
+#    sum_time_spectral_clustering += time_spectral_clustering
+#    sum_modularity_spectral_clustering += modularity_spectral_clustering
+#    sum_ARI_spectral_clustering += ARI_spectral_clustering
+#    sum_purify_spectral_clustering += purify_spectral_clustering
+#    sum_inverse_purify_spectral_clustering += inverse_purify_spectral_clustering
+#    sum_NMI_spectral_clustering += NMI_spectral_clustering
 
 
 average_time_spectral_clustering = sum_time_spectral_clustering / 5
@@ -330,9 +363,9 @@ average_inverse_purify_spectral_clustering  = sum_inverse_purify_spectral_cluste
 average_NMI_spectral_clustering = sum_NMI_spectral_clustering / 5
 
 
-print('average_time_spectral_clustering: ', average_time_spectral_clustering)
-print('average_modularity_spectral_clustering: ', average_modularity_spectral_clustering)
-print('average_ARI_spectral_clustering: ', average_ARI_spectral_clustering)
-print('average_purify_spectral_clustering: ', average_purify_spectral_clustering)
-print('average_inverse_purify_spectral_clustering: ', average_inverse_purify_spectral_clustering)
-print('average_NMI_spectral_clustering: ', average_NMI_spectral_clustering)
+#print('average_time_spectral_clustering: ', average_time_spectral_clustering)
+#print('average_modularity_spectral_clustering: ', average_modularity_spectral_clustering)
+#print('average_ARI_spectral_clustering: ', average_ARI_spectral_clustering)
+#print('average_purify_spectral_clustering: ', average_purify_spectral_clustering)
+#print('average_inverse_purify_spectral_clustering: ', average_inverse_purify_spectral_clustering)
+#print('average_NMI_spectral_clustering: ', average_NMI_spectral_clustering)
