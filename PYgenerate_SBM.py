@@ -22,7 +22,7 @@ from graph_cut_util import generate_initial_value_multiclass
 
 # parameter setting
 dt_inner = 1
-num_communities = 5
+num_communities = 10
 #alg_K = 9
 m = 1 * num_communities
 tol = 1e-4
@@ -31,7 +31,7 @@ N = 3000
 num_nodes_each_cluster = int(N/num_communities)
 #print('num_nodes_each_cluster type: ', type(num_nodes_each_cluster))
 
-print('num_communities = 5')
+print('num_communities = 10 with strong')
 
 sizes = []
 
@@ -42,8 +42,8 @@ for i in range(num_communities):
 
 all_one_matrix = np.ones((len(sizes),len(sizes)))
 diag_matrix = np.diag(np.full(len(sizes),1))
-#probs = 0.01 * all_one_matrix + 0.94 * diag_matrix
-probs = 0.1 * all_one_matrix + 0.2 * diag_matrix
+probs = 0.01 * all_one_matrix + 0.94 * diag_matrix
+#probs = 0.1 * all_one_matrix + 0.2 * diag_matrix
 print(probs)
 
 G = nx.stochastic_block_model(sizes, probs, seed=0)
