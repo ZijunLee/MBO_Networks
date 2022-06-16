@@ -282,7 +282,7 @@ def mbo_modularity_1(num_nodes,num_communities, m, degree, u_init, eigval, eigve
     
     start_time_MBO_iteration = time.time()
     while (n < max_iter) and (stop_criterion > tol):
-    #for i in range(10):
+    #for i in range(50):
         modularity_score_old = proxy
         u_old = u_new.copy()
 
@@ -304,25 +304,24 @@ def mbo_modularity_1(num_nodes,num_communities, m, degree, u_init, eigval, eigve
         # Stop criterion
         #start_time_stop_criterion = time.time()
         #stop_criterion = (np.abs(u_new - u_old)).sum()
-        #stop_criterion = sp.linalg.norm(u_new-u_old) / sp.linalg.norm(u_new)
+        stop_criterion = sp.linalg.norm(u_new-u_old) / sp.linalg.norm(u_new)
         #print("compute stop criterion:-- %.3f seconds --" % (time.time() - start_time_stop_criterion))
 
         n = n + 1
         #print('n: ',n)
         u_new_label = vector_to_labels(u_new)
-        modularity_score_new = skn.clustering.modularity(adj_mat,u_new_label,resolution=0.5)
+        modularity_score_new = skn.clustering.modularity(adj_mat,u_new_label,resolution=1)
         #print('modularity for MMBO using inner step with L_{mix}: ', modularity_score_new)
         
         # check if the modularity_new > modularity_old
-        proxy = modularity_score_new
-        stop_criterion = np.abs(modularity_score_new - modularity_score_old)
+        #proxy = modularity_score_new
+        #stop_criterion = np.abs(modularity_score_new - modularity_score_old)
         
         modularity_score_list.append(modularity_score_new)
         #if (stop_criterion > 0):
         #    modularity_score_list.append(modularity_score_new)
             
-
-    print("compute the whole MBO iteration:-- %.3f seconds --" % (time.time() - start_time_MBO_iteration))
+    #print("compute the whole MBO iteration:-- %.3f seconds --" % (time.time() - start_time_MBO_iteration))
     
     return u_new, n, modularity_score_list
 
@@ -630,7 +629,7 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m,degree, dt, u_init, 
     
     start_time_MBO_iteration = time.time()
     while (n < max_iter) and (stop_criterion > tol):
-    #for i in range(10):
+    #for i in range(50):
         modularity_score_old = proxy
         u_old = u_new.copy()
 
@@ -655,13 +654,13 @@ def mbo_modularity_inner_step(num_nodes, num_communities, m,degree, dt, u_init, 
         n = n+1
         
         u_new_label = vector_to_labels(u_new)
-        modularity_score_new = skn.clustering.modularity(adj_mat,u_new_label,resolution=0.5)
+        modularity_score_new = skn.clustering.modularity(adj_mat,u_new_label,resolution=1)
         
         #proxy = modularity_score_new
         #stop_criterion = np.abs(modularity_score_new - modularity_score_old)
         modularity_score_list.append(modularity_score_new)
         #print('modularity for MMBO using inner step with L_{mix}: ', modularity_score_1)
-    print("compute the whole MBO iteration:-- %.3f seconds --" % (time.time() - start_time_MBO_iteration))
+    #print("compute the whole MBO iteration:-- %.3f seconds --" % (time.time() - start_time_MBO_iteration))
 
     return u_new, n, modularity_score_list
 
@@ -714,7 +713,7 @@ def mbo_modularity_hu_original(num_nodes, num_communities, m, degree,dt, u_init,
     start_time_MBO_iteration = time.time()
     # Perform MBO scheme
     while (n < max_iter) and (stop_criterion > tol):
-    #for i in range(10):
+    #for i in range(50):
         modularity_score_old = proxy
         u_old = u_new.copy()
         vv = u_old.copy()
@@ -751,12 +750,12 @@ def mbo_modularity_hu_original(num_nodes, num_communities, m, degree,dt, u_init,
         n = n+1
         
         u_new_label = vector_to_labels(u_new)
-        modularity_score_new = skn.clustering.modularity(adj_mat,u_new_label,resolution=0.5)
+        modularity_score_new = skn.clustering.modularity(adj_mat,u_new_label,resolution=1)
         
         #proxy = modularity_score_new
         #stop_criterion = np.abs(modularity_score_new - modularity_score_old)
         modularity_score_list.append(modularity_score_new)
         #print('modularity for MMBO using inner step with L_{mix}: ', modularity_score_1)
-    print("compute the whole MBO iteration:-- %.3f seconds --" % (time.time() - start_time_MBO_iteration))
+    #print("compute the whole MBO iteration:-- %.3f seconds --" % (time.time() - start_time_MBO_iteration))
 
     return u_new, n, modularity_score_list
