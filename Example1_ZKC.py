@@ -1,4 +1,3 @@
-from cgi import print_arguments
 import numpy as np
 from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_rand_score
 from matplotlib import pyplot as plt
