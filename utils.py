@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.random import permutation
 from sklearn import metrics
+from itertools import product
 
 
 def labels_to_vector(labels,vec_dim = None):
@@ -18,12 +19,15 @@ def labels_to_vector(labels,vec_dim = None):
         n_class = np.max(labels)+1
     else:
         n_class = vec_dim
-    # use TV, then output u contains {0,1}
+        # use TV, then output u contains {0,1}
     vec = np.zeros([labels.shape[0], n_class])
-    # use signless TV, then output u contains {-1,1}
+        
+        # use signless TV, then output u contains {-1,1}
     #vec = -np.ones([labels.shape[0], n_class])
     for i in range(n_class):
         vec[labels == i,i] = 1.
+        
+        # output u contains {-1,1}
     vec = np.where(vec > 0, vec, -1)
     return vec
 
@@ -63,18 +67,20 @@ def generate_initial_value_multiclass(opt , n_samples = None, n_class = None):
     
     if opt == 'rd_equal':
         ind = permutation(n_samples)
-        # original: only use TV, then u_init is zero matrix
-        #u_init = np.zeros((n_samples, n_class)) 
-        # use signless TV, then u_init = (-1)matrix
-        u_init = -np.ones((n_samples, n_class)) 
+            # original: only use TV, then u_init is zero matrix
+        u_init = np.zeros((n_samples, n_class)) 
+            # use signless TV, then u_init = (-1)matrix
+        #u_init = -np.ones((n_samples, n_class)) 
         sample_per_class = n_samples // n_class
         for i in range(n_class):
             u_init[ind[i*sample_per_class:(i+1)*sample_per_class], i] = 1
-            
+        u_init = np.where(u_init > 0, u_init, -1)
         return u_init
+    
     elif opt == 'rd':
         u_init = np.random.uniform(low = -1, high = 1, size = [n_samples,n_class])
         u_init = labels_to_vector(vector_to_labels(u_init))
+        u_init = np.where(u_init > 0, u_init, -1)
         return u_init
 
 
@@ -117,3 +123,46 @@ def inverse_purity_score(y_true, y_pred):
     contingency_matrix = metrics.cluster.contingency_matrix(y_true, y_pred)
     # return purity
     return np.sum(np.amax(contingency_matrix, axis=1)) / np.sum(contingency_matrix) 
+
+
+
+def get_modularity_ER(adjacency_mat, community_dict):
+#    '''
+#    Calculate the modularity. 
+#    .. math:: Q = \frac{1}{2m}\sum_{i,j} \(A_ij - \frac{2m}{N(N-1)}\) * \detal_(c_i, c_j)
+
+#    Parameters
+#    ----------
+#    adjacency_mat : sp.sparse._csr.csr_matrix or ny.ndarray
+#        The adjacency matrix of network/graph
+#    community_dict : dict
+#        A dictionary to store the membership of each node
+#        Key is node and value is community index
+
+#    Returns
+#    -------
+#    float
+#        The modularity of `network` given `community_dict`
+#    '''
+
+    Q = 0
+    num_nodes = adjacency_mat.shape[0]
+    list_node = list(range(0, num_nodes))
+    total_degree = np.sum(adjacency_mat)  
+    N_square = num_nodes * (num_nodes -1)
+
+    Q = np.sum([adjacency_mat[i,j] - total_degree *\
+                         1/N_square\
+                 for i, j in product(range(len(list_node)),\
+                                     range(len(list_node))) \
+                if community_dict[list_node[i]] == community_dict[list_node[j]]])
+    return Q / total_degree
+
+
+
+def label_to_dict(u_label):
+    len_label = []
+    for i in range(len(u_label)):
+        len_label.append(i)
+    u_dict = dict(zip(len_label, u_label))
+    return u_dict
