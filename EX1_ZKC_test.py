@@ -877,7 +877,7 @@ sum_NMI_CNM = 0
 
 for _ in range(20):
     start_time_CNM = time.time()
-    partition_CNM = nx_comm.greedy_modularity_communities(G, resolution=gamma)
+    partition_CNM = nx_comm.greedy_modularity_communities(G)
     time_CNM = time.time() - start_time_CNM
     #print("CNM algorithm:-- %.3f seconds --" % (time.time() - start_time_CNM))
 
