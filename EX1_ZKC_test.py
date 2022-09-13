@@ -1,4 +1,3 @@
-from re import L
 import numpy as np
 from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_rand_score
 from matplotlib import pyplot as plt
@@ -12,8 +11,9 @@ import time
 import sknetwork as skn
 from sknetwork.clustering import Louvain
 from sknetwork.data import karate_club
+from cdlib import evaluation, NodeClustering
 from MMBO_and_HU import MMBO_using_projection, MMBO_using_finite_differendce, adj_to_laplacian_signless_laplacian,HU_mmbo_method, adj_to_modularity_mat
-from utils import vector_to_labels, labels_to_vector, purity_score, inverse_purity_score, generate_initial_value_multiclass, label_to_dict, get_modularity_ER
+from utils import vector_to_labels, labels_to_vector, purity_score, inverse_purity_score, generate_initial_value_multiclass, label_to_dict, get_modularity_ER, dict_to_list_set
 
 
 
@@ -26,7 +26,7 @@ m = 1 * num_communities
 tol = 0
 N_t = 3
 gamma = 1
-dt = 0.3
+
 
 
 # Get Zachary's Karate Club graph (ZKC)
@@ -205,7 +205,7 @@ for _ in range(20):
 
     # Hu's method using L_sym
     start_time_HU_sym = time.time()
-    u_hu_sym_vector, num_iteration_HU_sym, HU_sym_modularity_list = HU_mmbo_method(num_nodes, degree, dt, eig_val_hu_sym, eig_vec_hu_sym,
+    u_hu_sym_vector, num_iteration_HU_sym, HU_sym_modularity_list = HU_mmbo_method(num_nodes, degree, eig_val_hu_sym, eig_vec_hu_sym,
                                  tol, N_t, u_init, adj_mat_nparray, gamma=gamma) 
     time_HU_sym = time.time() - start_time_HU_sym
     time_HU_sym = time_eig_l_sym + time_initialize_u + time_HU_sym
@@ -213,9 +213,12 @@ for _ in range(20):
 
     u_hu_sym_label = vector_to_labels(u_hu_sym_vector)
     u_hu_sym_dict = label_to_dict(u_hu_sym_label)
+    u_hu_sym_list = dict_to_list_set(u_hu_sym_dict)
+    u_hu_sym_communities = NodeClustering(u_hu_sym_list, graph=None)
 
-    ER_modularity_hu_sym = get_modularity_ER(adj_mat_nparray, u_hu_sym_dict)
-    modularity_hu_sym = skn.clustering.modularity(adj_mat_nparray,u_hu_sym_label,resolution=gamma)
+    ER_modularity_hu_sym = evaluation.erdos_renyi_modularity(G, u_hu_sym_communities)
+    modularity_hu_sym = evaluation.newman_girvan_modularity(G,u_hu_sym_communities)
+    #modularity_hu_sym = skn.clustering.modularity(adj_mat_nparray,u_hu_sym_label,resolution=gamma)
     ARI_hu_sym = adjusted_rand_score(u_hu_sym_label, gt_membership)
     purify_hu_sym = purity_score(gt_membership, u_hu_sym_label)
     inverse_purify_hu_sym = inverse_purity_score(gt_membership, u_hu_sym_label)
@@ -240,7 +243,7 @@ for _ in range(20):
 
     # HU's method --rw
     start_time_HU_rw = time.time()
-    u_hu_vector_rw, num_iter_HU_rw, HU_modularity_list_rw = HU_mmbo_method(num_nodes, degree, dt, eig_val_hu_rw, eig_vec_hu_rw,
+    u_hu_vector_rw, num_iter_HU_rw, HU_modularity_list_rw = HU_mmbo_method(num_nodes, degree, eig_val_hu_rw, eig_vec_hu_rw,
                                  tol, N_t, u_init, adj_mat_nparray, gamma=gamma) 
     time_HU_rw = time.time() - start_time_HU_rw
     time_HU_rw = time_eig_l_rw + time_initialize_u + time_HU_rw
@@ -249,9 +252,11 @@ for _ in range(20):
 
     u_hu_label_rw = vector_to_labels(u_hu_vector_rw)
     u_hu_rw_dict = label_to_dict(u_hu_label_rw)
+    u_hu_rw_list = dict_to_list_set(u_hu_rw_dict)
+    u_hu_rw_communities = NodeClustering(u_hu_rw_list, graph=None)
 
-    ER_modu_Hu_rw = get_modularity_ER(adj_mat_nparray, u_hu_rw_dict)
-    modu_Hu_rw = skn.clustering.modularity(adj_mat_nparray,u_hu_label_rw,resolution=gamma)
+    ER_modu_Hu_rw = evaluation.erdos_renyi_modularity(G, u_hu_rw_communities)
+    modu_Hu_rw = evaluation.newman_girvan_modularity(G, u_hu_rw_communities)
     ARI_Hu_rw = adjusted_rand_score(u_hu_label_rw, gt_membership)
     purify_Hu_rw = purity_score(gt_membership, u_hu_label_rw)
     inverse_purify_Hu_rw = inverse_purity_score(gt_membership, u_hu_label_rw)
@@ -277,7 +282,7 @@ for _ in range(20):
     
     # MMBO projection l_sym
     start_time_MMBO_projection_l_sym = time.time()
-    u_MMBO_projection_l_sym, num_iteration_MMBO_projection_l_sym, MMBO_projection_sym_modularity_list = MMBO_using_projection(m, degree, dt, 
+    u_MMBO_projection_l_sym, num_iteration_MMBO_projection_l_sym, MMBO_projection_sym_modularity_list = MMBO_using_projection(m, degree, 
                                             eig_val_mmbo_sym, eig_vec_mmbo_sym, tol, u_init, adj_mat_nparray, gamma=gamma) 
     time_MMBO_projection_sym = time.time() - start_time_MMBO_projection_l_sym
     time_MMBO_projection_sym = time_eig_l_mix_sym + time_initialize_u + time_MMBO_projection_sym
@@ -285,9 +290,13 @@ for _ in range(20):
 
     u_MMBO_projection_l_sym_label = vector_to_labels(u_MMBO_projection_l_sym)
     u_MMBO_projection_l_sym_dict = label_to_dict(u_MMBO_projection_l_sym_label)
-
-    ER_modularity_MMBO_projection_l_sym = get_modularity_ER(adj_mat_nparray, u_MMBO_projection_l_sym_dict)
-    modularity_MMBO_projection_l_sym = skn.clustering.modularity(adj_mat_nparray ,u_MMBO_projection_l_sym_label,resolution=gamma)
+    u_MMBO_projection_l_sym_list = dict_to_list_set(u_MMBO_projection_l_sym_dict)
+    u_MMBO_projection_l_sym_coms = NodeClustering(u_MMBO_projection_l_sym_list, graph=None)
+    
+    ER_modularity_MMBO_projection_l_sym = evaluation.erdos_renyi_modularity(G,u_MMBO_projection_l_sym_coms)
+    modularity_MMBO_projection_l_sym = evaluation.newman_girvan_modularity(G,u_MMBO_projection_l_sym_coms)
+    #ER_modularity_MMBO_projection_l_sym = get_modularity_ER(adj_mat_nparray, u_MMBO_projection_l_sym_dict)
+    #modularity_MMBO_projection_l_sym = skn.clustering.modularity(adj_mat_nparray ,u_MMBO_projection_l_sym_label,resolution=gamma)
     ARI_MMBO_projection_l_sym = adjusted_rand_score(u_MMBO_projection_l_sym_label, gt_membership)
     purify_MMBO_projection_l_sym = purity_score(gt_membership, u_MMBO_projection_l_sym_label)
     inverse_purify_MMBO_projection_l_sym = inverse_purity_score(gt_membership, u_MMBO_projection_l_sym_label)
@@ -312,7 +321,7 @@ for _ in range(20):
 
     # MMBO projection l_rw
     start_time_MMBO_projection_l_rw = time.time()
-    u_MMBO_projection_l_rw, num_iteration_MMBO_projection_l_rw, MMBO_projection_l_rw_modularity_list = MMBO_using_projection(m, degree, dt, 
+    u_MMBO_projection_l_rw, num_iteration_MMBO_projection_l_rw, MMBO_projection_l_rw_modularity_list = MMBO_using_projection(m, degree, 
                                             eig_val_mmbo_rw, eig_vec_mmbo_rw, tol, u_init, adj_mat_nparray, gamma=gamma) 
     time_MMBO_projection_rw = time.time() - start_time_MMBO_projection_l_rw
     time_MMBO_projection_rw = time_eig_l_mix_rw + time_initialize_u + time_MMBO_projection_rw
@@ -320,9 +329,13 @@ for _ in range(20):
 
     u_MMBO_projection_l_rw_label = vector_to_labels(u_MMBO_projection_l_rw)
     u_MMBO_projection_l_rw_dict = label_to_dict(u_MMBO_projection_l_rw_label)
-
-    ER_modularity_MMBO_projection_l_rw = get_modularity_ER(adj_mat_nparray, u_MMBO_projection_l_rw_dict)
-    modularity_MMBO_projection_l_rw = skn.clustering.modularity(adj_mat_nparray,u_MMBO_projection_l_rw_label,resolution=gamma)
+    u_MMBO_projection_l_rw_list = dict_to_list_set(u_MMBO_projection_l_rw_dict)
+    u_MMBO_projection_l_rw_coms = NodeClustering(u_MMBO_projection_l_rw_list, graph=None)
+    
+    ER_modularity_MMBO_projection_l_rw = evaluation.erdos_renyi_modularity(G, u_MMBO_projection_l_rw_coms)
+    modularity_MMBO_projection_l_rw = evaluation.newman_girvan_modularity(G, u_MMBO_projection_l_rw_coms)
+    #ER_modularity_MMBO_projection_l_rw = get_modularity_ER(adj_mat_nparray, u_MMBO_projection_l_rw_dict)
+    #modularity_MMBO_projection_l_rw = skn.clustering.modularity(adj_mat_nparray,u_MMBO_projection_l_rw_label,resolution=gamma)
     ARI_MMBO_projection_l_rw = adjusted_rand_score(u_MMBO_projection_l_rw_label, gt_membership)
     purify_MMBO_projection_l_rw = purity_score(gt_membership, u_MMBO_projection_l_rw_label)
     inverse_purify_MMBO_projection_l_rw = inverse_purity_score(gt_membership, u_MMBO_projection_l_rw_label)
@@ -340,7 +353,7 @@ for _ in range(20):
 
     # MMBO projection B_sym
     start_time_MMBO_projection_B_sym = time.time()
-    u_mmbo_proj_B_sym, num_iteration_mmbo_proj_B_sym, MMBO_projection_B_sym_modularity_list = MMBO_using_projection(m, degree, dt, 
+    u_mmbo_proj_B_sym, num_iteration_mmbo_proj_B_sym, MMBO_projection_B_sym_modularity_list = MMBO_using_projection(m, degree, 
                                             eig_val_mmbo_B_sym, eig_vec_mmbo_B_sym, tol, u_init, adj_mat_nparray, gamma=gamma) 
     time_MMBO_projection_B_sym = time.time() - start_time_MMBO_projection_B_sym
     time_MMBO_projection_B_sym = time_eig_l_mix_B_sym + time_initialize_u + time_MMBO_projection_B_sym
@@ -348,9 +361,13 @@ for _ in range(20):
 
     u_mmbo_proj_B_sym_label = vector_to_labels(u_mmbo_proj_B_sym)
     u_mmbo_proj_B_sym_dict = label_to_dict(u_mmbo_proj_B_sym_label)
-
-    ER_modularity_mmbo_proj_B_sym = get_modularity_ER(adj_mat_nparray, u_mmbo_proj_B_sym_dict)
-    modularity_mmbo_proj_B_sym = skn.clustering.modularity(adj_mat_nparray,u_mmbo_proj_B_sym_label,resolution=gamma)
+    u_mmbo_proj_B_sym_list = dict_to_list_set(u_mmbo_proj_B_sym_dict)
+    u_mmbo_proj_B_sym_coms = NodeClustering(u_mmbo_proj_B_sym_list, graph=None)
+    
+    ER_modularity_mmbo_proj_B_sym = evaluation.erdos_renyi_modularity(G, u_mmbo_proj_B_sym_coms)
+    modularity_mmbo_proj_B_sym = evaluation.newman_girvan_modularity(G, u_mmbo_proj_B_sym_coms)
+    #ER_modularity_mmbo_proj_B_sym = get_modularity_ER(adj_mat_nparray, u_mmbo_proj_B_sym_dict)
+    #modularity_mmbo_proj_B_sym = skn.clustering.modularity(adj_mat_nparray,u_mmbo_proj_B_sym_label,resolution=gamma)
     ARI_mmbo_proj_B_sym = adjusted_rand_score(u_mmbo_proj_B_sym_label, gt_membership)
     purify_mmbo_proj_B_sym = purity_score(gt_membership, u_mmbo_proj_B_sym_label)
     inverse_purify_mmbo_proj_B_sym = inverse_purity_score(gt_membership, u_mmbo_proj_B_sym_label)
@@ -367,7 +384,7 @@ for _ in range(20):
 
     # MMBO projection B_rw
     start_time_MMBO_projection_B_rw = time.time()
-    u_mmbo_proj_B_rw, num_iteration_mmbo_proj_B_rw, MMBO_projection_B_rw_modularity_list = MMBO_using_projection(m, degree, dt, 
+    u_mmbo_proj_B_rw, num_iteration_mmbo_proj_B_rw, MMBO_projection_B_rw_modularity_list = MMBO_using_projection(m, degree, 
                                             eig_val_mmbo_B_rw, eig_vec_mmbo_B_rw, tol, u_init, adj_mat_nparray, gamma=gamma)
     time_MMBO_projection_B_rw = time.time() - start_time_MMBO_projection_B_rw
     time_MMBO_projection_B_sym = time_eig_l_mix_B_rw + time_initialize_u + time_MMBO_projection_B_rw
@@ -375,9 +392,13 @@ for _ in range(20):
 
     u_mmbo_proj_B_rw_label = vector_to_labels(u_mmbo_proj_B_rw)
     u_mmbo_proj_B_rw_dict = label_to_dict(u_mmbo_proj_B_rw_label)
-
-    ER_modularity_mmbo_proj_B_rw = get_modularity_ER(adj_mat_nparray, u_mmbo_proj_B_rw_dict)
-    modularity_mmbo_proj_B_rw = skn.clustering.modularity(adj_mat_nparray,u_mmbo_proj_B_rw_label,resolution=gamma)
+    u_mmbo_proj_B_rw_list = dict_to_list_set(u_mmbo_proj_B_rw_dict)
+    u_mmbo_proj_B_rw_coms = NodeClustering(u_mmbo_proj_B_rw_list, graph=None)
+    
+    ER_modularity_mmbo_proj_B_rw = evaluation.erdos_renyi_modularity(G, u_mmbo_proj_B_rw_coms)
+    modularity_mmbo_proj_B_rw = evaluation.newman_girvan_modularity(G, u_mmbo_proj_B_rw_coms)
+    #ER_modularity_mmbo_proj_B_rw = get_modularity_ER(adj_mat_nparray, u_mmbo_proj_B_rw_dict)
+    #modularity_mmbo_proj_B_rw = skn.clustering.modularity(adj_mat_nparray,u_mmbo_proj_B_rw_label,resolution=gamma)
     ARI_mmbo_proj_B_rw = adjusted_rand_score(u_mmbo_proj_B_rw_label, gt_membership)
     purify_mmbo_proj_B_rw = purity_score(gt_membership, u_mmbo_proj_B_rw_label)
     inverse_purify_mmbo_proj_B_rw = inverse_purity_score(gt_membership, u_mmbo_proj_B_rw_label)
@@ -395,7 +416,7 @@ for _ in range(20):
 
     # MMBO using finite difference L_sym
     start_time_MMBO_using_finite_difference_sym = time.time()
-    u_MMBO_using_finite_difference_sym, num_iteration_MMBO_using_finite_difference_sym, MMBO_using_finite_difference_sym_modularity_list = MMBO_using_finite_differendce(m,degree, dt,
+    u_MMBO_using_finite_difference_sym, num_iteration_MMBO_using_finite_difference_sym, MMBO_using_finite_difference_sym_modularity_list = MMBO_using_finite_differendce(m,degree,
                                         eig_val_mmbo_sym, eig_vec_mmbo_sym, tol, N_t,  u_init, adj_mat_nparray, gamma=gamma) 
     time_MMBO_using_finite_difference_sym = time.time() - start_time_MMBO_using_finite_difference_sym
     time_MMBO_using_finite_difference_sym = time_eig_l_mix_sym + time_initialize_u + time_MMBO_using_finite_difference_sym
@@ -404,9 +425,13 @@ for _ in range(20):
 
     u_MMBO_using_finite_difference_sym_label = vector_to_labels(u_MMBO_using_finite_difference_sym)
     u_MMBO_using_finite_difference_sym_dict = label_to_dict (u_MMBO_using_finite_difference_sym_label)
-
-    ER_modularity_MMBO_using_finite_difference_sym = get_modularity_ER(adj_mat_nparray, u_MMBO_using_finite_difference_sym_dict)
-    modularity_MMBO_using_finite_difference_sym = skn.clustering.modularity(adj_mat_nparray,u_MMBO_using_finite_difference_sym_label,resolution=gamma)
+    u_MMBO_using_finite_difference_sym_list = dict_to_list_set(u_MMBO_using_finite_difference_sym_dict)
+    u_MMBO_using_finite_difference_sym_coms = NodeClustering(u_MMBO_using_finite_difference_sym_list, graph=None)
+    
+    ER_modularity_MMBO_using_finite_difference_sym = evaluation.erdos_renyi_modularity(G, u_MMBO_using_finite_difference_sym_coms)
+    modularity_MMBO_using_finite_difference_sym = evaluation.newman_girvan_modularity(G, u_MMBO_using_finite_difference_sym_coms)
+    #ER_modularity_MMBO_using_finite_difference_sym = get_modularity_ER(adj_mat_nparray, u_MMBO_using_finite_difference_sym_dict)
+    #modularity_MMBO_using_finite_difference_sym = skn.clustering.modularity(adj_mat_nparray,u_MMBO_using_finite_difference_sym_label,resolution=gamma)
     ARI_MMBO_using_finite_difference_sym = adjusted_rand_score(u_MMBO_using_finite_difference_sym_label, gt_membership)
     purify_MMBO_using_finite_difference_sym = purity_score(gt_membership, u_MMBO_using_finite_difference_sym_label)
     inverse_purify_MMBO_using_finite_difference_sym1 = inverse_purity_score(gt_membership, u_MMBO_using_finite_difference_sym_label)
@@ -430,7 +455,7 @@ for _ in range(20):
 
     # MMBO using finite difference L_rw
     start_time_MMBO_using_finite_difference_rw = time.time()
-    u_MMBO_using_finite_difference_rw, num_iteration_MMBO_using_finite_difference_rw, MMBO_using_finite_difference_rw_modularity_list = MMBO_using_finite_differendce(m,degree, dt,
+    u_MMBO_using_finite_difference_rw, num_iteration_MMBO_using_finite_difference_rw, MMBO_using_finite_difference_rw_modularity_list = MMBO_using_finite_differendce(m,degree, 
                                         eig_val_mmbo_rw, eig_vec_mmbo_rw, tol, N_t,  u_init, adj_mat_nparray, gamma=gamma)
     time_MMBO_using_finite_difference_rw = time.time() - start_time_MMBO_using_finite_difference_rw
     time_MMBO_using_finite_difference_rw = time_eig_l_mix_rw + time_initialize_u + time_MMBO_using_finite_difference_rw
@@ -438,9 +463,13 @@ for _ in range(20):
 
     u_MMBO_using_finite_difference_rw_label = vector_to_labels(u_MMBO_using_finite_difference_rw)
     u_MMBO_using_finite_difference_rw_dict = label_to_dict(u_MMBO_using_finite_difference_rw_label)
-
-    ER_modularity_MMBO_using_finite_difference_rw = get_modularity_ER(adj_mat_nparray, u_MMBO_using_finite_difference_rw_dict)
-    modularity_MMBO_using_finite_difference_rw = skn.clustering.modularity(adj_mat_nparray,u_MMBO_using_finite_difference_rw_label,resolution=gamma)
+    u_MMBO_using_finite_difference_rw_list = dict_to_list_set(u_MMBO_using_finite_difference_rw_dict)
+    u_MMBO_using_finite_difference_rw_coms = NodeClustering(u_MMBO_using_finite_difference_rw_list, graph=None)
+    
+    ER_modularity_MMBO_using_finite_difference_rw = evaluation.erdos_renyi_modularity(G, u_MMBO_using_finite_difference_rw_coms)
+    modularity_MMBO_using_finite_difference_rw = evaluation.newman_girvan_modularity(G, u_MMBO_using_finite_difference_rw_coms)
+    #ER_modularity_MMBO_using_finite_difference_rw = get_modularity_ER(adj_mat_nparray, u_MMBO_using_finite_difference_rw_dict)
+    #modularity_MMBO_using_finite_difference_rw = skn.clustering.modularity(adj_mat_nparray,u_MMBO_using_finite_difference_rw_label,resolution=gamma)
     ARI_MMBO_using_finite_difference_rw = adjusted_rand_score(u_MMBO_using_finite_difference_rw_label, gt_membership)
     purify_MMBO_using_finite_difference_rw = purity_score(gt_membership, u_MMBO_using_finite_difference_rw_label)
     inverse_purify_MMBO_using_finite_difference_rw = inverse_purity_score(gt_membership, u_MMBO_using_finite_difference_rw_label)
@@ -465,7 +494,7 @@ for _ in range(20):
 
     # MMBO using finite difference B_sym
     start_time_MMBO_using_finite_difference_B_sym = time.time()
-    u_MMBO_using_finite_difference_B_sym, num_iteration_MMBO_using_finite_difference_B_sym, MMBO_using_finite_difference_B_sym_modularity_list = MMBO_using_finite_differendce(m,degree, dt, 
+    u_MMBO_using_finite_difference_B_sym, num_iteration_MMBO_using_finite_difference_B_sym, MMBO_using_finite_difference_B_sym_modularity_list = MMBO_using_finite_differendce(m,degree,  
                                         eig_val_mmbo_B_sym, eig_vec_mmbo_B_sym, tol, N_t,  u_init, adj_mat_nparray, gamma=gamma)
     time_start_time_MMBO_using_finite_difference_B_sym = time.time() - start_time_MMBO_using_finite_difference_B_sym
     time_start_time_MMBO_using_finite_difference_B_sym = time_eig_l_mix_B_sym + time_initialize_u + time_start_time_MMBO_using_finite_difference_B_sym
@@ -473,9 +502,13 @@ for _ in range(20):
 
     u_MMBO_using_finite_difference_B_sym_label = vector_to_labels(u_MMBO_using_finite_difference_B_sym)
     u_MMBO_using_finite_difference_B_sym_dict = label_to_dict(u_MMBO_using_finite_difference_B_sym_label)
-
-    ER_modularity_MMBO_using_finite_difference_B_sym = get_modularity_ER(adj_mat_nparray, u_MMBO_using_finite_difference_B_sym_dict)
-    modularity_MMBO_using_finite_difference_B_sym = skn.clustering.modularity(adj_mat_nparray,u_MMBO_using_finite_difference_B_sym_label,resolution=gamma)
+    u_MMBO_using_finite_difference_B_sym_list = dict_to_list_set(u_MMBO_using_finite_difference_B_sym_dict)
+    u_MMBO_using_finite_difference_B_sym_coms = NodeClustering(u_MMBO_using_finite_difference_B_sym_list, graph=None)
+    
+    ER_modularity_MMBO_using_finite_difference_B_sym = evaluation.erdos_renyi_modularity(G, u_MMBO_using_finite_difference_B_sym_coms)
+    modularity_MMBO_using_finite_difference_B_sym = evaluation.newman_girvan_modularity(G, u_MMBO_using_finite_difference_B_sym_coms)
+    #ER_modularity_MMBO_using_finite_difference_B_sym = get_modularity_ER(adj_mat_nparray, u_MMBO_using_finite_difference_B_sym_dict)
+    #modularity_MMBO_using_finite_difference_B_sym = skn.clustering.modularity(adj_mat_nparray,u_MMBO_using_finite_difference_B_sym_label,resolution=gamma)
     ARI_MMBO_using_finite_difference_B_sym = adjusted_rand_score(u_MMBO_using_finite_difference_B_sym_label, gt_membership)
     purify_MMBO_using_finite_difference_B_sym = purity_score(gt_membership, u_MMBO_using_finite_difference_B_sym_label)
     inverse_purify_MMBO_using_finite_difference_B_sym = inverse_purity_score(gt_membership, u_MMBO_using_finite_difference_B_sym_label)
@@ -493,16 +526,20 @@ for _ in range(20):
 
     # MMBO using finite difference B_rw
     start_time_MMBO_using_finite_difference_B_rw = time.time()
-    u_MMBO_using_finite_difference_B_rw, num_iertation_MMBO_using_finite_difference_B_rw, MMBO_using_finite_difference_B_rw_modularity_list = MMBO_using_finite_differendce(m,degree, dt,
+    u_MMBO_using_finite_difference_B_rw, num_iertation_MMBO_using_finite_difference_B_rw, MMBO_using_finite_difference_B_rw_modularity_list = MMBO_using_finite_differendce(m,degree, 
                                         eig_val_mmbo_B_rw, eig_vec_mmbo_B_rw, tol, N_t,  u_init, adj_mat_nparray, gamma=gamma)
     time_MMBO_using_finite_difference_B_rw = time.time() - start_time_MMBO_using_finite_difference_B_rw
     #print('the number of MBO iteration for MMBO using inner step with L_B_rw: ',num_repeat_inner_B_rw)
 
     u_MMBO_using_finite_difference_B_rw_label = vector_to_labels(u_MMBO_using_finite_difference_B_rw)
     u_MMBO_using_finite_difference_B_rw_dict = label_to_dict(u_MMBO_using_finite_difference_B_rw_label)
-
-    ER_modularity_MMBO_using_finite_difference_B_rw = get_modularity_ER(adj_mat_nparray, u_MMBO_using_finite_difference_B_rw_dict)
-    modularity_MMBO_using_finite_difference_B_rw = skn.clustering.modularity(adj_mat_nparray,u_MMBO_using_finite_difference_B_rw_label,resolution=1)
+    u_MMBO_using_finite_difference_B_rw_list = dict_to_list_set(u_MMBO_using_finite_difference_B_rw_dict)
+    u_MMBO_using_finite_difference_B_rw_coms = NodeClustering(u_MMBO_using_finite_difference_B_rw_list, graph=None)
+    
+    ER_modularity_MMBO_using_finite_difference_B_rw = evaluation.erdos_renyi_modularity(G, u_MMBO_using_finite_difference_B_rw_coms)
+    modularity_MMBO_using_finite_difference_B_rw = evaluation.newman_girvan_modularity(G, u_MMBO_using_finite_difference_B_rw_coms)
+    #ER_modularity_MMBO_using_finite_difference_B_rw = get_modularity_ER(adj_mat_nparray, u_MMBO_using_finite_difference_B_rw_dict)
+    #modularity_MMBO_using_finite_difference_B_rw = skn.clustering.modularity(adj_mat_nparray,u_MMBO_using_finite_difference_B_rw_label,resolution=1)
     ARI_mmbo_inner_B_rwMMBO_using_finite_difference_B_rw = adjusted_rand_score(u_MMBO_using_finite_difference_B_rw_label, gt_membership)
     purify_MMBO_using_finite_difference_B_rw = purity_score(gt_membership, u_MMBO_using_finite_difference_B_rw_label)
     inverse_purifyMMBO_using_finite_difference_B_rw = inverse_purity_score(gt_membership, u_MMBO_using_finite_difference_B_rw_label)

@@ -141,7 +141,7 @@ def adj_to_modularity_mat(adj_matrix):
 
 
 
-def MMBO_using_projection(m, degree, dt, eig_val, eig_vec, tol, u_init, adj_mat,
+def MMBO_using_projection(m, degree, eig_val, eig_vec, tol, u_init, adj_mat,
                      gamma=0.5, eps=1, max_iter=10000, stopping_condition='standard'): # inner stepcount is actually important! and can't be set to 1...
     
     #print('Start computing the MMBO scheme using projection on the eigenvectors')
@@ -162,12 +162,12 @@ def MMBO_using_projection(m, degree, dt, eig_val, eig_vec, tol, u_init, adj_mat,
     
     # Time step selection
     #start_time_timestep_selection = time.time()
-    #dtlow = 0.15/((gamma+1)*np.max(degree))
-    #dthigh = np.log(np.linalg.norm(u_init)/eps)/eig_val[0]
-    #dti = np.sqrt(dtlow*dthigh)
+    dtlow = 0.15/((gamma+1)*np.max(degree))
+    dthigh = np.log(np.linalg.norm(u_init)/eps)/eig_val[0]
+    dti = np.sqrt(dtlow*dthigh)
     #print('dti: ', dti)
     #print("compute time step selection:-- %.3f seconds --" % (time.time() - start_time_timestep_selection))
-    dti = dt
+    #dti = dt
 
     demon = sp.sparse.spdiags([np.exp(- 0.5 * eig_val * dti)],[0],m,m) @ eig_vec.transpose()
 
@@ -217,7 +217,7 @@ def MMBO_using_projection(m, degree, dt, eig_val, eig_vec, tol, u_init, adj_mat,
 
 
 
-def MMBO_using_finite_differendce(m, degree, dt, eig_val, eig_vec, tol, N_t, u_init, adj_mat,
+def MMBO_using_finite_differendce(m, degree, eig_val, eig_vec, tol, N_t, u_init, adj_mat,
                         gamma=0.5, eps=1, max_iter=10000, stopping_condition='standard'): # inner stepcount is actually important! and can't be set to 1...
     
     #print('Start the MMBO scheme using finite difference')
@@ -236,10 +236,10 @@ def MMBO_using_finite_differendce(m, degree, dt, eig_val, eig_vec, tol, N_t, u_i
     #print("compute initialize u:-- %.3f seconds --" % (time.time() - start_time_initialize))
 
     # Time step selection
-    #dtlow = 0.15/((gamma+1)*np.max(degree))
-    #dthigh = np.log(np.linalg.norm(u_init)/eps)/eig_val[0]
-    #dti = np.sqrt(dtlow*dthigh)
-    dti = dt
+    dtlow = 0.15/((gamma+1)*np.max(degree))
+    dthigh = np.log(np.linalg.norm(u_init)/eps)/eig_val[0]
+    dti = np.sqrt(dtlow*dthigh)
+    #dti = dt
 
     dti = dti / (2 * N_t)
     #print('dti: ', dti)
@@ -292,7 +292,7 @@ def MMBO_using_finite_differendce(m, degree, dt, eig_val, eig_vec, tol, N_t, u_i
 
 
 
-def HU_mmbo_method(num_nodes, degree, dt, eig_val, eig_vec, tol, N_t, u_init, adj_mat,
+def HU_mmbo_method(num_nodes, degree, eig_val, eig_vec, tol, N_t, u_init, adj_mat,
                     gamma=0.5, eps=1, max_iter=10000, stopping_condition='standard'): 
 
     degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)
@@ -312,7 +312,11 @@ def HU_mmbo_method(num_nodes, degree, dt, eig_val, eig_vec, tol, N_t, u_init, ad
     stop_criterion = 10
     proxy = 0
     u_new = u_init.copy()
-    modularity_score_list =[]    
+    modularity_score_list =[]   
+
+    dtlow = 0.15/((gamma+1)*np.max(degree))
+    dthigh = np.log(np.linalg.norm(u_init)/eps)/eig_val[0]
+    dti = np.sqrt(dtlow*dthigh) 
 
 
     # Perform MBO scheme
@@ -327,8 +331,8 @@ def HU_mmbo_method(num_nodes, degree, dt, eig_val, eig_vec, tol, N_t, u_init, ad
         #start_time_diffusion = time.time()
         for j in range(N_t):
             mean_f = np.dot(degree.reshape(1, len(degree)), vv) / np.sum(degree)
-            ww += 2 * gamma * dt * degree_diag @ (vv - mean_f)
-            vv = _diffusion_step_eig(ww,eig_vec,eig_val,dt)
+            ww += 2 * gamma * dti * degree_diag @ (vv - mean_f)
+            vv = _diffusion_step_eig(ww,eig_vec,eig_val,dti)
         #print("compute MBO diffusion step:-- %.3f seconds --" % (time.time() - start_time_diffusion))
         
         

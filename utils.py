@@ -166,3 +166,20 @@ def label_to_dict(u_label):
         len_label.append(i)
     u_dict = dict(zip(len_label, u_label))
     return u_dict
+
+
+def dict_to_list_set(dictionary):
+    dict_value_list = list(dict.values(dictionary))   #convert a dict value to list
+    dict_keys_list = list(dict.keys(dictionary))
+    num_cluster = list(set(dict_value_list))
+
+    num_clustering_list = []
+    for x in range(len(num_cluster)):
+        innerlist = []
+        for i in range(len(dict_keys_list)):
+            if dict_value_list[i] == num_cluster[x]:
+                innerlist.append(dict_keys_list[i])
+        num_clustering_list.append(innerlist)
+
+    return num_clustering_list
+
