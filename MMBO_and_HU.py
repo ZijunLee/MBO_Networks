@@ -315,7 +315,7 @@ def HU_mmbo_method(num_nodes, degree, eig_val, eig_vec, tol, N_t, u_init, adj_ma
     modularity_score_list =[]   
 
     dtlow = 0.15/((gamma+1)*np.max(degree))
-    dthigh = np.log(np.linalg.norm(u_init)/eps)/eig_val[0]
+    dthigh = np.log(np.linalg.norm(u_init)/eps)/eig_val[1]
     dti = np.sqrt(dtlow*dthigh) 
 
 
