@@ -8,3 +8,4 @@ python-louvain
 graphlearning
 sknetwork
 openmpi
+cdlib
