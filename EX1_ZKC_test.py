@@ -26,6 +26,7 @@ m = 1 * num_communities
 tol = 0
 N_t = 3
 gamma = 1
+dt = 0.3
 
 
 # Get Zachary's Karate Club graph (ZKC)
@@ -204,7 +205,7 @@ for _ in range(20):
 
     # Hu's method using L_sym
     start_time_HU_sym = time.time()
-    u_hu_sym_vector, num_iteration_HU_sym, HU_sym_modularity_list = HU_mmbo_method(num_nodes, degree, eig_val_hu_sym, eig_vec_hu_sym,
+    u_hu_sym_vector, num_iteration_HU_sym, HU_sym_modularity_list = HU_mmbo_method(num_nodes, degree, dt, eig_val_hu_sym, eig_vec_hu_sym,
                                  tol, N_t, u_init, adj_mat_nparray, gamma=gamma) 
     time_HU_sym = time.time() - start_time_HU_sym
     time_HU_sym = time_eig_l_sym + time_initialize_u + time_HU_sym
@@ -239,7 +240,7 @@ for _ in range(20):
 
     # HU's method --rw
     start_time_HU_rw = time.time()
-    u_hu_vector_rw, num_iter_HU_rw, HU_modularity_list_rw = HU_mmbo_method(num_nodes, degree, eig_val_hu_rw, eig_vec_hu_rw,
+    u_hu_vector_rw, num_iter_HU_rw, HU_modularity_list_rw = HU_mmbo_method(num_nodes, degree, dt, eig_val_hu_rw, eig_vec_hu_rw,
                                  tol, N_t, u_init, adj_mat_nparray, gamma=gamma) 
     time_HU_rw = time.time() - start_time_HU_rw
     time_HU_rw = time_eig_l_rw + time_initialize_u + time_HU_rw
@@ -276,7 +277,7 @@ for _ in range(20):
     
     # MMBO projection l_sym
     start_time_MMBO_projection_l_sym = time.time()
-    u_MMBO_projection_l_sym, num_iteration_MMBO_projection_l_sym, MMBO_projection_sym_modularity_list = MMBO_using_projection(m, degree,  
+    u_MMBO_projection_l_sym, num_iteration_MMBO_projection_l_sym, MMBO_projection_sym_modularity_list = MMBO_using_projection(m, degree, dt, 
                                             eig_val_mmbo_sym, eig_vec_mmbo_sym, tol, u_init, adj_mat_nparray, gamma=gamma) 
     time_MMBO_projection_sym = time.time() - start_time_MMBO_projection_l_sym
     time_MMBO_projection_sym = time_eig_l_mix_sym + time_initialize_u + time_MMBO_projection_sym
@@ -311,7 +312,7 @@ for _ in range(20):
 
     # MMBO projection l_rw
     start_time_MMBO_projection_l_rw = time.time()
-    u_MMBO_projection_l_rw, num_iteration_MMBO_projection_l_rw, MMBO_projection_l_rw_modularity_list = MMBO_using_projection(m, degree,  
+    u_MMBO_projection_l_rw, num_iteration_MMBO_projection_l_rw, MMBO_projection_l_rw_modularity_list = MMBO_using_projection(m, degree, dt, 
                                             eig_val_mmbo_rw, eig_vec_mmbo_rw, tol, u_init, adj_mat_nparray, gamma=gamma) 
     time_MMBO_projection_rw = time.time() - start_time_MMBO_projection_l_rw
     time_MMBO_projection_rw = time_eig_l_mix_rw + time_initialize_u + time_MMBO_projection_rw
@@ -339,7 +340,7 @@ for _ in range(20):
 
     # MMBO projection B_sym
     start_time_MMBO_projection_B_sym = time.time()
-    u_mmbo_proj_B_sym, num_iteration_mmbo_proj_B_sym, MMBO_projection_B_sym_modularity_list = MMBO_using_projection(m, degree,  
+    u_mmbo_proj_B_sym, num_iteration_mmbo_proj_B_sym, MMBO_projection_B_sym_modularity_list = MMBO_using_projection(m, degree, dt, 
                                             eig_val_mmbo_B_sym, eig_vec_mmbo_B_sym, tol, u_init, adj_mat_nparray, gamma=gamma) 
     time_MMBO_projection_B_sym = time.time() - start_time_MMBO_projection_B_sym
     time_MMBO_projection_B_sym = time_eig_l_mix_B_sym + time_initialize_u + time_MMBO_projection_B_sym
@@ -366,7 +367,7 @@ for _ in range(20):
 
     # MMBO projection B_rw
     start_time_MMBO_projection_B_rw = time.time()
-    u_mmbo_proj_B_rw, num_iteration_mmbo_proj_B_rw, MMBO_projection_B_rw_modularity_list = MMBO_using_projection(m, degree,  
+    u_mmbo_proj_B_rw, num_iteration_mmbo_proj_B_rw, MMBO_projection_B_rw_modularity_list = MMBO_using_projection(m, degree, dt, 
                                             eig_val_mmbo_B_rw, eig_vec_mmbo_B_rw, tol, u_init, adj_mat_nparray, gamma=gamma)
     time_MMBO_projection_B_rw = time.time() - start_time_MMBO_projection_B_rw
     time_MMBO_projection_B_sym = time_eig_l_mix_B_rw + time_initialize_u + time_MMBO_projection_B_rw
@@ -394,7 +395,7 @@ for _ in range(20):
 
     # MMBO using finite difference L_sym
     start_time_MMBO_using_finite_difference_sym = time.time()
-    u_MMBO_using_finite_difference_sym, num_iteration_MMBO_using_finite_difference_sym, MMBO_using_finite_difference_sym_modularity_list = MMBO_using_finite_differendce(m,degree, 
+    u_MMBO_using_finite_difference_sym, num_iteration_MMBO_using_finite_difference_sym, MMBO_using_finite_difference_sym_modularity_list = MMBO_using_finite_differendce(m,degree, dt,
                                         eig_val_mmbo_sym, eig_vec_mmbo_sym, tol, N_t,  u_init, adj_mat_nparray, gamma=gamma) 
     time_MMBO_using_finite_difference_sym = time.time() - start_time_MMBO_using_finite_difference_sym
     time_MMBO_using_finite_difference_sym = time_eig_l_mix_sym + time_initialize_u + time_MMBO_using_finite_difference_sym
@@ -429,7 +430,7 @@ for _ in range(20):
 
     # MMBO using finite difference L_rw
     start_time_MMBO_using_finite_difference_rw = time.time()
-    u_MMBO_using_finite_difference_rw, num_iteration_MMBO_using_finite_difference_rw, MMBO_using_finite_difference_rw_modularity_list = MMBO_using_finite_differendce(m,degree, 
+    u_MMBO_using_finite_difference_rw, num_iteration_MMBO_using_finite_difference_rw, MMBO_using_finite_difference_rw_modularity_list = MMBO_using_finite_differendce(m,degree, dt,
                                         eig_val_mmbo_rw, eig_vec_mmbo_rw, tol, N_t,  u_init, adj_mat_nparray, gamma=gamma)
     time_MMBO_using_finite_difference_rw = time.time() - start_time_MMBO_using_finite_difference_rw
     time_MMBO_using_finite_difference_rw = time_eig_l_mix_rw + time_initialize_u + time_MMBO_using_finite_difference_rw
@@ -464,7 +465,7 @@ for _ in range(20):
 
     # MMBO using finite difference B_sym
     start_time_MMBO_using_finite_difference_B_sym = time.time()
-    u_MMBO_using_finite_difference_B_sym, num_iteration_MMBO_using_finite_difference_B_sym, MMBO_using_finite_difference_B_sym_modularity_list = MMBO_using_finite_differendce(m,degree, 
+    u_MMBO_using_finite_difference_B_sym, num_iteration_MMBO_using_finite_difference_B_sym, MMBO_using_finite_difference_B_sym_modularity_list = MMBO_using_finite_differendce(m,degree, dt, 
                                         eig_val_mmbo_B_sym, eig_vec_mmbo_B_sym, tol, N_t,  u_init, adj_mat_nparray, gamma=gamma)
     time_start_time_MMBO_using_finite_difference_B_sym = time.time() - start_time_MMBO_using_finite_difference_B_sym
     time_start_time_MMBO_using_finite_difference_B_sym = time_eig_l_mix_B_sym + time_initialize_u + time_start_time_MMBO_using_finite_difference_B_sym
@@ -492,7 +493,7 @@ for _ in range(20):
 
     # MMBO using finite difference B_rw
     start_time_MMBO_using_finite_difference_B_rw = time.time()
-    u_MMBO_using_finite_difference_B_rw, num_iertation_MMBO_using_finite_difference_B_rw, MMBO_using_finite_difference_B_rw_modularity_list = MMBO_using_finite_differendce(m,degree, 
+    u_MMBO_using_finite_difference_B_rw, num_iertation_MMBO_using_finite_difference_B_rw, MMBO_using_finite_difference_B_rw_modularity_list = MMBO_using_finite_differendce(m,degree, dt,
                                         eig_val_mmbo_B_rw, eig_vec_mmbo_B_rw, tol, N_t,  u_init, adj_mat_nparray, gamma=gamma)
     time_MMBO_using_finite_difference_B_rw = time.time() - start_time_MMBO_using_finite_difference_B_rw
     #print('the number of MBO iteration for MMBO using inner step with L_B_rw: ',num_repeat_inner_B_rw)
