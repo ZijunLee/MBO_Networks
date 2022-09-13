@@ -3,7 +3,6 @@ import scipy as sp
 from scipy.sparse.linalg import eigsh
 import time
 import sknetwork as skn
-from graph_mbo.utils import dict_to_list_set
 from utils import generate_initial_value_multiclass, _diffusion_step_eig, _mbo_forward_step_multiclass, vector_to_labels
 
 
