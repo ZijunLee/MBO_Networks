@@ -38,7 +38,7 @@ num_nystrom = 500
 
 data, gt_labels = gl.datasets.load('mnist')
 
-pca = PCA(n_components = 50,svd_solver='full')
+pca = PCA(n_components = 50,svd_solver='arpack')
 Z_training = pca.fit_transform(data)
 
 
@@ -51,12 +51,19 @@ W = gl.weightmatrix.knn(Z_training, 10)
 total_degree = np.sum(W, dtype=np.int64)
 probability = total_degree / (num_nodes * (num_nodes -1))
 
+all_one_matrix = np.ones((num_nodes, num_nodes))
+diag_matrix = np.diag(np.full(num_nodes,1))
+ER_null_adj = probability * all_one_matrix - probability * diag_matrix
+print('ER_null_adj')
+
+del all_one_matrix, diag_matrix
+
 start_time_create_ER_graph = time.time()
-G_ER = nx.fast_gnp_random_graph(num_nodes, probability)
-ER_null_adj = nx.convert_matrix.to_numpy_array(G_ER)
+#G_ER = nx.fast_gnp_random_graph(num_nodes, probability)
+#ER_null_adj = nx.convert_matrix.to_numpy_array(G_ER)
 print("creat Erdos-Renyi graph:-- %.3f seconds --" % (time.time() - start_time_create_ER_graph))
 
-del G_ER
+#del G_ER
 
 ER_null_first_k_columns = ER_null_adj[:, :num_nystrom]
 
