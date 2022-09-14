@@ -189,6 +189,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
     #print("compute M_{FH}:-- %.3f seconds --" % (time.time() - start_time_construct_B))
     
     M_11_rw = M_first_k_column_rw[:num_nystrom, :]
+    M_11_rw = np.nan_to_num(M_11_rw)
     pinv_A_new_rw = pinv(M_11_rw)
 
     # QR decomposition of B
@@ -228,7 +229,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
     start_time_symmetric = time.time()
     # symmetric normalize A and B of W 
     start_time_normalized_W = time.time()
-    dhat = np.sqrt(1./d_c)
+    dhat = np.sqrt(d_inverse)
     dhat = np.expand_dims(dhat, axis=-1)
     first_columns_W_sym = first_k_columns_W * np.dot(dhat, dhat[0:num_nystrom].transpose()) 
     #print("normalized W_11 & W_12:-- %.3f seconds --" % (time.time() - start_time_normalized_W))
@@ -236,7 +237,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
 
     # construct A & B of null model P (i.e. P_A & P_B)
     start_time_normalized_Q = time.time()
-    dhat_null = np.sqrt(1./d_c_null)
+    dhat_null = np.sqrt(d_inverse_null)
     dhat_null = np.expand_dims(dhat_null, axis=-1)
     first_k_columns_P_sym = ER_null_adjacency_k_columns * np.dot(dhat_null, dhat_null[0:num_nystrom].transpose())
     #print("normalized P_11 & P_12:-- %.3f seconds --" % (time.time() - start_time_normalized_Q))
@@ -246,6 +247,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
     #start_time_approximation_B = time.time()
     M_sym_first_k_column = first_columns_W_sym - first_k_columns_P_sym
     M_11_sym = M_sym_first_k_column[:num_nystrom, :]
+    M_11_sym = np.nan_to_num(M_11_sym)
     pinv_A_new_sym = pinv(M_11_sym)
 
     # QR decomposition of B
