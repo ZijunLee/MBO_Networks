@@ -1,7 +1,6 @@
 from cdlib.algorithms import louvain
 from cdlib import evaluation
 import networkx as nx
-from graph_mbo.utils import get_modularity_ER, get_modularity, labels_to_vector, vector_to_labels, dict_to_list_set, label_to_dict
 from community import community_louvain
 import numpy as np
 from MMBO_and_HU import HU_mmbo_method, adj_to_laplacian_signless_laplacian, MMBO_using_projection
@@ -17,7 +16,7 @@ import graphlearning as gl
 from sklearn.decomposition import PCA
 import time
 from Nystrom_QR_test import nystrom_QR_l_mix_sym_rw
-
+from utils import vector_to_labels, dict_to_list_set, label_to_dict
 
 
 ## parameter setting
