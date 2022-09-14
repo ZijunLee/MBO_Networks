@@ -11,6 +11,7 @@ import time
 import sknetwork as skn
 from sknetwork.clustering import Louvain
 from sknetwork.data import karate_club
+import cdlib
 from cdlib import evaluation, NodeClustering
 from MMBO_and_HU import MMBO_using_projection, MMBO_using_finite_differendce, adj_to_laplacian_signless_laplacian,HU_mmbo_method, adj_to_modularity_mat
 from utils import vector_to_labels, labels_to_vector, purity_score, inverse_purity_score, generate_initial_value_multiclass, label_to_dict, get_modularity_ER, dict_to_list_set
@@ -44,6 +45,14 @@ for i in gt_membership:
 
 gt_array = np.asarray(gt_number)        # gt_number is a list
 gt_vec = labels_to_vector(gt_array)     # gt_number is a vector
+
+aranged_list = np.arange(0, len(gt_array), 1, dtype=int)
+
+gt_dict = label_to_dict(gt_array)
+aranged_dict = label_to_dict(aranged_list)
+gt_list_set = dict_to_list_set(gt_dict)
+
+gt_coms = NodeClustering(gt_list_set, graph=None)
 
 
 # Convert the graph G into the adjacency matrix
@@ -571,10 +580,10 @@ print('average_time_MMBO_projection_sym: ', average_time_MMBO_projection_sym)
 print('average_num_iter_MMBO_projection_sym: ', average_num_iter_MMBO_projection_sym)
 print('average_modularity_MMBO_projection_sym: ', average_modularity_MMBO_projection_sym)
 print('average_ER_modularity_MMBO_projection_sym: ', average_ER_modularity_MMBO_projection_sym)
-print('average_ARI_MMBO_projection_sym: ', average_ARI_MMBO_projection_sym)
-print('average_purify_MMBO_projection_sym: ', average_purify_MMBO_projection_sym)
-print('average_inverse_purify_MMBO_projection_sym: ', average_inverse_purify_MMBO_projection_sym)
-print('average_NMI_MMBO_projection_sym: ', average_NMI_MMBO_projection_sym)
+#print('average_ARI_MMBO_projection_sym: ', average_ARI_MMBO_projection_sym)
+#print('average_purify_MMBO_projection_sym: ', average_purify_MMBO_projection_sym)
+#print('average_inverse_purify_MMBO_projection_sym: ', average_inverse_purify_MMBO_projection_sym)
+#print('average_NMI_MMBO_projection_sym: ', average_NMI_MMBO_projection_sym)
 
 
 print('MMBO using projection L_rw')
@@ -592,10 +601,10 @@ print('average_time_MMBO_projection_rw: ', average_time_MMBO_projection_rw)
 print('average_num_iteration_MMBO_projection_rw: ', average_num_iteration_MMBO_projection_rw)
 print('average_modularity_MMBO_projection_sym: ', average_modularity_MMBO_projection_rw)
 print('average_ER_modularity_MMBO_projection_sym: ', average_ER_modularity_MMBO_projection_rw)
-print('average_ARI_MMBO_projection_sym: ', average_ARI_MMBO_projection_rw)
-print('average_purify_MMBO_projection_sym: ', average_purify_MMBO_projection_rw)
-print('average_inverse_purify_MMBO_projection_sym: ', average_inverse_purify_MMBO_projection_rw)
-print('average_NMI_MMBO_projection_sym: ', average_NMI_MMBO_projection_rw)
+#print('average_ARI_MMBO_projection_sym: ', average_ARI_MMBO_projection_rw)
+#print('average_purify_MMBO_projection_sym: ', average_purify_MMBO_projection_rw)
+#print('average_inverse_purify_MMBO_projection_sym: ', average_inverse_purify_MMBO_projection_rw)
+#print('average_NMI_MMBO_projection_sym: ', average_NMI_MMBO_projection_rw)
 
 
 print('MMBO using projection B_sym')
@@ -613,10 +622,10 @@ print('average_time_MMBO_projection_B_sym: ', average_time_MMBO_projection_B_sym
 print('average_num_iteration_MMBO_projection_B_sym: ', average_num_iter_MMBO_projection_B_sym)
 print('average_modularity_MMBO_projection_B_sym: ', average_modularity_MMBO_projection_B_sym)
 print('average_ER_modularity_MMBO_projection_B_sym: ', average_ER_modularity_MMBO_projection_B_sym)
-print('average_ARI_MMBO_projection_B_sym: ', average_ARI_MMBO_projection_B_sym)
-print('average_purify_MMBO_projection_B_sym: ', average_purify_MMBO_projection_B_sym)
-print('average_inverse_purify_MMBO_projection_B_sym: ', average_inverse_purify_MMBO_projection_B_sym)
-print('average_NMI_MMBO_projection_B_sym: ', average_NMI_MMBO_projection_B_sym)
+#print('average_ARI_MMBO_projection_B_sym: ', average_ARI_MMBO_projection_B_sym)
+#print('average_purify_MMBO_projection_B_sym: ', average_purify_MMBO_projection_B_sym)
+#print('average_inverse_purify_MMBO_projection_B_sym: ', average_inverse_purify_MMBO_projection_B_sym)
+#print('average_NMI_MMBO_projection_B_sym: ', average_NMI_MMBO_projection_B_sym)
 
 
 print('MMBO using projection B_rw')
@@ -634,10 +643,10 @@ print('average_time_MMBO_projection_B_rw: ', average_time_MMBO_projection_B_rw)
 print('average_num_iteration_MMBO_projection_B_rw: ', average_num_iter_MMBO_projection_B_rw)
 print('average_modularity_MMBO_projection_B_rw: ', average_modularity_MMBO_projection_B_rw)
 print('average_ER_modularity_MMBO_projection_B_rw: ', average_ER_modularity_MMBO_projection_B_rw)
-print('average_ARI_MMBO_projection_B_rw: ', average_ARI_MMBO_projection_B_rw)
-print('average_purify_MMBO_projection_symMMBO_projection_B_rw: ', average_purify_MMBO_projection_B_rw)
-print('average_inverse_purify_MMBO_projection_B_rw: ', average_inverse_purify_MMBO_projection_B_rw)
-print('average_NMI_MMBO_projection_B_rw: ', average_NMI_MMBO_projection_B_rw)
+#print('average_ARI_MMBO_projection_B_rw: ', average_ARI_MMBO_projection_B_rw)
+#print('average_purify_MMBO_projection_symMMBO_projection_B_rw: ', average_purify_MMBO_projection_B_rw)
+#print('average_inverse_purify_MMBO_projection_B_rw: ', average_inverse_purify_MMBO_projection_B_rw)
+#print('average_NMI_MMBO_projection_B_rw: ', average_NMI_MMBO_projection_B_rw)
 
 
 print('MMBO using finite difference L_sym')
@@ -655,10 +664,10 @@ print('average_time_MMBO_using_finite_difference_sym: ', average_time_MMBO_inner
 print('average_num_iteration_MMBO_using_finite_difference_sym: ', average_num_iter_MMBO_inner_step)
 print('average_modularity_MMBO_using_finite_difference_sym: ', average_modularity_MMBO_inner_step)
 print('average_ER_modularity_MMBO_using_finite_difference_sym: ', average_ER_modularity_MMBO_inner_step)
-print('average_ARI_MMBO_using_finite_difference_sym: ', average_ARI_MMBO_inner_step)
-print('average_purify_MMBO_using_finite_difference_sym: ', average_purify_MMBO_inner_step)
-print('average_inverse_purify_MMBO_using_finite_difference_sym: ', average_inverse_purify_MMBO_inner_step)
-print('average_NMI_MMBO_using_finite_difference_sym: ', average_NMI_MMBO_inner_step)
+#print('average_ARI_MMBO_using_finite_difference_sym: ', average_ARI_MMBO_inner_step)
+#print('average_purify_MMBO_using_finite_difference_sym: ', average_purify_MMBO_inner_step)
+#print('average_inverse_purify_MMBO_using_finite_difference_sym: ', average_inverse_purify_MMBO_inner_step)
+#print('average_NMI_MMBO_using_finite_difference_sym: ', average_NMI_MMBO_inner_step)
 
 
 print('MMBO using finite difference L_rw')
@@ -675,10 +684,10 @@ print('average_time_MMBO_using_finite_difference_rw: ', average_time_MMBO_using_
 print('average_num_iter_MMBO_using_finite_difference_rw: ', average_num_iter_MMBO_inner_step_rw)
 print('average_modularity_MMBO_using_finite_difference_rw: ', average_modularity_MMBO_inner_step_rw)
 print('average_ER_modularity_MMBO_using_finite_difference_rw: ', average_ER_modularity_MMBO_inner_step_rw)
-print('average_ARI_MMBO_using_finite_difference_rw: ', average_ARI_MMBO_inner_step_rw)
-print('average_purify_MMBO_using_finite_difference_rw: ', average_purify_MMBO_inner_step_rw)
-print('average_inverse_purify_MMBO_using_finite_difference_rw: ', average_inverse_purify_MMBO_inner_step_rw)
-print('average_NMI_MMBO_using_finite_difference_rw: ', average_NMI_MMBO_inner_step_rw)
+#print('average_ARI_MMBO_using_finite_difference_rw: ', average_ARI_MMBO_inner_step_rw)
+#print('average_purify_MMBO_using_finite_difference_rw: ', average_purify_MMBO_inner_step_rw)
+#print('average_inverse_purify_MMBO_using_finite_difference_rw: ', average_inverse_purify_MMBO_inner_step_rw)
+#print('average_NMI_MMBO_using_finite_difference_rw: ', average_NMI_MMBO_inner_step_rw)
 
 
 print('MMBO using finite difference B_sym')
@@ -695,10 +704,10 @@ print('average_time_MMBO_using_finite_difference_B_sym: ',average_time_MMBO_usin
 print('average_num_iteration_MMBO_using_finite_difference_B_sym: ', average_num_iter_MMBO_inner_step_B_sym)
 print('average_modularity_MMBO_using_finite_difference_B_sym: ', average_modularity_MMBO_inner_step_B_sym)
 print('average_ER_modularity_MMBO_using_finite_difference_B_sym: ', average_ER_modularity_MMBO_inner_step_B_sym)
-print('average_ARI_MMBO_using_finite_difference_B_sym: ', average_ARI_MMBO_inner_step_B_sym)
-print('average_purify_MMBO_using_finite_difference_B_symp: ', average_purify_MMBO_inner_step_B_sym)
-print('average_inverse_purify_MMBO_using_finite_difference_B_sym: ', average_inverse_purify_MMBO_inner_step_B_sym)
-print('average_NMI_MMBO_using_finite_difference_B_sym: ', average_NMI_MMBO_inner_step_B_sym)
+#print('average_ARI_MMBO_using_finite_difference_B_sym: ', average_ARI_MMBO_inner_step_B_sym)
+#print('average_purify_MMBO_using_finite_difference_B_symp: ', average_purify_MMBO_inner_step_B_sym)
+#print('average_inverse_purify_MMBO_using_finite_difference_B_sym: ', average_inverse_purify_MMBO_inner_step_B_sym)
+#print('average_NMI_MMBO_using_finite_difference_B_sym: ', average_NMI_MMBO_inner_step_B_sym)
 
 
 print('MMBO using finite difference B_rw')
@@ -715,10 +724,10 @@ print('average_time_MMBO_using_finite_difference_B_rw: ',average_time_MMBO_using
 print('average_num_ieration_MMBO_using_finite_difference_B_rw: ', average_num_iter_MMBO_inner_step_B_rw)
 print('average_modularity_MMBO_using_finite_difference_B_rw: ', average_modularity_MMBO_inner_step_B_rw)
 print('average_ER_modularity_MMBO_using_finite_difference_B_rw: ', average_ER_modularity_MMBO_inner_step_B_rw)
-print('average_ARI_MMBO_using_finite_difference_B_rw: ', average_ARI_MMBO_inner_step_B_rw)
-print('average_purify_MMBO_using_finite_difference_B_rw: ', average_purify_MMBO_inner_step_B_rw)
-print('average_inverse_purify_MMBO_using_finite_difference_B_rw: ', average_inverse_purify_MMBO_inner_step_B_rw)
-print('average_NMI_MMBO_using_finite_difference_B_rw: ', average_NMI_MMBO_inner_step_B_rw)
+#print('average_ARI_MMBO_using_finite_difference_B_rw: ', average_ARI_MMBO_inner_step_B_rw)
+#print('average_purify_MMBO_using_finite_difference_B_rw: ', average_purify_MMBO_inner_step_B_rw)
+#print('average_inverse_purify_MMBO_using_finite_difference_B_rw: ', average_inverse_purify_MMBO_inner_step_B_rw)
+#print('average_NMI_MMBO_using_finite_difference_B_rw: ', average_NMI_MMBO_inner_step_B_rw)
 
 
 
@@ -737,10 +746,10 @@ print('average_time_HU_sym: ', average_time_hu_mbo)
 print('average_num_iteration_HU_sym: ', average_num_iter_HU_sym)
 print('average_modularity_HU_sym: ', average_modularity_hu_sym)
 print('average_ER_modularity_HU_sym: ', average_ER_modularity_hu_sym)
-print('average_ARI_HU_sym: ', average_ARI_hu_original_sym)
-print('average_purify_HU_sym: ', average_purify_hu_original_sym)
-print('average_inverse_purify_HU_sym: ', average_inverse_purify_hu_original_sym)
-print('average_NMI_HU_sym: ', average_NMI_hu_original_sym)
+#print('average_ARI_HU_sym: ', average_ARI_hu_original_sym)
+#print('average_purify_HU_sym: ', average_purify_hu_original_sym)
+#print('average_inverse_purify_HU_sym: ', average_inverse_purify_hu_original_sym)
+#print('average_NMI_HU_sym: ', average_NMI_hu_original_sym)
 
 
 print('HU method L_rw')
@@ -758,10 +767,10 @@ print('average_time_HU_rw: ', average_time_hu_mbo)
 print('average_num_iteration_HU_rw: ', average_num_iter_HU_rw)
 print('average_modularity_HU_rw: ', average_modularity_hu_rw)
 print('average_ER_modularity_HU_rw: ', average_ER_modularity_hu_rw)
-print('average_ARI_HU_rw: ', average_ARI_hu_original_rw)
-print('average_purify_HU_rw: ', average_purify_hu_original_rw)
-print('average_inverse_purify_HU_rw: ', average_inverse_purify_hu_original_rw)
-print('average_NMI_HU_rw: ', average_NMI_hu_original_rw)
+#print('average_ARI_HU_rw: ', average_ARI_hu_original_rw)
+#print('average_purify_HU_rw: ', average_purify_hu_original_rw)
+#print('average_inverse_purify_HU_rw: ', average_inverse_purify_hu_original_rw)
+#print('average_NMI_HU_rw: ', average_NMI_hu_original_rw)
 
 
 
@@ -782,39 +791,45 @@ sum_NMI_louvain = 0
 for _ in range(20):
     start_time_louvain = time.time()
     #partition_Louvain = nx_comm.louvain_communities(G, resolution=gamma, threshold=tol)
-    louvain = Louvain(modularity='potts')
-    adjacency = karate_club()
-    louvain_array = louvain.fit_transform(adjacency)
+
+    #louvain = Louvain(modularity='newman')
+    #adjacency = karate_club()
+    #louvain_array = louvain.fit_transform(adjacency)
+
+    communities_louvain = cdlib.algorithms.louvain(G, weight='weight', resolution=1.)
+    louvain_partition_list = cdlib.utils.remap_node_communities(communities_louvain.communities, aranged_dict)
     time_louvain = time.time() - start_time_louvain
     #print("Louvain:-- %.3f seconds --" % (time_louvain))
 
     #partition_louvain_list = [list(x) for x in partition_Louvain]
-    #partition_louvain_expand = sum(partition_louvain_list, [])
-    #num_cluster_louvain = []
-    #for cluster in range(len(partition_louvain_list)):
-    #    for number_louvain in range(len(partition_louvain_list[cluster])):
-    #        num_cluster_louvain.append(cluster)
+    partition_louvain_expand = sum(louvain_partition_list, [])
+    num_cluster_louvain = []
+    for cluster in range(len(louvain_partition_list)):
+        for number_louvain in range(len(louvain_partition_list[cluster])):
+            num_cluster_louvain.append(cluster)
 
-    #louvain_dict = dict(zip(partition_louvain_expand, num_cluster_louvain))
+    louvain_dict = dict(zip(partition_louvain_expand, num_cluster_louvain))
     #louvain_list = list(dict.values(louvain_dict))    #convert a dict to list
     #louvain_array = np.asarray(louvain_list)
 
-    #partition_louvain_sort = np.sort(partition_louvain_expand)
-    #louvain_list_sorted = []
-    #for louvain_element in partition_louvain_sort:
-    #    louvain_list_sorted.append(louvain_dict[louvain_element])
-    #louvain_array_sorted = np.asarray(louvain_list_sorted)
+    partition_louvain_sort = np.sort(partition_louvain_expand)
+    louvain_list_sorted = []
+    for louvain_element in partition_louvain_sort:
+        louvain_list_sorted.append(louvain_dict[louvain_element])
+    louvain_array_sorted = np.asarray(louvain_list_sorted)
 
 
-    louvain_vec = labels_to_vector(louvain_array)
-    louvain_dict = label_to_dict(louvain_array)
+    louvain_vec = labels_to_vector(louvain_array_sorted)
+    #louvain_dict = label_to_dict(louvain_array)
 
-    ER_modularity_louvain = get_modularity_ER(adj_mat_nparray, louvain_dict)
-    modularity_louvain = skn.clustering.modularity(adj_mat_nparray,louvain_array,resolution=gamma)
-    ARI_louvain = adjusted_rand_score(louvain_array, gt_membership)
-    purify_louvain = purity_score(gt_membership, louvain_array)
-    inverse_purify_louvain = inverse_purity_score(gt_membership, louvain_array)
-    NMI_louvain = normalized_mutual_info_score(gt_membership, louvain_array)
+    ER_modularity_louvain = evaluation.erdos_renyi_modularity(G,communities_louvain)
+    modularity_louvain = evaluation.newman_girvan_modularity(G,communities_louvain)
+    #ER_modularity_louvain = get_modularity_ER(adj_mat_nparray, louvain_dict)
+    #modularity_louvain = skn.clustering.modularity(adj_mat_nparray,louvain_array,resolution=gamma)
+    ARI_louvain = adjusted_rand_score(louvain_array_sorted, gt_membership)
+    purify_louvain = purity_score(gt_membership, louvain_array_sorted)
+    inverse_purify_louvain = inverse_purity_score(gt_membership, louvain_array_sorted)
+    NMI_louvain = normalized_mutual_info_score(gt_membership, louvain_array_sorted)
 
     sum_time_louvain += time_louvain
     sum_modularity_louvain += modularity_louvain
@@ -837,10 +852,10 @@ print('The Louvain method')
 print('average_time_louvain: ', average_time_louvain)
 print('average_modularity_louvain: ', average_modularity_louvain)
 print('average_ER_modularity_louvain: ', average_ER_modularity_louvain)
-print('average_ARI_louvain: ', average_ARI_louvain)
-print('average_purify_louvain: ', average_purify_louvain)
-print('average_inverse_purify_louvain: ', average_inverse_purify_louvain)
-print('average_NMI_louvain: ', average_NMI_louvain)
+#print('average_ARI_louvain: ', average_ARI_louvain)
+#print('average_purify_louvain: ', average_purify_louvain)
+#print('average_inverse_purify_louvain: ', average_inverse_purify_louvain)
+#print('average_NMI_louvain: ', average_NMI_louvain)
 
 
 
@@ -862,9 +877,13 @@ for _ in range(20):
 
     ass_vec = labels_to_vector(assignment)
     ass_dict = label_to_dict(assignment)
-
-    ER_modularity_spectral_clustering = get_modularity_ER(adj_mat_nparray, ass_dict)
-    modularity_spectral_clustering = skn.clustering.modularity(adj_mat_nparray,assignment,resolution=1)
+    ass_list = dict_to_list_set(ass_dict)
+    ass_coms = NodeClustering(ass_list, graph=None)
+    
+    ER_modularity_spectral_clustering = evaluation.erdos_renyi_modularity(G, ass_coms)[2]
+    modularity_spectral_clustering = evaluation.newman_girvan_modularity(G, ass_coms)[2]
+    #ER_modularity_spectral_clustering = get_modularity_ER(adj_mat_nparray, ass_dict)
+    #modularity_spectral_clustering = skn.clustering.modularity(adj_mat_nparray,assignment,resolution=1)
     ARI_spectral_clustering = adjusted_rand_score(assignment, gt_membership)
     purify_spectral_clustering = purity_score(gt_membership, assignment)
     inverse_purify_spectral_clustering = inverse_purity_score(gt_membership, assignment)
@@ -896,10 +915,10 @@ print('Spectral clustering')
 print('average_time_sc: ', average_time_sc)
 print('average_modularity_sc: ', average_modularity_sc)
 print('average_ER_modularity_sc: ', average_ER_modularity_sc)
-print('average_ARI_spectral_clustering: ', average_ARI_spectral_clustering)
-print('average_purify_spectral_clustering: ', average_purify_spectral_clustering)
-print('average_inverse_purify_spectral_clustering: ', average_inverse_purify_spectral_clustering)
-print('average_NMI_spectral_clustering: ', average_NMI_spectral_clustering)
+#print('average_ARI_spectral_clustering: ', average_ARI_spectral_clustering)
+#print('average_purify_spectral_clustering: ', average_purify_spectral_clustering)
+#print('average_inverse_purify_spectral_clustering: ', average_inverse_purify_spectral_clustering)
+#print('average_NMI_spectral_clustering: ', average_NMI_spectral_clustering)
 
 
 
@@ -936,8 +955,13 @@ for _ in range(20):
     
     CNM_vec = labels_to_vector(CNM_array_sorted)
 
-    ER_modularity_CNM = get_modularity_ER(adj_mat_nparray, CNM_dict)
-    modularity_CNM = skn.clustering.modularity(adj_mat_nparray,CNM_array_sorted,resolution=gamma)
+
+    CNM_coms = NodeClustering(partition_CNM_list, graph=None)
+    
+    ER_modularity_CNM = evaluation.erdos_renyi_modularity(G, CNM_coms)[2]
+    modularity_CNM = evaluation.newman_girvan_modularity(G, CNM_coms)[2]
+    #ER_modularity_CNM = get_modularity_ER(adj_mat_nparray, CNM_dict)
+    #modularity_CNM = skn.clustering.modularity(adj_mat_nparray,CNM_array_sorted,resolution=gamma)
     ARI_CNM = adjusted_rand_score(CNM_array_sorted, gt_membership)
     purify_CNM = purity_score(gt_membership, CNM_array_sorted)
     inverse_purify_CNM = inverse_purity_score(gt_membership, CNM_array_sorted)
@@ -964,10 +988,10 @@ print('CNM')
 print('average_time_CNM: ', average_time_CNM)
 print('average_modularity_CNM: ', average_modularity_CNM)
 print('average_ER_modularity_CNM: ', average_ER_modularity_CNM)
-print('average_ARI_CNM: ', average_ARI_CNM)
-print('average_purity_CNM: ', average_purity_CNM)
-print('average_inverse_purity_CNM: ', average_inverse_purity_CNM)
-print('average_NMI_CNM: ', average_NMI_CNM)
+#print('average_ARI_CNM: ', average_ARI_CNM)
+#print('average_purity_CNM: ', average_purity_CNM)
+#print('average_inverse_purity_CNM: ', average_inverse_purity_CNM)
+#print('average_NMI_CNM: ', average_NMI_CNM)
 
 
 # Girvan-Newman algorithm
@@ -1003,8 +1027,12 @@ for _ in range(20):
     
     GN_vec = labels_to_vector(GN_array_sorted)
 
-    ER_modularity_GN = get_modularity_ER(adj_mat_nparray, GN_dict)
-    modularity_GN = skn.clustering.modularity(adj_mat_nparray,GN_array_sorted,resolution=gamma)
+    GN_coms = NodeClustering(partition_GN_list, graph=None)
+    
+    ER_modularity_GN = evaluation.erdos_renyi_modularity(G, GN_coms)[2]
+    modularity_GN = evaluation.newman_girvan_modularity(G, GN_coms)[2]
+    #ER_modularity_GN = get_modularity_ER(adj_mat_nparray, GN_dict)
+    #modularity_GN = skn.clustering.modularity(adj_mat_nparray,GN_array_sorted,resolution=gamma)
     ARI_GN = adjusted_rand_score(GN_array_sorted, gt_membership)
     purify_GN = purity_score(gt_membership, GN_array_sorted)
     inverse_purify_GN = inverse_purity_score(gt_membership, GN_array_sorted)
@@ -1030,10 +1058,10 @@ print('GN')
 print('average_time_GN: ', average_time_GN)
 print('average_modularity_GN: ', average_modularity_GN)
 print('average_ER_modularity_GN: ', average_ER_modularity_GN)
-print('average_ARI_GN: ', average_ARI_GN)
-print('average_purify_GN: ', average_purify_GN)
-print('average_inverse_purify_GN: ', average_inverse_purify_GN)
-print('average_NMI_GN: ', average_NMI_GN)
+#print('average_ARI_GN: ', average_ARI_GN)
+#print('average_purify_GN: ', average_purify_GN)
+#print('average_inverse_purify_GN: ', average_inverse_purify_GN)
+#print('average_NMI_GN: ', average_NMI_GN)
 
 
 
