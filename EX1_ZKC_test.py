@@ -823,8 +823,8 @@ for _ in range(20):
     louvain_vec = labels_to_vector(louvain_array_sorted)
     #louvain_dict = label_to_dict(louvain_array)
 
-    ER_modularity_louvain = evaluation.erdos_renyi_modularity(G,communities_louvain)
-    modularity_louvain = evaluation.newman_girvan_modularity(G,communities_louvain)
+    ER_modularity_louvain = evaluation.erdos_renyi_modularity(G,communities_louvain)[2]
+    modularity_louvain = evaluation.newman_girvan_modularity(G,communities_louvain)[2]
     #ER_modularity_louvain = get_modularity_ER(adj_mat_nparray, louvain_dict)
     #modularity_louvain = skn.clustering.modularity(adj_mat_nparray,louvain_array,resolution=gamma)
     ARI_louvain = adjusted_rand_score(louvain_array_sorted, gt_membership)
