@@ -31,6 +31,7 @@ modularity_tol = 1e-4
 inner_step_count = 5
 gamma = 0.5
 tau = 0.02
+num_nystrom = 500
 
 #Load labels, knndata, and build 10-nearest neighbor weight matrix
 #W = gl.weightmatrix.knn('mnist', 10)
@@ -41,13 +42,21 @@ data, gt_labels = gl.datasets.load('mnist')
 pca = PCA(n_components = 50,svd_solver='full')
 Z_training = pca.fit_transform(data)
 
-#n1, p = Z_training.shape
-#print("Features:", p)
 
 W = gl.weightmatrix.knn(Z_training, 10)
 degree_W = np.array(np.sum(W, axis=-1)).flatten()
 #print('adj_mat type: ', type(adj_mat))
 
+# Construct the Erdos-Renyi null model P
+total_degree = np.sum(degree_W, dtype=np.int64)
+probability = total_degree / (num_nodes * (num_nodes -1))
+
+start_time_create_ER_graph = time.time()
+G_ER = nx.fast_gnp_random_graph(num_nodes, probability)
+ER_null_adj = nx.convert_matrix.to_numpy_array(G_ER)
+print("creat Erdos-Renyi graph:-- %.3f seconds --" % (time.time() - start_time_create_ER_graph))
+
+ER_null_first_k_columns = ER_null_adj[:, :num_nystrom]
 G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 
 
@@ -59,7 +68,7 @@ print("compute initialize u:-- %.3f seconds --" % (time_initialize_u))
 
 
 
-eig_val_MMBO_sym, eig_vec_MMBO_sym, eig_val_MMBO_rw, eig_vec_MMBO_rw, order_raw_data_MMBO, index_MMBO, time_eig_l_mix_sym, time_eig_l_mix_rw = nystrom_QR_l_mix_sym_rw(Z_training, num_nystrom=500, tau = tau)
+eig_val_MMBO_sym, eig_vec_MMBO_sym, eig_val_MMBO_rw, eig_vec_MMBO_rw, order_raw_data_MMBO, index_MMBO, time_eig_l_mix_sym, time_eig_l_mix_rw = nystrom_QR_l_mix_sym_rw(Z_training, ER_null_first_k_columns, num_nystrom=num_nystrom, tau = tau)
 E_mmbo_sym = np.squeeze(eig_val_MMBO_sym[:m])
 V_mmbo_sym = eig_vec_MMBO_sym[:,:m]
 E_mmbo_rw = np.squeeze(eig_val_MMBO_rw[:m])

@@ -111,7 +111,7 @@ def nystrom_QR_l_sym(raw_data, num_nystrom  = 300, tau = None): # basic implemen
 
 
 
-def nystrom_QR_l_mix_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic implementation
+def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  = 300, tau = None): # basic implementation
 
     print('Start Nystrom extension using QR decomposition for L_mix_sym / L_mix_rw')     
 
@@ -155,19 +155,19 @@ def nystrom_QR_l_mix_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic i
     #P_first_k_columns = total_degree * d_c[:,np.newaxis] @ d_c[0:num_nystrom,np.newaxis].transpose()
 
     # Construct the Erdos-Renyi null model P
-    total_degree = np.sum(d_c, dtype=np.int64)
-    probability = total_degree / (num_rows * (num_rows -1))
+    #total_degree = np.sum(d_c, dtype=np.int64)
+    #probability = total_degree / (num_rows * (num_rows -1))
     
-    start_time_create_ER_graph = time.time()
-    G_ER = nx.fast_gnp_random_graph(num_rows, probability)
-    ER_null_adj = nx.convert_matrix.to_numpy_array(G_ER)
-    print("creat Erdos-Renyi graph:-- %.3f seconds --" % (time.time() - start_time_create_ER_graph))
+    #start_time_create_ER_graph = time.time()
+    #G_ER = nx.fast_gnp_random_graph(num_rows, probability)
+    #ER_null_adj = nx.convert_matrix.to_numpy_array(G_ER)
+    #print("creat Erdos-Renyi graph:-- %.3f seconds --" % (time.time() - start_time_create_ER_graph))
     
-    P_11 = ER_null_adj[:num_nystrom, :num_nystrom]
-    P_first_k_columns = ER_null_adj[:, :num_nystrom]
+    P_11 = ER_null_adjacency_k_columns[:, :num_nystrom]
+    #P_first_k_columns = ER_null_adj[:, :num_nystrom]
     pinv_ER_null = pinv(P_11)
-    P_first_k_columns_T = P_first_k_columns.transpose()
-    d_c_null = np.dot(P_first_k_columns, np.dot(pinv_ER_null, np.sum(P_first_k_columns_T,axis = 1)))    
+    P_first_k_columns_T = ER_null_adjacency_k_columns.transpose()
+    d_c_null = np.dot(ER_null_adjacency_k_columns, np.dot(pinv_ER_null, np.sum(P_first_k_columns_T,axis = 1)))    
     d_inverse_null = 1./d_c_null
     d_inverse_null = np.expand_dims(d_inverse_null, axis=-1)
 
@@ -179,7 +179,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic i
 
 
     start_time_normalized_Q = time.time()
-    first_k_columns_P_rw = P_first_k_columns * d_inverse_null
+    first_k_columns_P_rw = ER_null_adjacency_k_columns * d_inverse_null
     #print("normalized P_11 & P_12:-- %.3f seconds --" % (time.time() - start_time_normalized_Q))
     
     
@@ -238,7 +238,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic i
     start_time_normalized_Q = time.time()
     dhat_null = np.sqrt(1./d_c_null)
     dhat_null = np.expand_dims(dhat_null, axis=-1)
-    first_k_columns_P_sym = P_first_k_columns * np.dot(dhat_null, dhat_null[0:num_nystrom].transpose())
+    first_k_columns_P_sym = ER_null_adjacency_k_columns * np.dot(dhat_null, dhat_null[0:num_nystrom].transpose())
     #print("normalized P_11 & P_12:-- %.3f seconds --" % (time.time() - start_time_normalized_Q))
 
     
