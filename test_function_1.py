@@ -60,6 +60,7 @@ del G_ER
 
 ER_null_first_k_columns = ER_null_adj[:, :num_nystrom]
 
+del ER_null_adj
 
 # Initialize u
 start_time_initialize = time.time()
