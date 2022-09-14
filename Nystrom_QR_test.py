@@ -169,6 +169,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
     P_first_k_columns_T = ER_null_adjacency_k_columns.transpose()
     d_c_null = np.dot(ER_null_adjacency_k_columns, np.dot(pinv_ER_null, np.sum(P_first_k_columns_T,axis = 1)))    
     d_inverse_null = 1./d_c_null
+    d_inverse_null = np.nan_to_num(d_inverse_null)
     d_inverse_null = np.expand_dims(d_inverse_null, axis=-1)
 
     start_time_random_walk = time.time()
@@ -189,7 +190,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
     #print("compute M_{FH}:-- %.3f seconds --" % (time.time() - start_time_construct_B))
     
     M_11_rw = M_first_k_column_rw[:num_nystrom, :]
-    M_11_rw = np.nan_to_num(M_11_rw)
+    #M_11_rw = np.nan_to_num(M_11_rw)
     pinv_A_new_rw = pinv(M_11_rw)
 
     # QR decomposition of B
@@ -200,7 +201,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
     # construct S
     start_time_construct_S = time.time()  
     S_rw = np.dot(R_rw, np.dot(pinv_A_new_rw, R_rw.transpose()))
-    S_rw = np.nan_to_num(S_rw)
+    #S_rw = np.nan_to_num(S_rw)
     S_rw = (S_rw + S_rw.transpose())/2.
     #print("construct S:-- %.3f seconds --" % (time.time() - start_time_construct_S))
     
