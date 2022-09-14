@@ -20,9 +20,8 @@ from utils import vector_to_labels, dict_to_list_set, label_to_dict
 
 
 ## parameter setting
-dt_inner = 1
 num_nodes = 70000
-num_communities = 10
+num_communities = 120
 m = 1 * num_communities
 #m = 100
 dt = 1
@@ -46,9 +45,10 @@ Z_training = pca.fit_transform(data)
 W = gl.weightmatrix.knn(Z_training, 10)
 degree_W = np.array(np.sum(W, axis=-1)).flatten()
 #print('adj_mat type: ', type(adj_mat))
+G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 
 # Construct the Erdos-Renyi null model P
-total_degree = np.sum(degree_W, dtype=np.int64)
+total_degree = np.sum(W, dtype=np.int64)
 probability = total_degree / (num_nodes * (num_nodes -1))
 
 start_time_create_ER_graph = time.time()
@@ -57,7 +57,6 @@ ER_null_adj = nx.convert_matrix.to_numpy_array(G_ER)
 print("creat Erdos-Renyi graph:-- %.3f seconds --" % (time.time() - start_time_create_ER_graph))
 
 ER_null_first_k_columns = ER_null_adj[:, :num_nystrom]
-G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 
 
 # Initialize u
