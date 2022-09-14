@@ -224,7 +224,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
     V_rw = np.real(V_rw)
 
     time_eig_l_mix_rw = time.time() - start_time_random_walk
-    #print("random walk L_{mix}:-- %.3f seconds --" % (time.time() - start_time_random_walk))
+    print("random walk L_{mix}:-- %.3f seconds --" % (time.time() - start_time_random_walk))
 
 
     start_time_symmetric = time.time()
@@ -282,7 +282,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
     #print("calculating eigenvalues & -vectors:-- %.3f seconds --" % (time.time() - start_time_compute_eigenvectors))
     V_sym = np.real(V_sym)
     time_eig_l_mix_sym = time.time() - start_time_symmetric
-    #print("symmetric normalized L_{mix}:-- %.3f seconds --" % (time.time() - start_time_symmetric))
+    print("symmetric normalized L_{mix}:-- %.3f seconds --" % (time.time() - start_time_symmetric))
 
     return E_sym, V_sym, E_rw, V_rw, order_raw_data, index, time_eig_l_mix_sym, time_eig_l_mix_rw
 
