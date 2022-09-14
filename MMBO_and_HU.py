@@ -165,7 +165,7 @@ def MMBO_using_projection(m, degree, eig_val, eig_vec, tol, u_init, adj_mat,
     dtlow = 0.15/((gamma+1)*np.max(degree))
     dthigh = np.log(np.linalg.norm(u_init)/eps)/eig_val[0]
     dti = np.sqrt(dtlow*dthigh)
-    print('dti--MMBO projection: ', dti)
+    #print('dti--MMBO projection: ', dti)
     #print("compute time step selection:-- %.3f seconds --" % (time.time() - start_time_timestep_selection))
     #dti = dt
 
@@ -240,7 +240,7 @@ def MMBO_using_finite_differendce(m, degree, eig_val, eig_vec, tol, N_t, u_init,
     dthigh = np.log(np.linalg.norm(u_init)/eps)/eig_val[0]
     dti = np.sqrt(dtlow*dthigh)
     #dti = dt
-    print('dt: ', dti)
+    #print('dt: ', dti)
 
     dti = dti / (2 * N_t)
     #print('dti: ', dti)
@@ -316,9 +316,10 @@ def HU_mmbo_method(num_nodes, degree, eig_val, eig_vec, tol, N_t, u_init, adj_ma
     modularity_score_list =[]   
 
     dtlow = 0.15/((gamma+1)*np.max(degree))
-    dthigh = np.log(np.linalg.norm(u_init)/eps)/eig_val[1]
+    dthigh = np.log(np.linalg.norm(u_init)/eps)/ eig_val[1]
     dti = np.sqrt(dtlow*dthigh) 
-
+    #print('dt--HU: ', dti)
+    #dti = 0.1
 
     # Perform MBO scheme
     #start_time_MBO_iteration = time.time()
