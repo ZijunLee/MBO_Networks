@@ -163,7 +163,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
     #ER_null_adj = nx.convert_matrix.to_numpy_array(G_ER)
     #print("creat Erdos-Renyi graph:-- %.3f seconds --" % (time.time() - start_time_create_ER_graph))
     
-    P_11 = ER_null_adjacency_k_columns[:, :num_nystrom]
+    P_11 = ER_null_adjacency_k_columns[:num_nystrom, :]
     #P_first_k_columns = ER_null_adj[:, :num_nystrom]
     pinv_ER_null = pinv(P_11)
     P_first_k_columns_T = ER_null_adjacency_k_columns.transpose()
