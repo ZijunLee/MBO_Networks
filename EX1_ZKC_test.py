@@ -13,6 +13,7 @@ from sknetwork.clustering import Louvain
 from sknetwork.data import karate_club
 import cdlib
 from cdlib import evaluation, NodeClustering
+from cdlib.algorithms import louvain
 from MMBO_and_HU import MMBO_using_projection, MMBO_using_finite_differendce, adj_to_laplacian_signless_laplacian,HU_mmbo_method, adj_to_modularity_mat
 from utils import vector_to_labels, labels_to_vector, purity_score, inverse_purity_score, generate_initial_value_multiclass, label_to_dict, get_modularity_ER, dict_to_list_set
 
@@ -796,7 +797,7 @@ for _ in range(20):
     #adjacency = karate_club()
     #louvain_array = louvain.fit_transform(adjacency)
 
-    communities_louvain = cdlib.algorithms.louvain(G, weight='weight', resolution=1.)
+    communities_louvain = louvain(G, weight='weight', resolution=1.)
     louvain_partition_list = cdlib.utils.remap_node_communities(communities_louvain.communities, aranged_dict)
     time_louvain = time.time() - start_time_louvain
     #print("Louvain:-- %.3f seconds --" % (time_louvain))
