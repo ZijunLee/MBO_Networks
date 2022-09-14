@@ -1,3 +1,4 @@
+from ast import Delete
 from cdlib.algorithms import louvain
 from cdlib import evaluation
 import networkx as nx
@@ -43,7 +44,7 @@ Z_training = pca.fit_transform(data)
 
 
 W = gl.weightmatrix.knn(Z_training, 10)
-degree_W = np.array(np.sum(W, axis=-1)).flatten()
+#degree_W = np.array(np.sum(W, axis=-1)).flatten()
 #print('adj_mat type: ', type(adj_mat))
 #G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 
@@ -55,6 +56,8 @@ start_time_create_ER_graph = time.time()
 G_ER = nx.fast_gnp_random_graph(num_nodes, probability)
 ER_null_adj = nx.convert_matrix.to_numpy_array(G_ER)
 print("creat Erdos-Renyi graph:-- %.3f seconds --" % (time.time() - start_time_create_ER_graph))
+
+del G_ER
 
 ER_null_first_k_columns = ER_null_adj[:, :num_nystrom]
 
