@@ -184,3 +184,16 @@ def dict_to_list_set(dictionary):
 
     return num_clustering_list
 
+
+def list_set_to_dict(list_set):
+    
+    partition_expand = sum(list_set, [])
+
+    num_cluster = []
+    for cluster in range(len(list_set)):
+        for number in range(len(list_set[cluster])):
+            num_cluster.append(cluster)
+
+    dict = dict(zip(partition_expand, num_cluster))
+
+    return dict
