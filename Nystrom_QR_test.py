@@ -233,7 +233,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
     # symmetric normalize A and B of W 
     start_time_normalized_W = time.time()
     dhat = np.sqrt(1./d_c)
-    #dhat = np.expand_dims(dhat, axis=-1)
+    dhat = np.expand_dims(dhat, axis=-1)
     first_columns_W_sym = first_k_columns_W * np.dot(dhat, dhat[0:num_nystrom].transpose()) 
     #print("normalized W_11 & W_12:-- %.3f seconds --" % (time.time() - start_time_normalized_W))
 
