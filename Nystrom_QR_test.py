@@ -262,12 +262,12 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
     # construct S
     start_time_construct_S = time.time()  
     S_sym = np.dot(R_sym, np.dot(pinv_A_new_sym, R_sym.transpose()))
-    #S_sym = np.nan_to_num(S_sym)
     S_sym = (S_sym + S_sym.transpose())/2.
     #print("construct S:-- %.3f seconds --" % (time.time() - start_time_construct_S))
     
     # do orthogonalization and eigen-decomposition of S
     start_time_eigendecomposition_S = time.time()
+    S_sym = np.nan_to_num(S_sym)
     E_sym, U_sym = eigh(S_sym)
     #print("do eigen-decomposition of S:-- %.3f seconds --" % (time.time() - start_time_eigendecomposition_S))
 
