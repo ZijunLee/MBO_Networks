@@ -241,6 +241,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
     # construct A & B of null model P (i.e. P_A & P_B)
     start_time_normalized_Q = time.time()
     dhat_null = np.sqrt(1./d_c_null)
+    dhat_null = np.nan_to_num(dhat_null)
     dhat_null = np.expand_dims(dhat_null, axis=-1)
     first_k_columns_P_sym = ER_null_adjacency_k_columns * np.dot(dhat_null, dhat_null[0:num_nystrom].transpose())
     #print("normalized P_11 & P_12:-- %.3f seconds --" % (time.time() - start_time_normalized_Q))
@@ -250,7 +251,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
     #start_time_approximation_B = time.time()
     M_sym_first_k_column = first_columns_W_sym - first_k_columns_P_sym
     M_11_sym = M_sym_first_k_column[:num_nystrom, :]
-    M_11_sym = np.nan_to_num(M_11_sym)
+    #M_11_sym = np.nan_to_num(M_11_sym)
     pinv_A_new_sym = pinv(M_11_sym)
 
     # QR decomposition of B
@@ -261,7 +262,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
     # construct S
     start_time_construct_S = time.time()  
     S_sym = np.dot(R_sym, np.dot(pinv_A_new_sym, R_sym.transpose()))
-    S_sym = np.nan_to_num(S_sym)
+    #S_sym = np.nan_to_num(S_sym)
     S_sym = (S_sym + S_sym.transpose())/2.
     #print("construct S:-- %.3f seconds --" % (time.time() - start_time_construct_S))
     

@@ -1,4 +1,3 @@
-from ast import Delete
 from cdlib.algorithms import louvain
 from cdlib import evaluation
 import networkx as nx
@@ -77,6 +76,7 @@ E_mmbo_rw = np.squeeze(eig_val_MMBO_rw[:m])
 V_mmbo_rw = eig_vec_MMBO_rw[:,:m]
 
 print('E_mmbo_sym: ', E_mmbo_sym)
+print('E_mmbo_rw: ', E_mmbo_rw)
 
 #gt_labels_MMBO = gt_labels[index_MMBO]
 #W_MMBO = gl.weightmatrix.knn(order_raw_data_MMBO, 10)
