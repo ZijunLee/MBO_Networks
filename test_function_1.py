@@ -47,16 +47,7 @@ W = gl.weightmatrix.knn(Z_training, 10)
 #print('adj_mat type: ', type(adj_mat))
 G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 
-# Construct the Erdos-Renyi null model P
-total_degree = np.sum(W, dtype=np.int64)
-probability = total_degree / (num_nodes * (num_nodes -1))
 
-all_one_matrix = np.ones((num_nodes, num_nodes))
-#diag_matrix = np.diag(np.full(num_nodes,1))
-ER_null_adj = probability * all_one_matrix
-#print('ER_null_adj')
-
-del all_one_matrix
 
 start_time_create_ER_graph = time.time()
 #G_ER = nx.fast_gnp_random_graph(num_nodes, probability)
@@ -65,9 +56,6 @@ print("creat Erdos-Renyi graph:-- %.3f seconds --" % (time.time() - start_time_c
 
 #del G_ER
 
-ER_null_first_k_columns = ER_null_adj[:, :num_nystrom]
-
-del ER_null_adj
 
 # Initialize u
 start_time_initialize = time.time()
@@ -77,7 +65,7 @@ print("compute initialize u:-- %.3f seconds --" % (time_initialize_u))
 
 
 
-eig_val_MMBO_sym, eig_vec_MMBO_sym, eig_val_MMBO_rw, eig_vec_MMBO_rw, order_raw_data_MMBO, index_MMBO, time_eig_l_mix_sym, time_eig_l_mix_rw = nystrom_QR_l_mix_sym_rw(Z_training, ER_null_first_k_columns, num_nystrom=num_nystrom, tau = tau)
+eig_val_MMBO_sym, eig_vec_MMBO_sym, eig_val_MMBO_rw, eig_vec_MMBO_rw, order_raw_data_MMBO, index_MMBO, time_eig_l_mix_sym, time_eig_l_mix_rw = nystrom_QR_l_mix_sym_rw(Z_training, num_nystrom=num_nystrom, tau = tau)
 E_mmbo_sym = np.squeeze(eig_val_MMBO_sym[:m])
 V_mmbo_sym = eig_vec_MMBO_sym[:,:m]
 E_mmbo_rw = np.squeeze(eig_val_MMBO_rw[:m])

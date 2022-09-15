@@ -111,7 +111,7 @@ def nystrom_QR_l_sym(raw_data, num_nystrom  = 300, tau = None): # basic implemen
 
 
 
-def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  = 300, tau = None): # basic implementation
+def nystrom_QR_l_mix_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic implementation
 
     print('Start Nystrom extension using QR decomposition for L_mix_sym / L_mix_rw')     
 
@@ -149,6 +149,14 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
     d_inverse = 1./d_c
     d_inverse = np.expand_dims(d_inverse, axis=-1)
 
+
+    total_degree = np.sum(d_c, dtype=np.int64)
+    probability = total_degree / (num_rows * (num_rows -1))
+
+    all_one_matrix = np.ones((num_rows, num_rows))
+    #diag_matrix = np.diag(np.full(num_nodes,1))
+    ER_null_adj = probability * all_one_matrix
+    ER_null_adjacency_k_columns = ER_null_adj[:, :num_nystrom]
     
     P_11 = ER_null_adjacency_k_columns[:num_nystrom, :]
     #P_first_k_columns = ER_null_adj[:, :num_nystrom]
@@ -370,11 +378,12 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic
     # computing the approximation of B
     M_11_sym = M_sym_first_k_columns[:num_nystrom, :]
     pinv_A_new = pinv(M_11_sym)
-
+    print('pinv_A_new', pinv_A_new)
 
     # QR decomposition of B
     start_time_QR_decomposition_approximation_B = time.time()
     Q_sym, R_sym = np.linalg.qr(M_sym_first_k_columns, mode='reduced')
+    print('R_sym', R_sym)
     #print("QR decomposition of B:-- %.3f seconds --" % (time.time() - start_time_QR_decomposition_approximation_B))
     
     # construct S
