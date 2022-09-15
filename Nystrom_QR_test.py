@@ -294,15 +294,15 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom
     # calculating the first k-th columns of W
     #start_time_calculating_the_first_k_columns_W = time.time()
     first_k_columns_W = rbf_kernel(order_raw_data, sample_data, gamma=tau)
-
+    print('first_k_columns_W', first_k_columns_W)
+    print('ER_null_adjacency_k_columns', ER_null_adjacency_k_columns)
     # calculating W_21
     start_time_calculating_B = time.time()
-
-
 
     # compute B = W - P
     start_time_construct_B = time.time()
     first_k_columns_B = first_k_columns_W - ER_null_adjacency_k_columns
+    print('first_k_columns_B', first_k_columns_B)
     #print("compute B:-- %.3f seconds --" % (time.time() - start_time_construct_B))
 
     # positive part of B, i.e. B_{11}^+ & B_{12}^+
