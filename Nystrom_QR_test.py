@@ -297,14 +297,6 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom
 
     # calculating W_21
     start_time_calculating_B = time.time()
-    B = rbf_kernel(sample_data, other_data, gamma=tau)
-    #print("calculating W_21:-- %.3f seconds --" % (time.time() - start_time_calculating_B))
-
-    # calculating W_11
-    start_time_calculating_A = time.time()
-    A = rbf_kernel(sample_data, sample_data, gamma=tau)
-    #print("calculating W_11:-- %.3f seconds --" % (time.time() - start_time_calculating_A))
-
 
 
 
@@ -349,6 +341,7 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom
     # compute M_{FH} = normalized W - normalized P
     start_time_construct_B = time.time()
     M_sym_first_k_columns = first_columns_B_pos_sym - first_columns_B_neg_sym
+    M_sym_first_k_columns = np.nan_to_num(M_sym_first_k_columns)
     #print("compute M_{FH}:-- %.3f seconds --" % (time.time() - start_time_construct_B))
     
     # computing the approximation of B

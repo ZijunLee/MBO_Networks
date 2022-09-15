@@ -98,6 +98,8 @@ V_mmbo_B_sym = eig_vec_mmbo_B_sym[:,:m]
 D_mmbo_B_rw = np.squeeze(eig_val_mmbo_B_rw[:m])
 V_mmbo_B_rw = eig_vec_mmbo_B_rw[:,:m]
 
+print('D_mmbo_B_sym: ', D_mmbo_B_sym)
+print('D_mmbo_B_rw: ', D_mmbo_B_rw)
 
 gt_labels_B = gt_labels[index_B]
 W_B = gl.weightmatrix.knn(order_raw_data_B, 10)
