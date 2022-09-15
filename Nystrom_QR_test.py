@@ -341,7 +341,7 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom
     # compute M_{FH} = normalized W - normalized P
     start_time_construct_B = time.time()
     M_sym_first_k_columns = first_columns_B_pos_sym - first_columns_B_neg_sym
-    M_sym_first_k_columns = np.nan_to_num(M_sym_first_k_columns)
+    #M_sym_first_k_columns = np.nan_to_num(M_sym_first_k_columns)
     #print("compute M_{FH}:-- %.3f seconds --" % (time.time() - start_time_construct_B))
     
     # computing the approximation of B
