@@ -275,7 +275,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
 
 
 
-def nystrom_QR_l_mix_B_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  = 300, tau = None): # basic implementation
+def nystrom_QR_l_mix_B_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic implementation
 
     print('Start Nystrom extension using QR decomposition for L_B_sym / L_B_rw (B^+/B^-)') 
 
@@ -294,10 +294,28 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom
     # calculating the first k-th columns of W
     #start_time_calculating_the_first_k_columns_W = time.time()
     first_k_columns_W = rbf_kernel(order_raw_data, sample_data, gamma=tau)
-    print('first_k_columns_W', first_k_columns_W)
-    print('ER_null_adjacency_k_columns', ER_null_adjacency_k_columns)
+
     # calculating W_21
     start_time_calculating_B = time.time()
+    B = rbf_kernel(sample_data, other_data, gamma=tau)
+    #print("calculating W_21:-- %.3f seconds --" % (time.time() - start_time_calculating_B))
+
+    # calculating W_11
+    start_time_calculating_A = time.time()
+    A = rbf_kernel(sample_data, sample_data, gamma=tau)
+    #print("calculating W_11:-- %.3f seconds --" % (time.time() - start_time_calculating_A))
+
+    pinv_A = pinv(A)
+    first_k_columns_W_T = first_k_columns_W.transpose()
+    d_c = np.dot(first_k_columns_W, np.dot(pinv_A, np.sum(first_k_columns_W_T,axis = 1)))
+
+    total_degree = np.sum(d_c, dtype=np.int64)
+    probability = total_degree / (num_rows * (num_rows -1))
+
+    all_one_matrix = np.ones((num_rows, num_rows))
+    #diag_matrix = np.diag(np.full(num_nodes,1))
+    ER_null_adj = probability * all_one_matrix
+    ER_null_adjacency_k_columns = ER_null_adj[:, :num_nystrom]
 
     # compute B = W - P
     start_time_construct_B = time.time()
@@ -322,8 +340,9 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom
     #start_time_symmetric_B_pos = time.time()  
     B_positive_T = B_positive.transpose()
     d_c_pos = np.dot(B_positive, np.dot(pinv_A_pos, np.sum(B_positive_T,axis = 1)))
-    dhat_pos = np.sqrt(1./d_c_pos)
-    dhat_pos = np.nan_to_num(dhat_pos)
+    d_inverse_pos = 1./d_c_pos
+    d_inverse_pos = np.nan_to_num(d_inverse_pos)
+    dhat_pos = np.sqrt(d_inverse_pos)
     dhat_pos = np.expand_dims(dhat_pos, axis=-1)
     first_columns_B_pos_sym = B_positive * np.dot(dhat_pos, dhat_pos[0:num_nystrom].transpose())
     #print("symmetric normalized B^+:-- %.3f seconds --" % (time.time() - start_time_symmetric_B_pos))
@@ -332,8 +351,9 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom
     #start_time_symmetric_B_neg = time.time() 
     B_negaive_T = B_negative.transpose()
     d_c_neg = np.dot(B_negative, np.dot(pinv_A_neg, np.sum(B_negaive_T,axis = 1)))
-    dhat_neg = np.sqrt(1./d_c_neg)
-    dhat_neg = np.nan_to_num(dhat_neg)
+    d_inverse_neg = 1./d_c_neg
+    d_inverse_neg = np.nan_to_num(d_inverse_neg)
+    dhat_neg = np.sqrt(d_inverse_neg)
     dhat_neg = np.expand_dims(dhat_neg, axis=-1)
     print('dhat_neg', dhat_neg)
     first_columns_B_neg_sym = B_negative * np.dot(dhat_neg, dhat_neg[0:num_nystrom].transpose())
