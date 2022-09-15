@@ -380,7 +380,7 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic
     # QR decomposition of B
     start_time_QR_decomposition_approximation_B = time.time()
     M_sym_first_k_columns = np.nan_to_num(M_sym_first_k_columns)
-    Q_sym, R_sym = sp.linalg.qr(M_sym_first_k_columns)
+    Q_sym, R_sym = np.linalg.qr(M_sym_first_k_columns)
     print('R_sym', R_sym)
     #print("QR decomposition of B:-- %.3f seconds --" % (time.time() - start_time_QR_decomposition_approximation_B))
     
