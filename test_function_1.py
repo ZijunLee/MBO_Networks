@@ -92,7 +92,7 @@ degree_W_MMBO = np.array(np.sum(W_MMBO, axis=-1)).flatten()
 
 
 
-eig_val_mmbo_B_sym, eig_vec_mmbo_B_sym, eig_val_mmbo_B_rw, eig_vec_mmbo_B_rw, order_raw_data_B, index_B, time_eig_B_sym, time_eig_B_rw = nystrom_QR_l_mix_B_sym_rw(Z_training, ER_null_first_k_columns, num_nystrom=num_nystrom, tau=tau)
+eig_val_mmbo_B_sym, eig_vec_mmbo_B_sym, eig_val_mmbo_B_rw, eig_vec_mmbo_B_rw, order_raw_data_B, index_B, time_eig_B_sym, time_eig_B_rw = nystrom_QR_l_mix_B_sym_rw(Z_training, num_nystrom=num_nystrom, tau=tau)
 D_mmbo_B_sym = np.squeeze(eig_val_mmbo_B_sym[:m])
 V_mmbo_B_sym = eig_vec_mmbo_B_sym[:,:m]
 D_mmbo_B_rw = np.squeeze(eig_val_mmbo_B_rw[:m])
