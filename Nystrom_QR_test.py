@@ -314,7 +314,8 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom
     B_negative = -np.where(first_k_columns_B < 0, first_k_columns_B, 0)
     B_11_negative = B_negative[:num_nystrom,:]
     pinv_A_neg = pinv(B_11_negative)
-
+    print('B_negative', B_negative)
+    print('pinv_A_neg', pinv_A_neg)
 
     start_time_symmetric = time.time() 
     # symmetric normalize B^+
@@ -325,7 +326,6 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom
     dhat_pos = np.nan_to_num(dhat_pos)
     dhat_pos = np.expand_dims(dhat_pos, axis=-1)
     first_columns_B_pos_sym = B_positive * np.dot(dhat_pos, dhat_pos[0:num_nystrom].transpose())
-    print('first_columns_B_pos_sym', first_columns_B_pos_sym)
     #print("symmetric normalized B^+:-- %.3f seconds --" % (time.time() - start_time_symmetric_B_pos))
 
     # symmetric normalize B^-
@@ -335,8 +335,9 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom
     dhat_neg = np.sqrt(1./d_c_neg)
     dhat_neg = np.nan_to_num(dhat_neg)
     dhat_neg = np.expand_dims(dhat_neg, axis=-1)
+    print('dhat_neg', dhat_neg)
     first_columns_B_neg_sym = B_negative * np.dot(dhat_neg, dhat_neg[0:num_nystrom].transpose())
-    print('first_columns_B_neg_sym', first_columns_B_neg_sym)   
+    #print('first_columns_B_neg_sym', first_columns_B_neg_sym)   
     #print("symmetric normalized B^-:-- %.3f seconds --" % (time.time() - start_time_symmetric_B_neg))
 
     
