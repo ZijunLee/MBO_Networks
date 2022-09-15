@@ -328,7 +328,6 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic
     # compute B = W - P
     start_time_construct_B = time.time()
     first_k_columns_B = first_k_columns_W - ER_null_adjacency_k_columns
-    print('first_k_columns_B', first_k_columns_B)
     #print("compute B:-- %.3f seconds --" % (time.time() - start_time_construct_B))
 
     # positive part of B, i.e. B_{11}^+ & B_{12}^+
@@ -340,8 +339,7 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic
     B_negative = -np.where(first_k_columns_B < 0, first_k_columns_B, 0)
     B_11_negative = B_negative[:num_nystrom,:]
     pinv_A_neg = pinv(B_11_negative)
-    print('B_negative', B_negative)
-    print('pinv_A_neg', pinv_A_neg)
+
 
     start_time_symmetric = time.time() 
     # symmetric normalize B^+
@@ -363,7 +361,6 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic
     d_inverse_neg = np.nan_to_num(d_inverse_neg)
     dhat_neg = np.sqrt(d_inverse_neg)
     dhat_neg = np.expand_dims(dhat_neg, axis=-1)
-    print('dhat_neg', dhat_neg)
     first_columns_B_neg_sym = B_negative * np.dot(dhat_neg, dhat_neg[0:num_nystrom].transpose())
     #print('first_columns_B_neg_sym', first_columns_B_neg_sym)   
     #print("symmetric normalized B^-:-- %.3f seconds --" % (time.time() - start_time_symmetric_B_neg))
@@ -379,12 +376,10 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic
     # computing the approximation of B
     M_11_sym = M_sym_first_k_columns[:num_nystrom, :]
     pinv_A_new = pinv(M_11_sym)
-    print('pinv_A_new', pinv_A_new)
 
     # QR decomposition of B
     start_time_QR_decomposition_approximation_B = time.time()
-    Q_sym, R_sym = np.linalg.qr(M_sym_first_k_columns, mode='reduced')
-    R_sym = np.nan_to_num(R_sym)
+    Q_sym, R_sym = sp.linalg.qr(M_sym_first_k_columns)
     print('R_sym', R_sym)
     #print("QR decomposition of B:-- %.3f seconds --" % (time.time() - start_time_QR_decomposition_approximation_B))
     
