@@ -150,19 +150,6 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
     d_inverse = np.expand_dims(d_inverse, axis=-1)
 
     
-    # Construct the Girvan-Newman null model P
-    #total_degree = 1. / np.sum(d_c, dtype=np.int64)
-    #P_first_k_columns = total_degree * d_c[:,np.newaxis] @ d_c[0:num_nystrom,np.newaxis].transpose()
-
-    # Construct the Erdos-Renyi null model P
-    #total_degree = np.sum(d_c, dtype=np.int64)
-    #probability = total_degree / (num_rows * (num_rows -1))
-    
-    #start_time_create_ER_graph = time.time()
-    #G_ER = nx.fast_gnp_random_graph(num_rows, probability)
-    #ER_null_adj = nx.convert_matrix.to_numpy_array(G_ER)
-    #print("creat Erdos-Renyi graph:-- %.3f seconds --" % (time.time() - start_time_create_ER_graph))
-    
     P_11 = ER_null_adjacency_k_columns[:num_nystrom, :]
     #P_first_k_columns = ER_null_adj[:, :num_nystrom]
     pinv_ER_null = pinv(P_11)
@@ -288,7 +275,7 @@ def nystrom_QR_l_mix_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  
 
 
 
-def nystrom_QR_l_mix_B_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic implementation
+def nystrom_QR_l_mix_B_sym_rw(raw_data, ER_null_adjacency_k_columns, num_nystrom  = 300, tau = None): # basic implementation
 
     print('Start Nystrom extension using QR decomposition for L_B_sym / L_B_rw (B^+/B^-)') 
 
@@ -318,19 +305,12 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic
     A = rbf_kernel(sample_data, sample_data, gamma=tau)
     #print("calculating W_11:-- %.3f seconds --" % (time.time() - start_time_calculating_A))
 
-    pinv_A = pinv(A)
-    first_k_columns_W_T = first_k_columns_W.transpose()
-    d_c = np.dot(first_k_columns_W, np.dot(pinv_A, np.sum(first_k_columns_W_T,axis = 1)))
 
-    # construct null model P 
-    start_time_construct_P = time.time()
-    total_degree = 1. / np.sum(d_c, dtype=np.int64)
-    P_first_k_columns = total_degree * d_c[:,np.newaxis] @ d_c[0:num_nystrom,np.newaxis].transpose()
-    #print("construct null model P:-- %.3f seconds --" % (time.time() - start_time_construct_P))
+
 
     # compute B = W - P
     start_time_construct_B = time.time()
-    first_k_columns_B = first_k_columns_W - P_first_k_columns
+    first_k_columns_B = first_k_columns_W - ER_null_adjacency_k_columns
     #print("compute B:-- %.3f seconds --" % (time.time() - start_time_construct_B))
 
     # positive part of B, i.e. B_{11}^+ & B_{12}^+
