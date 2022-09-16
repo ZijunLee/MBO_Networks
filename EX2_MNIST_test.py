@@ -836,7 +836,7 @@ sum_purify_spectral_clustering = 0
 sum_inverse_purify_spectral_clustering = 0
 sum_NMI_spectral_clustering = 0
 
-for _ in range(20):
+for _ in range(5):
     start_time_spectral_clustering = time.time()
     sc = SpectralClustering(n_clusters=num_communities, affinity='precomputed')
     assignment = sc.fit_predict(W)
@@ -870,13 +870,13 @@ for _ in range(20):
     sum_inverse_purify_spectral_clustering += inverse_purify_spectral_clustering
     sum_NMI_spectral_clustering += NMI_spectral_clustering
 
-average_time_sc = sum_time_sc / 20
-#average_modularity_sc = sum_modularity_sc / 20
-average_ER_modularity_sc = sum_ER_modularity_sc / 20
-average_ARI_spectral_clustering = sum_ARI_spectral_clustering / 20
-average_purify_spectral_clustering = sum_purify_spectral_clustering / 20
-average_inverse_purify_spectral_clustering = sum_inverse_purify_spectral_clustering / 20
-average_NMI_spectral_clustering = sum_NMI_spectral_clustering / 20
+average_time_sc = sum_time_sc / 5
+#average_modularity_sc = sum_modularity_sc / 5
+average_ER_modularity_sc = sum_ER_modularity_sc / 5
+average_ARI_spectral_clustering = sum_ARI_spectral_clustering / 5
+average_purify_spectral_clustering = sum_purify_spectral_clustering / 5
+average_inverse_purify_spectral_clustering = sum_inverse_purify_spectral_clustering / 5
+average_NMI_spectral_clustering = sum_NMI_spectral_clustering / 5
 
 print('Spectral clustering')
 print('average_time_sc: ', average_time_sc)
