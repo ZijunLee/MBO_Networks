@@ -490,10 +490,10 @@ for _ in range(20):
     ER_modularity_MMBO_using_finite_difference_sym = evaluation.erdos_renyi_modularity(G, u_MMBO_using_finite_difference_sym_coms)[2]
     #modularity_MMBO_using_finite_difference_sym = evaluation.newman_girvan_modularity(G, u_MMBO_using_finite_difference_sym_coms)[2]
     #modularity_MMBO_using_finite_difference_sym = skn.clustering.modularity(W_MMBO,u_MMBO_using_finite_difference_sym,resolution=gamma)
-    ARI_MMBO_using_finite_difference_sym = adjusted_rand_score(u_MMBO_using_finite_difference_sym, gt_labels_MMBO)
-    purify_MMBO_using_finite_difference_sym = purity_score(gt_labels_MMBO, u_MMBO_using_finite_difference_sym)
-    inverse_purify_MMBO_using_finite_difference_sym1 = inverse_purity_score(gt_labels_MMBO, u_MMBO_using_finite_difference_sym)
-    NMI_MMBO_using_finite_difference_sym = normalized_mutual_info_score(gt_labels_MMBO, u_MMBO_using_finite_difference_sym)
+    ARI_MMBO_using_finite_difference_sym = adjusted_rand_score(u_MMBO_using_finite_difference_sym_label, gt_labels_MMBO)
+    purify_MMBO_using_finite_difference_sym = purity_score(gt_labels_MMBO, u_MMBO_using_finite_difference_sym_label)
+    inverse_purify_MMBO_using_finite_difference_sym1 = inverse_purity_score(gt_labels_MMBO, u_MMBO_using_finite_difference_sym_label)
+    NMI_MMBO_using_finite_difference_sym = normalized_mutual_info_score(gt_labels_MMBO, u_MMBO_using_finite_difference_sym_label)
     
     #print('modularity for MMBO using finite difference with L_W&P: ', modularity_MMBO_using_finite_difference_sym)
     #print('ARI for MMBO using finite difference with L_W&P: ', ARI_MMBO_using_finite_difference_sym)
@@ -527,10 +527,10 @@ for _ in range(20):
     ER_modularity_MMBO_using_finite_difference_rw = evaluation.erdos_renyi_modularity(G, u_MMBO_using_finite_difference_rw_coms)[2]
     #modularity_MMBO_using_finite_difference_rw = evaluation.newman_girvan_modularity(G, u_MMBO_using_finite_difference_rw_coms)[2]
     #modularity_MMBO_using_finite_difference_rw = skn.clustering.modularity(W_MMBO,u_MMBO_using_finite_difference_rw,resolution=gamma)
-    ARI_MMBO_using_finite_difference_rw = adjusted_rand_score(u_MMBO_using_finite_difference_rw, gt_labels_MMBO)
-    purify_MMBO_using_finite_difference_rw = purity_score(gt_labels_MMBO, u_MMBO_using_finite_difference_rw)
-    inverse_purify_MMBO_using_finite_difference_rw = inverse_purity_score(gt_labels_MMBO, u_MMBO_using_finite_difference_rw)
-    NMI_MMBO_using_finite_difference_rw = normalized_mutual_info_score(gt_labels_MMBO, u_MMBO_using_finite_difference_rw)
+    ARI_MMBO_using_finite_difference_rw = adjusted_rand_score(u_MMBO_using_finite_difference_rw_label, gt_labels_MMBO)
+    purify_MMBO_using_finite_difference_rw = purity_score(gt_labels_MMBO, u_MMBO_using_finite_difference_rw_label)
+    inverse_purify_MMBO_using_finite_difference_rw = inverse_purity_score(gt_labels_MMBO, u_MMBO_using_finite_difference_rw_label)
+    NMI_MMBO_using_finite_difference_rw = normalized_mutual_info_score(gt_labels_MMBO, u_MMBO_using_finite_difference_rw_label)
 
 
     #print('modularity for MMBO using inner step with L_W&P_rw: ', modularity_MMBO_using_finite_difference_rw)
@@ -565,10 +565,10 @@ for _ in range(20):
     ER_modularity_MMBO_using_finite_difference_B_sym = evaluation.erdos_renyi_modularity(G, u_MMBO_using_finite_difference_B_sym_coms)[2]
     #modularity_MMBO_using_finite_difference_B_sym = evaluation.newman_girvan_modularity(G, u_MMBO_using_finite_difference_B_sym_coms)[2]
     #modularity_MMBO_using_finite_difference_B_sym = skn.clustering.modularity(W_B,u_MMBO_using_finite_difference_B_sym,resolution=gamma)
-    ARI_MMBO_using_finite_difference_B_sym = adjusted_rand_score(u_MMBO_using_finite_difference_B_sym, gt_labels_B)
-    purify_MMBO_using_finite_difference_B_sym = purity_score(gt_labels_B, u_MMBO_using_finite_difference_B_sym)
-    inverse_purify_MMBO_using_finite_difference_B_sym = inverse_purity_score(gt_labels_B, u_MMBO_using_finite_difference_B_sym)
-    NMI_MMBO_using_finite_difference_B_sym = normalized_mutual_info_score(gt_labels_B, u_MMBO_using_finite_difference_B_sym)
+    ARI_MMBO_using_finite_difference_B_sym = adjusted_rand_score(u_MMBO_using_finite_difference_B_sym_label, gt_labels_B)
+    purify_MMBO_using_finite_difference_B_sym = purity_score(gt_labels_B, u_MMBO_using_finite_difference_B_sym_label)
+    inverse_purify_MMBO_using_finite_difference_B_sym = inverse_purity_score(gt_labels_B, u_MMBO_using_finite_difference_B_sym_label)
+    NMI_MMBO_using_finite_difference_B_sym = normalized_mutual_info_score(gt_labels_B, u_MMBO_using_finite_difference_B_sym_label)
 
     sum_MMBO_using_finite_difference_B_sym += time_start_time_MMBO_using_finite_difference_B_sym
     sum_num_repeat_inner_nor_B_sym += num_iteration_MMBO_using_finite_difference_B_sym 
@@ -595,10 +595,10 @@ for _ in range(20):
     ER_modularity_MMBO_using_finite_difference_B_rw = evaluation.erdos_renyi_modularity(G, u_MMBO_using_finite_difference_B_rw_coms)[2]
     #modularity_MMBO_using_finite_difference_B_rw = evaluation.newman_girvan_modularity(G, u_MMBO_using_finite_difference_B_rw_coms)[2]
     #modularity_MMBO_using_finite_difference_B_rw = skn.clustering.modularity(W_B,u_MMBO_using_finite_difference_B_rw,resolution=1)
-    ARI_mmbo_inner_B_rwMMBO_using_finite_difference_B_rw = adjusted_rand_score(u_MMBO_using_finite_difference_B_rw, gt_labels_B)
-    purify_MMBO_using_finite_difference_B_rw = purity_score(gt_labels_B, u_MMBO_using_finite_difference_B_rw)
-    inverse_purifyMMBO_using_finite_difference_B_rw = inverse_purity_score(gt_labels_B, u_MMBO_using_finite_difference_B_rw)
-    NMI_MMBO_using_finite_difference_B_rw = normalized_mutual_info_score(gt_labels_B, u_MMBO_using_finite_difference_B_rw)
+    ARI_mmbo_inner_B_rwMMBO_using_finite_difference_B_rw = adjusted_rand_score(u_MMBO_using_finite_difference_B_rw_label, gt_labels_B)
+    purify_MMBO_using_finite_difference_B_rw = purity_score(gt_labels_B, u_MMBO_using_finite_difference_B_rw_label)
+    inverse_purifyMMBO_using_finite_difference_B_rw = inverse_purity_score(gt_labels_B, u_MMBO_using_finite_difference_B_rw_label)
+    NMI_MMBO_using_finite_difference_B_rw = normalized_mutual_info_score(gt_labels_B, u_MMBO_using_finite_difference_B_rw_label)
 
 
     sum_time_MMBO_using_finite_difference_B_rw += time_MMBO_using_finite_difference_B_rw
