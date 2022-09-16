@@ -15,6 +15,7 @@ from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_rand_
 import graphlearning as gl
 from sklearn.decomposition import PCA
 import time
+import random
 from Nystrom_QR_test import nystrom_QR_l_mix_sym_rw_ER_null, nystrom_QR_l_mix_B_sym_rw_ER_null
 from utils import vector_to_labels, dict_to_list_set, label_to_dict, labels_to_vector
 
@@ -37,8 +38,7 @@ num_nystrom = 500
 
 
 data, gt_labels = gl.datasets.load('mnist')
-gt_vec = labels_to_vector(gt_labels[:7000])
-#print('gt_vec', type(gt_vec))
+gt_vec = labels_to_vector(gt_labels)
 
 
 gt_labels_list = list(gt_labels)
@@ -109,11 +109,17 @@ G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 #time_initialize_u = time.time() - start_time_initialize
 #print("compute initialize u:-- %.3f seconds --" % (time_initialize_u))
 
-expand_zero_columns = np.zeros((7000, num_communities - 10))
+
+expand_zero_columns = np.zeros((num_nodes, num_communities - 10))
 gt_vec = np.append(gt_vec, expand_zero_columns, axis=1)
 
 u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
-u_init = np.concatenate((gt_vec, u_init[7000:]),axis = 0)
+
+row_numbers = range(0, len(gt_labels))
+Rs = random.sample(row_numbers, 0.1 * num_nodes)
+
+for i in Rs:
+    u_init[i,:] = gt_vec[i,:]
 
 
 eig_val_MMBO_sym, eig_vec_MMBO_sym, eig_val_MMBO_rw, eig_vec_MMBO_rw, order_raw_data_MMBO, index_MMBO, time_eig_l_mix_sym, time_eig_l_mix_rw = nystrom_QR_l_mix_sym_rw_ER_null(Z_training, num_nystrom=num_nystrom, tau = tau)
