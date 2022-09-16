@@ -21,7 +21,7 @@ from utils import vector_to_labels, dict_to_list_set, label_to_dict, labels_to_v
 
 ## parameter setting
 num_nodes = 70000
-num_communities = 120
+num_communities = 10
 m = 1 * num_communities
 #m = 100
 dt = 1
@@ -37,6 +37,9 @@ num_nystrom = 500
 
 
 data, gt_labels = gl.datasets.load('mnist')
+gt_vec = labels_to_vector(gt_labels[:7000])
+#print('gt_vec', type(gt_vec))
+
 
 gt_labels_list = list(gt_labels)
 
@@ -56,43 +59,35 @@ W = gl.weightmatrix.knn(Z_training, 10, symmetrize=True)
 G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 
 
-communities_louvain = louvain(G, weight='weight', resolution=1.)
-louvain_partition_list = cdlib.utils.remap_node_communities(communities_louvain.communities, gt_label_dict)
 
-partition_louvain_expand = sum(louvain_partition_list, [])
-num_cluster_louvain = []
-for cluster in range(len(louvain_partition_list)):
-    for number_louvain in range(len(louvain_partition_list[cluster])):
-        num_cluster_louvain.append(cluster)
 
-louvain_dict = dict(zip(partition_louvain_expand, num_cluster_louvain))
-#louvain_list = list(dict.values(louvain_dict))    #convert a dict to list
+
+    # louvain method (final version!)
+#partition_Louvain = community_louvain.best_partition(G, resolution=0.5)    # returns a dict
+#louvain_list = list(dict.values(partition_Louvain))    #convert a dict to list
 #louvain_array = np.asarray(louvain_list)
 
-partition_louvain_sort = np.sort(partition_louvain_expand)
-louvain_list_sorted = []
-for louvain_element in partition_louvain_sort:
-    louvain_list_sorted.append(louvain_dict[louvain_element])
-louvain_array_sorted = np.asarray(louvain_list_sorted)
+#louvain_partition_list = dict_to_list_set(partition_Louvain)
+#communities_louvain = NodeClustering(louvain_partition_list, graph=None)
+#print("Louvain:-- %.3f seconds --" % (time.time() - start_time_louvain))
+#louvain_cluster = len(np.unique(louvain_array))
+#print('number of clusters Louvain found: ',louvain_cluster)
 
 
-louvain_vec = labels_to_vector(louvain_array_sorted)
-#louvain_dict = label_to_dict(louvain_array)
-
-ER_modularity_louvain = evaluation.erdos_renyi_modularity(G,communities_louvain)[2]
+#ER_modularity_louvain = evaluation.erdos_renyi_modularity(G,communities_louvain)[2]
 #modularity_louvain = evaluation.newman_girvan_modularity(G,communities_louvain)[2]
-modularity_louvain = skn.clustering.modularity(W,louvain_array_sorted,resolution=gamma)
-ARI_louvain = adjusted_rand_score(louvain_array_sorted, gt_labels)
-purify_louvain = purity_score(gt_labels, louvain_array_sorted)
-inverse_purify_louvain = inverse_purity_score(gt_labels, louvain_array_sorted)
-NMI_louvain = normalized_mutual_info_score(gt_labels, louvain_array_sorted)
+#modularity_louvain = skn.clustering.modularity(W, louvain_array,resolution=gamma)
+#ARI_louvain = adjusted_rand_score(louvain_array, gt_labels)
+#purify_louvain = purity_score(gt_labels, louvain_array)
+#inverse_purify_louvain = inverse_purity_score(gt_labels, louvain_array)
+#NMI_louvain = normalized_mutual_info_score(gt_labels, louvain_array)
 
-print('ER-modularity Louvain score: ', ER_modularity_louvain)
-print('modularity Louvain score: ', modularity_louvain)
-print('ARI Louvain  score: ', ARI_louvain)
-print('purify for Louvain : ', purify_louvain)
-print('inverse purify for Louvain : ', inverse_purify_louvain)
-print('NMI for Louvain  : ', NMI_louvain)
+#print('ER-modularity Louvain score: ', ER_modularity_louvain)
+#print('modularity Louvain score: ', modularity_louvain)
+#print('ARI Louvain  score: ', ARI_louvain)
+#print('purify for Louvain : ', purify_louvain)
+#print('inverse purify for Louvain : ', inverse_purify_louvain)
+#print('NMI for Louvain  : ', NMI_louvain)
 
 
 #pca = PCA(n_components = 50,svd_solver='arpack')
@@ -114,20 +109,22 @@ print('NMI for Louvain  : ', NMI_louvain)
 #time_initialize_u = time.time() - start_time_initialize
 #print("compute initialize u:-- %.3f seconds --" % (time_initialize_u))
 
+u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
+u_init = np.concatenate((gt_vec, u_init[7000:]),axis = 0)
 
 
-#eig_val_MMBO_sym, eig_vec_MMBO_sym, eig_val_MMBO_rw, eig_vec_MMBO_rw, order_raw_data_MMBO, index_MMBO, time_eig_l_mix_sym, time_eig_l_mix_rw = nystrom_QR_l_mix_sym_rw_ER_null(Z_training, num_nystrom=num_nystrom, tau = tau)
-#E_mmbo_sym = np.squeeze(eig_val_MMBO_sym[:m])
-#V_mmbo_sym = eig_vec_MMBO_sym[:,:m]
-#E_mmbo_rw = np.squeeze(eig_val_MMBO_rw[:m])
-#V_mmbo_rw = eig_vec_MMBO_rw[:,:m]
+eig_val_MMBO_sym, eig_vec_MMBO_sym, eig_val_MMBO_rw, eig_vec_MMBO_rw, order_raw_data_MMBO, index_MMBO, time_eig_l_mix_sym, time_eig_l_mix_rw = nystrom_QR_l_mix_sym_rw_ER_null(Z_training, num_nystrom=num_nystrom, tau = tau)
+E_mmbo_sym = np.squeeze(eig_val_MMBO_sym[:m])
+V_mmbo_sym = eig_vec_MMBO_sym[:,:m]
+E_mmbo_rw = np.squeeze(eig_val_MMBO_rw[:m])
+V_mmbo_rw = eig_vec_MMBO_rw[:,:m]
 
 #print('E_mmbo_sym: ', E_mmbo_sym)
 #print('E_mmbo_rw: ', E_mmbo_rw)
 
-#gt_labels_MMBO = gt_labels[index_MMBO]
-#W_MMBO = gl.weightmatrix.knn(order_raw_data_MMBO, 10)
-#degree_W_MMBO = np.array(np.sum(W_MMBO, axis=-1)).flatten()
+gt_labels_MMBO = gt_labels[index_MMBO]
+W_MMBO = gl.weightmatrix.knn(order_raw_data_MMBO, 10)
+degree_W_MMBO = np.array(np.sum(W_MMBO, axis=-1)).flatten()
 
 
 
@@ -147,31 +144,31 @@ print('NMI for Louvain  : ', NMI_louvain)
 
 
 #start_time_MMBO_projection_l_sym = time.time()
-#u_MMBO_projection_l_sym, num_iteration_MMBO_projection_l_sym, MMBO_projection_sym_modularity_list = MMBO_using_projection(m, degree_W_MMBO,  
-#                                        E_mmbo_sym, V_mmbo_sym, modularity_tol, u_init, W_MMBO, gamma=gamma, stopping_condition='modularity') 
+u_MMBO_projection_l_sym, num_iteration_MMBO_projection_l_sym, MMBO_projection_sym_modularity_list = MMBO_using_projection(m, degree_W_MMBO,  
+                                        E_mmbo_sym, V_mmbo_sym, modularity_tol, u_init, W_MMBO, gamma=gamma, stopping_condition='modularity') 
 #time_MMBO_projection_sym = time.time() - start_time_MMBO_projection_l_sym
 #time_MMBO_projection_sym = time_eig_l_mix_sym + time_initialize_u + time_MMBO_projection_sym
 #print('the number of MBO iteration for MMBO using projection with L_W&P: ', num_iteration_MMBO_projection_l_sym)
 
-#u_MMBO_projection_l_sym_label = vector_to_labels(u_MMBO_projection_l_sym)
-#u_MMBO_projection_l_sym_dict = label_to_dict(u_MMBO_projection_l_sym_label)
-#u_MMBO_projection_l_sym_list = dict_to_list_set(u_MMBO_projection_l_sym_dict)
-#u_MMBO_projection_l_sym_coms = NodeClustering(u_MMBO_projection_l_sym_list, graph=None)
+u_MMBO_projection_l_sym_label = vector_to_labels(u_MMBO_projection_l_sym)
+u_MMBO_projection_l_sym_dict = label_to_dict(u_MMBO_projection_l_sym_label)
+u_MMBO_projection_l_sym_list = dict_to_list_set(u_MMBO_projection_l_sym_dict)
+u_MMBO_projection_l_sym_coms = NodeClustering(u_MMBO_projection_l_sym_list, graph=None)
 
-#ER_modularity_MMBO_projection_l_sym = evaluation.erdos_renyi_modularity(G,u_MMBO_projection_l_sym_coms)[2]
+ER_modularity_MMBO_projection_l_sym = evaluation.erdos_renyi_modularity(G,u_MMBO_projection_l_sym_coms)[2]
 #modularity_MMBO_projection_l_sym = evaluation.newman_girvan_modularity(G,u_MMBO_projection_l_sym_coms)[2]
-#modularity_MMBO_projection_l_sym = skn.clustering.modularity(W_MMBO ,u_MMBO_projection_l_sym_label,resolution=gamma)
-#ARI_MMBO_projection_l_sym = adjusted_rand_score(u_MMBO_projection_l_sym_label, gt_labels_MMBO)
-#purify_MMBO_projection_l_sym = purity_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
-#inverse_purify_MMBO_projection_l_sym = inverse_purity_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
-#NMI_MMBO_projection_l_sym = normalized_mutual_info_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
+modularity_MMBO_projection_l_sym = skn.clustering.modularity(W_MMBO ,u_MMBO_projection_l_sym_label,resolution=gamma)
+ARI_MMBO_projection_l_sym = adjusted_rand_score(u_MMBO_projection_l_sym_label, gt_labels_MMBO)
+purify_MMBO_projection_l_sym = purity_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
+inverse_purify_MMBO_projection_l_sym = inverse_purity_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
+NMI_MMBO_projection_l_sym = normalized_mutual_info_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
 
-#print('ER-modularity for MMBO using projection with L_W&P: ', ER_modularity_MMBO_projection_l_sym)
-#print('modularity for MMBO using projection with L_W&P: ', modularity_MMBO_projection_l_sym)
-#print('ARI for MMBO using projection with L_W&P: ', ARI_MMBO_projection_l_sym)
-#print('purify for MMBO using projection with L_W&P: ', purify_MMBO_projection_l_sym)
-#print('inverse purify for MMBO using projection with L_W&P: ', inverse_purify_MMBO_projection_l_sym)
-#print('NMI for MMBO using projection with L_W&P: ', NMI_MMBO_projection_l_sym)
+print('ER-modularity for MMBO using projection with L_W&P: ', ER_modularity_MMBO_projection_l_sym)
+print('modularity for MMBO using projection with L_W&P: ', modularity_MMBO_projection_l_sym)
+print('ARI for MMBO using projection with L_W&P: ', ARI_MMBO_projection_l_sym)
+print('purify for MMBO using projection with L_W&P: ', purify_MMBO_projection_l_sym)
+print('inverse purify for MMBO using projection with L_W&P: ', inverse_purify_MMBO_projection_l_sym)
+print('NMI for MMBO using projection with L_W&P: ', NMI_MMBO_projection_l_sym)
 
 
 #start_time_MMBO_projection_B_sym = time.time()
