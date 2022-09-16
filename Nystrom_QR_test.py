@@ -111,7 +111,7 @@ def nystrom_QR_l_sym(raw_data, num_nystrom  = 300, tau = None): # basic implemen
 
 
 
-def nystrom_QR_l_mix_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic implementation
+def nystrom_QR_l_mix_sym_rw_ER_null(raw_data, num_nystrom  = 300, tau = None): # basic implementation
 
     print('Start Nystrom extension using QR decomposition for L_mix_sym / L_mix_rw')     
 
@@ -124,17 +124,13 @@ def nystrom_QR_l_mix_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic i
     if num_nystrom == None:
         raise ValueError("Please Provide the number of sample points in num_nystrom")
     sample_data = raw_data[index[:num_nystrom]]
-    other_data = raw_data[index[num_nystrom:]]
+    #other_data = raw_data[index[num_nystrom:]]
     order_raw_data = raw_data[index]
 
     # calculating the first k-th column of W
     start_time_calculating_the_first_k_columns_W = time.time()
     first_k_columns_W = rbf_kernel(order_raw_data, sample_data, gamma=tau)
 
-    # calculating W_21
-    start_time_calculating_B = time.time()
-    B = rbf_kernel(sample_data, other_data, gamma=tau)
-    #print("calculating W_21:-- %.3f seconds --" % (time.time() - start_time_calculating_B))
 
     # calculating W_11
     start_time_calculating_A = time.time()
@@ -219,12 +215,11 @@ def nystrom_QR_l_mix_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic i
     V_rw = np.real(V_rw)
 
     time_eig_l_mix_rw = time.time() - start_time_random_walk
-    print("random walk L_{mix}:-- %.3f seconds --" % (time.time() - start_time_random_walk))
+    #print("random walk L_{mix}:-- %.3f seconds --" % (time.time() - start_time_random_walk))
 
 
     start_time_symmetric = time.time()
     # symmetric normalize A and B of W 
-    start_time_normalized_W = time.time()
     dhat = np.sqrt(1./d_c)
     dhat = np.expand_dims(dhat, axis=-1)
     first_columns_W_sym = first_k_columns_W * np.dot(dhat, dhat[0:num_nystrom].transpose()) 
@@ -276,37 +271,33 @@ def nystrom_QR_l_mix_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic i
     #print("calculating eigenvalues & -vectors:-- %.3f seconds --" % (time.time() - start_time_compute_eigenvectors))
     V_sym = np.real(V_sym)
     time_eig_l_mix_sym = time.time() - start_time_symmetric
-    print("symmetric normalized L_{mix}:-- %.3f seconds --" % (time.time() - start_time_symmetric))
+    #print("symmetric normalized L_{mix}:-- %.3f seconds --" % (time.time() - start_time_symmetric))
 
     return E_sym, V_sym, E_rw, V_rw, order_raw_data, index, time_eig_l_mix_sym, time_eig_l_mix_rw
 
 
 
 
-def nystrom_QR_l_mix_B_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic implementation
+def nystrom_QR_l_mix_B_sym_rw_ER_null(raw_data, num_nystrom  = 300, tau = None): # basic implementation
 
     print('Start Nystrom extension using QR decomposition for L_B_sym / L_B_rw (B^+/B^-)') 
 
     if tau is None:
-        print("graph kernel width not specified, using default value 1")
+        print("Error: graph kernel width not specified, using default value 1")
         tau = 1
 
     num_rows = raw_data.shape[0]
     index = permutation(num_rows)
     if num_nystrom == None:
-        raise ValueError("Please Provide the number of sample points in num_nystrom")
+        raise ValueError("Please provide the number of sample points in num_nystrom")
     sample_data = raw_data[index[:num_nystrom]]
-    other_data = raw_data[index[num_nystrom:]]
+    #other_data = raw_data[index[num_nystrom:]]
     order_raw_data = raw_data[index]
 
     # calculating the first k-th columns of W
     #start_time_calculating_the_first_k_columns_W = time.time()
     first_k_columns_W = rbf_kernel(order_raw_data, sample_data, gamma=tau)
 
-    # calculating W_21
-    start_time_calculating_B = time.time()
-    B = rbf_kernel(sample_data, other_data, gamma=tau)
-    #print("calculating W_21:-- %.3f seconds --" % (time.time() - start_time_calculating_B))
 
     # calculating W_11
     start_time_calculating_A = time.time()
@@ -361,17 +352,14 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic
     d_inverse_neg = np.nan_to_num(d_inverse_neg)
     dhat_neg = np.sqrt(d_inverse_neg)
     dhat_neg = np.expand_dims(dhat_neg, axis=-1)
-    first_columns_B_neg_sym = B_negative * np.dot(dhat_neg, dhat_neg[0:num_nystrom].transpose())
-    #print('first_columns_B_neg_sym', first_columns_B_neg_sym)   
+    first_columns_B_neg_sym = B_negative * np.dot(dhat_neg, dhat_neg[0:num_nystrom].transpose())   
     #print("symmetric normalized B^-:-- %.3f seconds --" % (time.time() - start_time_symmetric_B_neg))
 
     
     # compute M_{FH} = normalized W - normalized P
-    start_time_construct_B = time.time()
+    start_time_construct_B_sym = time.time()
     M_sym_first_k_columns = first_columns_B_pos_sym - first_columns_B_neg_sym
-    print('M_sym_first_k_columns', M_sym_first_k_columns)
-    #M_sym_first_k_columns = np.nan_to_num(M_sym_first_k_columns)
-    #print("compute M_{FH}:-- %.3f seconds --" % (time.time() - start_time_construct_B))
+    #print("compute M_{FH}:-- %.3f seconds --" % (time.time() - start_time_construct_B_sym))
     
     # computing the approximation of B
     M_11_sym = M_sym_first_k_columns[:num_nystrom, :]
@@ -381,7 +369,6 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic
     start_time_QR_decomposition_approximation_B = time.time()
     M_sym_first_k_columns = np.nan_to_num(M_sym_first_k_columns)
     Q_sym, R_sym = np.linalg.qr(M_sym_first_k_columns)
-    print('R_sym', R_sym)
     #print("QR decomposition of B:-- %.3f seconds --" % (time.time() - start_time_QR_decomposition_approximation_B))
     
     # construct S
@@ -411,12 +398,11 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic
     #print("calculating eigenvectors:-- %.3f seconds --" % (time.time() - start_time_compute_eigenvectors))
     V_sym = np.real(V_sym)
     V_sym = V_sym[:, -num_E:]
-    time_eig_B_sym = time.time() - start_time_calculating_B
+    time_eig_B_sym = time.time() - start_time_symmetric
     #print("symmetric normalized L_{mix} (B^+ & B^-):-- %.3f seconds --" % (time.time() - start_time_symmetric))
 
 
     start_time_random_walk = time.time()
-    start_time_normalized_B_pos = time.time()
     # random walk B^+_11 & B^+_12
     dhat_pos = 1./d_c_pos
     dhat_pos = np.nan_to_num(dhat_pos)
