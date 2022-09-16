@@ -21,7 +21,7 @@ from utils import vector_to_labels, dict_to_list_set, label_to_dict, labels_to_v
 
 ## parameter setting
 num_nodes = 70000
-num_communities = 10
+num_communities = 120
 m = 1 * num_communities
 #m = 100
 dt = 1
@@ -108,6 +108,9 @@ G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 #u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
 #time_initialize_u = time.time() - start_time_initialize
 #print("compute initialize u:-- %.3f seconds --" % (time_initialize_u))
+
+expand_zero_columns = np.zeros((7000, num_communities - 10))
+gt_vec = np.append(gt_vec, expand_zero_columns, axis=1)
 
 u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
 u_init = np.concatenate((gt_vec, u_init[7000:]),axis = 0)
