@@ -251,9 +251,7 @@ for _ in range(20):
 
     row_numbers = range(0, len(gt_labels))
     Rs = random.sample(row_numbers, 7000)
-
-    for i in Rs:
-        u_init[i,:] = gt_vec[i,:]
+    u_init[[Rs],:] = gt_vec[[Rs],:]
 
     time_initialize_u = time.time() - start_time_initialize
 
@@ -297,13 +295,13 @@ for _ in range(20):
     time_HU_rw = time_eig_l_rw + time_initialize_u + time_HU_rw
     #print('the num_iteration of HU method: ', num_iter_HU_rw)
 
-    u_hu_label_rw = vector_to_labels(u_hu_vector_rw)
+    u_hu_label_rw_label = vector_to_labels(u_hu_vector_rw)
 
-    modu_Hu_rw = skn.clustering.modularity(gt_labels_HU,u_hu_label_rw,resolution=gamma)
-    ARI_Hu_rw = adjusted_rand_score(u_hu_label_rw, gt_labels_HU)
-    purify_Hu_rw = purity_score(gt_labels_HU, u_hu_label_rw)
-    inverse_purify_Hu_rw = inverse_purity_score(gt_labels_HU, u_hu_label_rw)
-    NMI_Hu_rw = normalized_mutual_info_score(gt_labels_HU, u_hu_label_rw)
+    modu_Hu_rw = skn.clustering.modularity(W_HU,u_hu_label_rw_label,resolution=gamma)
+    ARI_Hu_rw = adjusted_rand_score(u_hu_label_rw_label, gt_labels_HU)
+    purify_Hu_rw = purity_score(gt_labels_HU, u_hu_label_rw_label)
+    inverse_purify_Hu_rw = inverse_purity_score(gt_labels_HU, u_hu_label_rw_label)
+    NMI_Hu_rw = normalized_mutual_info_score(gt_labels_HU, u_hu_label_rw_label)
 
     #print('HU method --random walk')
     #print('modularity score for HU method: ', modu_Hu_rw)
