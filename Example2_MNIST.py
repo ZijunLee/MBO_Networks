@@ -6,6 +6,7 @@ import sknetwork as skn
 import networkx as nx
 from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_rand_score
 import time
+import random
 from community import community_louvain
 from Nystrom_extension_QR import nystrom_QR_l_sym, nystrom_QR_l_mix_sym_rw, nystrom_QR_l_mix_B_sym_rw
 from sklearn.cluster import SpectralClustering
@@ -32,6 +33,9 @@ num_nodes = 70000
 
 # Load MNIST data, ground truth, and build 10-nearest neighbor weight matrix
 data, gt_labels = gl.datasets.load('mnist')
+gt_vec = labels_to_vector(gt_labels)
+
+
 pca = PCA(n_components = 50)
 Z_training = pca.fit_transform(data)
 W = gl.weightmatrix.knn(Z_training, 10, symmetrize=True)
@@ -234,7 +238,23 @@ sum_NMI_mmbo_inner_B_rw =0
 for _ in range(20):
 
     start_time_initialize = time.time()
+    # Unsupervised
+    #print('Unsupervised')
+    #u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
+
+    # 10% supervised
+    print('10% supervised')
+    expand_zero_columns = np.zeros((num_nodes, num_communities - 10))
+    gt_vec = np.append(gt_vec, expand_zero_columns, axis=1)
+
     u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
+
+    row_numbers = range(0, len(gt_labels))
+    Rs = random.sample(row_numbers, 7000)
+
+    for i in Rs:
+        u_init[i,:] = gt_vec[i,:]
+
     time_initialize_u = time.time() - start_time_initialize
 
 
@@ -412,12 +432,12 @@ for _ in range(20):
     time_MMBO_using_finite_difference_sym = time_eig_l_mix_sym + time_initialize_u + time_MMBO_using_finite_difference_sym
     #print('the number of MBO iteration for MMBO using finite difference with L_W&P_sym: ',num_iteration_MMBO_using_finite_difference_sym)
 
-    u_MMBO_using_finite_difference_sym = vector_to_labels(u_MMBO_using_finite_difference_sym)
-    modularity_MMBO_using_finite_difference_sym = skn.clustering.modularity(W_MMBO,u_MMBO_using_finite_difference_sym,resolution=gamma)
-    ARI_MMBO_using_finite_difference_sym = adjusted_rand_score(u_MMBO_using_finite_difference_sym, gt_labels_MMBO)
-    purify_MMBO_using_finite_difference_sym = purity_score(gt_labels_MMBO, u_MMBO_using_finite_difference_sym)
-    inverse_purify_MMBO_using_finite_difference_sym1 = inverse_purity_score(gt_labels_MMBO, u_MMBO_using_finite_difference_sym)
-    NMI_MMBO_using_finite_difference_sym = normalized_mutual_info_score(gt_labels_MMBO, u_MMBO_using_finite_difference_sym)
+    u_MMBO_using_finite_difference_sym_label = vector_to_labels(u_MMBO_using_finite_difference_sym)
+    modularity_MMBO_using_finite_difference_sym = skn.clustering.modularity(W_MMBO,u_MMBO_using_finite_difference_sym_label,resolution=gamma)
+    ARI_MMBO_using_finite_difference_sym = adjusted_rand_score(u_MMBO_using_finite_difference_sym_label, gt_labels_MMBO)
+    purify_MMBO_using_finite_difference_sym = purity_score(gt_labels_MMBO, u_MMBO_using_finite_difference_sym_label)
+    inverse_purify_MMBO_using_finite_difference_sym1 = inverse_purity_score(gt_labels_MMBO, u_MMBO_using_finite_difference_sym_label)
+    NMI_MMBO_using_finite_difference_sym = normalized_mutual_info_score(gt_labels_MMBO, u_MMBO_using_finite_difference_sym_label)
     
     #print('modularity for MMBO using finite difference with L_W&P: ', modularity_MMBO_using_finite_difference_sym)
     #print('ARI for MMBO using finite difference with L_W&P: ', ARI_MMBO_using_finite_difference_sym)
@@ -442,12 +462,12 @@ for _ in range(20):
     time_MMBO_using_finite_difference_rw = time_eig_l_mix_rw + time_initialize_u + time_MMBO_using_finite_difference_rw
     #print('the number of MBO iteration for MMBO using inner step with L_W&P_rw: ',num_repeat_inner_rw)
 
-    u_MMBO_using_finite_difference_rw = vector_to_labels(u_MMBO_using_finite_difference_rw)
-    modularity_MMBO_using_finite_difference_rw = skn.clustering.modularity(W_MMBO,u_MMBO_using_finite_difference_rw,resolution=gamma)
-    ARI_MMBO_using_finite_difference_rw = adjusted_rand_score(u_MMBO_using_finite_difference_rw, gt_labels_MMBO)
-    purify_MMBO_using_finite_difference_rw = purity_score(gt_labels_MMBO, u_MMBO_using_finite_difference_rw)
-    inverse_purify_MMBO_using_finite_difference_rw = inverse_purity_score(gt_labels_MMBO, u_MMBO_using_finite_difference_rw)
-    NMI_MMBO_using_finite_difference_rw = normalized_mutual_info_score(gt_labels_MMBO, u_MMBO_using_finite_difference_rw)
+    u_MMBO_using_finite_difference_rw_label = vector_to_labels(u_MMBO_using_finite_difference_rw)
+    modularity_MMBO_using_finite_difference_rw = skn.clustering.modularity(W_MMBO,u_MMBO_using_finite_difference_rw_label,resolution=gamma)
+    ARI_MMBO_using_finite_difference_rw = adjusted_rand_score(u_MMBO_using_finite_difference_rw_label, gt_labels_MMBO)
+    purify_MMBO_using_finite_difference_rw = purity_score(gt_labels_MMBO, u_MMBO_using_finite_difference_rw_label)
+    inverse_purify_MMBO_using_finite_difference_rw = inverse_purity_score(gt_labels_MMBO, u_MMBO_using_finite_difference_rw_label)
+    NMI_MMBO_using_finite_difference_rw = normalized_mutual_info_score(gt_labels_MMBO, u_MMBO_using_finite_difference_rw_label)
 
 
     #print('modularity for MMBO using inner step with L_W&P_rw: ', modularity_MMBO_using_finite_difference_rw)
@@ -473,12 +493,12 @@ for _ in range(20):
     time_start_time_MMBO_using_finite_difference_B_sym = time_eig_B_sym + time_initialize_u + time_start_time_MMBO_using_finite_difference_B_sym
     #print('the number of MBO iteration for MMBO using inner step with L_B_sym: ',num_repeat_inner_nor_B_sym)
 
-    u_MMBO_using_finite_difference_B_sym = vector_to_labels(u_MMBO_using_finite_difference_B_sym)
-    modularity_MMBO_using_finite_difference_B_sym = skn.clustering.modularity(W_B,u_MMBO_using_finite_difference_B_sym,resolution=gamma)
-    ARI_MMBO_using_finite_difference_B_sym = adjusted_rand_score(u_MMBO_using_finite_difference_B_sym, gt_labels_B)
-    purify_MMBO_using_finite_difference_B_sym = purity_score(gt_labels_B, u_MMBO_using_finite_difference_B_sym)
-    inverse_purify_MMBO_using_finite_difference_B_sym = inverse_purity_score(gt_labels_B, u_MMBO_using_finite_difference_B_sym)
-    NMI_MMBO_using_finite_difference_B_sym = normalized_mutual_info_score(gt_labels_B, u_MMBO_using_finite_difference_B_sym)
+    u_MMBO_using_finite_difference_B_sym_label = vector_to_labels(u_MMBO_using_finite_difference_B_sym)
+    modularity_MMBO_using_finite_difference_B_sym = skn.clustering.modularity(W_B,u_MMBO_using_finite_difference_B_sym_label,resolution=gamma)
+    ARI_MMBO_using_finite_difference_B_sym = adjusted_rand_score(u_MMBO_using_finite_difference_B_sym_label, gt_labels_B)
+    purify_MMBO_using_finite_difference_B_sym = purity_score(gt_labels_B, u_MMBO_using_finite_difference_B_sym_label)
+    inverse_purify_MMBO_using_finite_difference_B_sym = inverse_purity_score(gt_labels_B, u_MMBO_using_finite_difference_B_sym_label)
+    NMI_MMBO_using_finite_difference_B_sym = normalized_mutual_info_score(gt_labels_B, u_MMBO_using_finite_difference_B_sym_label)
 
     sum_MMBO_using_finite_difference_B_sym += time_start_time_MMBO_using_finite_difference_B_sym
     sum_num_repeat_inner_nor_B_sym += num_iteration_MMBO_using_finite_difference_B_sym 
@@ -496,12 +516,12 @@ for _ in range(20):
     time_MMBO_using_finite_difference_B_rw = time.time() - start_time_MMBO_using_finite_difference_B_rw
     #print('the number of MBO iteration for MMBO using inner step with L_B_rw: ',num_repeat_inner_B_rw)
 
-    u_MMBO_using_finite_difference_B_rw = vector_to_labels(u_MMBO_using_finite_difference_B_rw)
-    modularity_MMBO_using_finite_difference_B_rw = skn.clustering.modularity(W_B,u_MMBO_using_finite_difference_B_rw,resolution=1)
-    ARI_mmbo_inner_B_rwMMBO_using_finite_difference_B_rw = adjusted_rand_score(u_MMBO_using_finite_difference_B_rw, gt_labels_B)
-    purify_MMBO_using_finite_difference_B_rw = purity_score(gt_labels_B, u_MMBO_using_finite_difference_B_rw)
-    inverse_purifyMMBO_using_finite_difference_B_rw = inverse_purity_score(gt_labels_B, u_MMBO_using_finite_difference_B_rw)
-    NMI_MMBO_using_finite_difference_B_rw = normalized_mutual_info_score(gt_labels_B, u_MMBO_using_finite_difference_B_rw)
+    u_MMBO_using_finite_difference_B_rw_label = vector_to_labels(u_MMBO_using_finite_difference_B_rw)
+    modularity_MMBO_using_finite_difference_B_rw = skn.clustering.modularity(W_B,u_MMBO_using_finite_difference_B_rw_label,resolution=1)
+    ARI_mmbo_inner_B_rwMMBO_using_finite_difference_B_rw = adjusted_rand_score(u_MMBO_using_finite_difference_B_rw_label, gt_labels_B)
+    purify_MMBO_using_finite_difference_B_rw = purity_score(gt_labels_B, u_MMBO_using_finite_difference_B_rw_label)
+    inverse_purifyMMBO_using_finite_difference_B_rw = inverse_purity_score(gt_labels_B, u_MMBO_using_finite_difference_B_rw_label)
+    NMI_MMBO_using_finite_difference_B_rw = normalized_mutual_info_score(gt_labels_B, u_MMBO_using_finite_difference_B_rw_label)
 
 
     sum_time_MMBO_using_finite_difference_B_rw += time_MMBO_using_finite_difference_B_rw
@@ -714,7 +734,7 @@ sum_purify_spectral_clustering = 0
 sum_inverse_purify_spectral_clustering = 0
 sum_NMI_spectral_clustering = 0
 
-for _ in range(20):
+for _ in range(5):
     start_time_spectral_clustering = time.time()
     sc = SpectralClustering(n_clusters=num_communities, affinity='precomputed')
     assignment = sc.fit_predict(W)
@@ -742,12 +762,12 @@ for _ in range(20):
     sum_inverse_purify_spectral_clustering += inverse_purify_spectral_clustering
     sum_NMI_spectral_clustering += NMI_spectral_clustering
 
-average_time_sc = sum_time_sc / 20
-average_modularity_sc = sum_modularity_sc / 20
-average_ARI_spectral_clustering = sum_ARI_spectral_clustering / 20
-average_purify_spectral_clustering = sum_purify_spectral_clustering / 20
-average_inverse_purify_spectral_clustering = sum_inverse_purify_spectral_clustering / 20
-average_NMI_spectral_clustering = sum_NMI_spectral_clustering / 20
+average_time_sc = sum_time_sc / 5
+average_modularity_sc = sum_modularity_sc / 5
+average_ARI_spectral_clustering = sum_ARI_spectral_clustering / 5
+average_purify_spectral_clustering = sum_purify_spectral_clustering / 5
+average_inverse_purify_spectral_clustering = sum_inverse_purify_spectral_clustering / 5
+average_NMI_spectral_clustering = sum_NMI_spectral_clustering / 5
 
 print('average_time_sc: ', average_time_sc)
 print('average_modularity_sc: ', average_modularity_sc)
@@ -766,7 +786,7 @@ sum_purity_CNM = 0
 sum_inverse_purity_CNM = 0
 sum_NMI_CNM = 0
 
-for _ in range(20):
+for _ in range(10):
     start_time_CNM = time.time()
     partition_CNM = nx_comm.greedy_modularity_communities(G, resolution=gamma)
     time_CNM = time.time() - start_time_CNM
@@ -804,12 +824,12 @@ for _ in range(20):
     sum_NMI_CNM += NMI_CNM
 
 
-average_time_CNM = sum_time_CNM / 20
-average_modularity_CNM = sum_modularity_CNM / 20
-average_ARI_CNM = sum_ARI_CNM / 20
-average_purity_CNM = sum_purity_CNM / 20
-average_inverse_purity_CNM = sum_inverse_purity_CNM / 20
-average_NMI_CNM = sum_NMI_CNM / 20
+average_time_CNM = sum_time_CNM / 10
+average_modularity_CNM = sum_modularity_CNM / 10
+average_ARI_CNM = sum_ARI_CNM / 10
+average_purity_CNM = sum_purity_CNM / 10
+average_inverse_purity_CNM = sum_inverse_purity_CNM / 10
+average_NMI_CNM = sum_NMI_CNM / 10
 
 print('average_time_CNM: ', average_time_CNM)
 print('average_modularity_CNM: ', average_modularity_CNM)

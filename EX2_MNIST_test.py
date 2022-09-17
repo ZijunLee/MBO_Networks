@@ -1,6 +1,7 @@
 from matplotlib import pyplot as plt
 import numpy as np
 import scipy as sp
+import random
 from sklearn.decomposition import PCA
 import sknetwork as skn
 import networkx as nx
@@ -35,6 +36,7 @@ num_nodes = 70000
 
 # Load MNIST data, ground truth, and build 10-nearest neighbor weight matrix
 data, gt_labels = gl.datasets.load('mnist')
+gt_vec = labels_to_vector(gt_labels)
 
 gt_labels_list = list(gt_labels)
 
@@ -261,7 +263,23 @@ sum_NMI_mmbo_inner_B_rw =0
 for _ in range(20):
 
     start_time_initialize = time.time()
+    # Unsupervised
+    #print('Unsupervised')
+    #u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
+
+    # 10% supervised
+    print('10% supervised')
+    expand_zero_columns = np.zeros((num_nodes, num_communities - 10))
+    gt_vec = np.append(gt_vec, expand_zero_columns, axis=1)
+
     u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
+
+    row_numbers = range(0, len(gt_labels))
+    Rs = random.sample(row_numbers, 7000)
+
+    for i in Rs:
+        u_init[i,:] = gt_vec[i,:]
+
     time_initialize_u = time.time() - start_time_initialize
 
 
