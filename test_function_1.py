@@ -116,7 +116,7 @@ gt_vec = np.append(gt_vec, expand_zero_columns, axis=1)
 u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
 
 row_numbers = range(0, len(gt_labels))
-Rs = random.sample(row_numbers, 0.1 * num_nodes)
+Rs = random.sample(row_numbers, 7000)
 
 for i in Rs:
     u_init[i,:] = gt_vec[i,:]
