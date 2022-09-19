@@ -259,12 +259,10 @@ sum_inverse_purify_mmbo_inner_B_rw =0
 sum_NMI_mmbo_inner_B_rw =0
 
 gt_vec_new = gt_vec.copy()
-
+gt_vec_old = gt_vec_new.copy()
 
 # run the script 20 times using the modularity − related stopping condition
 for _ in range(20):
-    
-    gt_vec_old = gt_vec_new.copy()
 
     start_time_initialize = time.time()
     # Unsupervised
