@@ -70,7 +70,7 @@ sum_NMI_louvain = 0
 
 
 
-for _ in range(20):
+for _ in range(10):
     start_time_louvain = time.time()
     partition_Louvain = community_louvain.best_partition(G, resolution=gamma)    # returns a dict
     time_louvain = time.time() - start_time_louvain
@@ -101,14 +101,14 @@ for _ in range(20):
     sum_inverse_purity_louvain += inverse_purify_louvain
     sum_NMI_louvain += NMI_louvain
 
-average_louvain_cluster = sum_louvain_cluster / 20
-average_time_louvain = sum_time_louvain / 20
+average_louvain_cluster = sum_louvain_cluster / 10
+average_time_louvain = sum_time_louvain / 10
 #average_modularity_louvain = sum_modularity_louvain / 20
-average_ER_modularity_louvain = sum_ER_modularity_louvain / 20
-average_ARI_louvain = sum_ARI_louvain / 20
-average_purify_louvain = sum_purity_louvain / 20
-average_inverse_purify_louvain = sum_inverse_purity_louvain / 20
-average_NMI_louvain = sum_NMI_louvain / 20
+average_ER_modularity_louvain = sum_ER_modularity_louvain / 10
+average_ARI_louvain = sum_ARI_louvain / 10
+average_purify_louvain = sum_purity_louvain / 10
+average_inverse_purify_louvain = sum_inverse_purity_louvain / 10
+average_NMI_louvain = sum_NMI_louvain / 10
 
 
 print('average_time_louvain: ', average_time_louvain)

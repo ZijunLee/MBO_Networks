@@ -86,7 +86,7 @@ average_modularity_louvain = sum_modularity_louvain / 10
 average_ARI_louvain = sum_ARI_louvain / 10
 average_purify_louvain = sum_purity_louvain / 10
 average_inverse_purify_louvain = sum_inverse_purity_louvain / 10
-average_NMI_louvain = sum_NMI_louvain / 20
+average_NMI_louvain = sum_NMI_louvain / 10
 
 print('average_time_louvain: ', average_time_louvain)
 print('average_modularity_louvain: ', average_modularity_louvain)
