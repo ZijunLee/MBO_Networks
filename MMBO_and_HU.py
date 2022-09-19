@@ -271,7 +271,7 @@ def MMBO_using_projection(m, degree, eig_val, eig_vec, tol, u_init, adj_mat,
     #print("compute time step selection:-- %.3f seconds --" % (time.time() - start_time_timestep_selection))
     #dti = dt
 
-    demon = sp.sparse.spdiags([np.exp(- 0.5 * eig_val * dti)],[0],m,m) @ eig_vec.transpose()
+    demon = sp.sparse.spdiags([np.exp(- 0.5 * eig_val * dti)],[0],m,m).dot(eig_vec.transpose()) 
 
     # Perform MBO scheme
     n = 0
@@ -288,7 +288,9 @@ def MMBO_using_projection(m, degree, eig_val, eig_vec, tol, u_init, adj_mat,
 
         # Diffusion step
         #start_time_diffusion = time.time()
-        u_half = eig_vec @ (demon @ u_old)
+        #u_half = eig_vec @ (demon @ u_old)
+        interval = demon.dot(u_old)
+        u_half = eig_vec.dot(interval) 
         #print("compute MBO diffusion step:-- %.3f seconds --" % (time.time() - start_time_diffusion))
         
 
@@ -347,7 +349,7 @@ def MMBO_using_finite_differendce(m, degree, eig_val, eig_vec, tol, N_t, u_init,
     dti = dti / (2 * N_t)
     #print('dti: ', dti)
 
-    demon = sp.sparse.spdiags([1 / (1 + dti * eig_val)], [0], m, m) @ eig_vec.transpose()
+    demon = sp.sparse.spdiags([1 / (1 + dti * eig_val)], [0], m, m).dot(eig_vec.transpose())
 
     # Perform MBO scheme
     n = 0
@@ -364,7 +366,9 @@ def MMBO_using_finite_differendce(m, degree, eig_val, eig_vec, tol, N_t, u_init,
         # Diffusion step
         #start_time_diffusion = time.time()
         for j in range(N_t):
-            u_half = eig_vec @ (demon @ u_old)
+            #u_half = eig_vec @ (demon @ u_old)
+            interval = demon.dot(u_old)
+            u_half = eig_vec.dot(interval) 
         #print("compute MBO diffusion step:-- %.3f seconds --" % (time.time() - start_time_diffusion))
         
         # Thresholding 

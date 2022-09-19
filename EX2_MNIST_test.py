@@ -22,7 +22,7 @@ from Nystrom_QR_test import nystrom_QR_l_mix_sym_rw_ER_null, nystrom_QR_l_mix_B_
 
 
 # Example 2: MNIST (with Erdős–Rényi model)
-print('Using the Erdős–Rényi model as null model')
+print('Using the Erdős_Rényi model as null model')
 
 # Parameter setting
 
