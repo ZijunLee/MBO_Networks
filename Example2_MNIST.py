@@ -233,6 +233,9 @@ sum_purify_mmbo_inner_B_rw =0
 sum_inverse_purify_mmbo_inner_B_rw =0
 sum_NMI_mmbo_inner_B_rw =0
 
+gt_vec_new = gt_vec.copy()
+gt_vec_old = gt_vec_new.copy()
+
 
 # run the script 20 times using the modularity − related stopping condition
 for _ in range(20):
@@ -247,15 +250,15 @@ for _ in range(20):
     expand_zero_columns = np.zeros((num_nodes, num_communities - 10))
     print('expand_zero_columns', expand_zero_columns.shape)
 
-    gt_vec = np.append(gt_vec, expand_zero_columns, axis=1)
-    print('gt_vec', gt_vec.shape)
-
+    gt_vec_new = np.append(gt_vec_old, expand_zero_columns, axis=1)
+    print('gt_vec_new', gt_vec_new.shape)
+    
     u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
     print('u_init', u_init.shape)
-    
+
     row_numbers = range(0, len(gt_labels))
     Rs = random.sample(row_numbers, 7000)
-    u_init[[Rs],:] = gt_vec[[Rs],:]
+    u_init[[Rs],:] = gt_vec_new[[Rs],:]
 
     time_initialize_u = time.time() - start_time_initialize
 
@@ -407,7 +410,7 @@ for _ in range(20):
     u_mmbo_proj_B_rw, num_iteration_mmbo_proj_B_rw, MMBO_projection_B_rw_modularity_list = MMBO_using_projection(m, degree_W_B,  
                                             D_mmbo_B_rw, V_mmbo_B_rw, modularity_tol, u_init, W_B, gamma=gamma, stopping_condition='modularity')
     time_MMBO_projection_B_rw = time.time() - start_time_MMBO_projection_B_rw
-    time_MMBO_projection_B_sym = time_eig_B_rw + time_initialize_u + time_MMBO_projection_B_rw
+    time_MMBO_projection_B_rw = time_eig_B_rw + time_initialize_u + time_MMBO_projection_B_rw
     #print('the number of MBO iteration for MMBO using projection with L_B_rw: ', num_repeat_mmbo_proj_B_rw)
 
     u_mmbo_proj_B_rw_label = vector_to_labels(u_mmbo_proj_B_rw)
@@ -516,6 +519,7 @@ for _ in range(20):
     u_MMBO_using_finite_difference_B_rw, num_iertation_MMBO_using_finite_difference_B_rw, MMBO_using_finite_difference_B_rw_modularity_list = MMBO_using_finite_differendce(m,degree_W_B, 
                                         D_mmbo_B_rw, V_mmbo_B_rw, modularity_tol, N_t,  u_init, W_B, gamma=gamma, stopping_condition='modularity')
     time_MMBO_using_finite_difference_B_rw = time.time() - start_time_MMBO_using_finite_difference_B_rw
+    time_MMBO_using_finite_difference_B_rw = time_eig_B_rw + time_initialize_u + time_start_time_MMBO_using_finite_difference_B_sym
     #print('the number of MBO iteration for MMBO using inner step with L_B_rw: ',num_repeat_inner_B_rw)
 
     u_MMBO_using_finite_difference_B_rw_label = vector_to_labels(u_MMBO_using_finite_difference_B_rw)
