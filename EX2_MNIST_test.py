@@ -266,23 +266,23 @@ for _ in range(20):
 
     start_time_initialize = time.time()
     # Unsupervised
-    #print('Unsupervised')
-    #u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
+    print('Unsupervised')
+    u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
 
     # 10% supervised
-    print('10% supervised')
-    expand_zero_columns = np.zeros((num_nodes, num_communities - 10))
-    print('expand_zero_columns', expand_zero_columns.shape)
+    #print('10% supervised')
+    #expand_zero_columns = np.zeros((num_nodes, num_communities - 10))
+    #print('expand_zero_columns', expand_zero_columns.shape)
 
-    gt_vec_new = np.append(gt_vec_old, expand_zero_columns, axis=1)
-    print('gt_vec_new', gt_vec_new.shape)
+    #gt_vec_new = np.append(gt_vec_old, expand_zero_columns, axis=1)
+    #print('gt_vec_new', gt_vec_new.shape)
     
-    u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
-    print('u_init', u_init.shape)
+    #u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
+    #print('u_init', u_init.shape)
 
-    row_numbers = range(0, len(gt_labels))
-    Rs = random.sample(row_numbers, 7000)
-    u_init[[Rs],:] = gt_vec_new[[Rs],:]
+    #row_numbers = range(0, len(gt_labels))
+    #Rs = random.sample(row_numbers, 7000)
+    #u_init[[Rs],:] = gt_vec_new[[Rs],:]
 
 
     time_initialize_u = time.time() - start_time_initialize
