@@ -39,8 +39,8 @@ for i in range(num_communities):
 
 all_one_matrix = np.ones((len(sizes),len(sizes)))
 diag_matrix = np.diag(np.full(len(sizes),1))
-probs = 0.01 * all_one_matrix + 0.94 * diag_matrix       # Strong community struture
-#probs = 0.1 * all_one_matrix + 0.2 * diag_matrix        # Weak community struture
+#probs = 0.01 * all_one_matrix + 0.94 * diag_matrix       # Strong community struture
+probs = 0.1 * all_one_matrix + 0.2 * diag_matrix        # Weak community struture
 print(probs)
 
 G = nx.stochastic_block_model(sizes, probs, seed=0)
@@ -914,7 +914,7 @@ sum_inverse_purity_CNM = 0
 sum_NMI_CNM = 0
 
 
-for _ in range(20):
+for _ in range(5):
     start_time_CNM = time.time()
     partition_CNM = nx_comm.greedy_modularity_communities(G)
     time_CNM = time.time() - start_time_CNM
@@ -956,13 +956,13 @@ for _ in range(20):
     sum_NMI_CNM += NMI_CNM
 
 
-average_time_CNM = sum_time_CNM / 20
-average_modularity_CNM = sum_modularity_CNM / 20
-average_ER_modularity_CNM = sum_ER_modularity_CNM / 20
-average_ARI_CNM = sum_ARI_CNM / 20
-average_purity_CNM = sum_purity_CNM / 20
-average_inverse_purity_CNM = sum_inverse_purity_CNM / 20
-average_NMI_CNM = sum_NMI_CNM / 20
+average_time_CNM = sum_time_CNM / 5
+average_modularity_CNM = sum_modularity_CNM / 5
+average_ER_modularity_CNM = sum_ER_modularity_CNM / 5
+average_ARI_CNM = sum_ARI_CNM / 5
+average_purity_CNM = sum_purity_CNM / 5
+average_inverse_purity_CNM = sum_inverse_purity_CNM / 5
+average_NMI_CNM = sum_NMI_CNM / 5
 
 
 print('CNM')
