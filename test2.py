@@ -6,11 +6,11 @@ import random
 import networkx.algorithms.community as nx_comm
 import graphlearning as gl
 from sklearn.decomposition import PCA
-import cv2
-import os
-import sys
-sys.path.append('/'.join(os.getcwd().split('/')[:-1]))
-from graph_MMBO_cluster import LaplacianClustering, imageblocks, build_affinity_matrix
+#import cv2
+#import os
+#import sys
+#sys.path.append('/'.join(os.getcwd().split('/')[:-1]))
+#from graph_MMBO_cluster import LaplacianClustering, imageblocks, build_affinity_matrix
 from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_rand_score
 from matplotlib import pyplot as plt
 from sklearn.metrics import adjusted_rand_score
