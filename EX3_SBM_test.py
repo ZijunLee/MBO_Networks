@@ -39,8 +39,8 @@ for i in range(num_communities):
 
 all_one_matrix = np.ones((len(sizes),len(sizes)))
 diag_matrix = np.diag(np.full(len(sizes),1))
-#probs = 0.01 * all_one_matrix + 0.94 * diag_matrix       # Strong community struture
-probs = 0.1 * all_one_matrix + 0.2 * diag_matrix        # Weak community struture
+probs = 0.01 * all_one_matrix + 0.94 * diag_matrix       # Strong community struture
+#probs = 0.1 * all_one_matrix + 0.2 * diag_matrix        # Weak community struture
 print(probs)
 
 G = nx.stochastic_block_model(sizes, probs, seed=0)
