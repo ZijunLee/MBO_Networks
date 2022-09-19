@@ -90,6 +90,57 @@ def adj_to_laplacian_signless_laplacian(adj_matrix):
     rw_signless_lapclacian =  signless_degree_inv @ signless_laplacian_null_model
 
     return num_nodes, degree, sym_graph_laplacian,random_walk_lap, sym_signless_laplacian, rw_signless_lapclacian
+
+
+
+def adj_to_laplacian_signless_laplacian_ER(adj_matrix):
+        
+    # Compute the degree of adjacency matrix
+    degree = np.array(np.sum(adj_matrix, axis=-1)).flatten()
+    degree_diag = np.diag(degree)
+
+    # Compute the number of nodes
+    num_nodes = len(degree)
+
+    # Construct ER model
+    #start_time_construct_null_model = time.time()
+    #dergee_di_null = np.expand_dims(degree, axis=-1)
+    null_model = np.ones((len(degree), len(degree)))
+    total_degree = np.sum(adj_matrix)
+    #total_degree_int = total_degree.astype(int)
+    nodes_square = num_nodes * (num_nodes-1)
+    weights_ER = total_degree /nodes_square
+    null_model = weights_ER * null_model
+    #print('null_model', null_model.shape)
+    #time_null_model = time.time() - start_time_construct_null_model
+    #print("construct null model:-- %.3f seconds --" % (time_null_model))
+
+
+    # compute unnormalized laplacian
+    graph_laplacian = degree_diag - adj_matrix    # L_A = D - A
+ 
+    del adj_matrix
+
+    # compute symmetric normalized laplacian 
+    degree_inv = np.diag((1 / degree))
+    #degree_inv = sp.sparse.spdiags([1.0 / degree], [0], num_nodes, num_nodes)   # obtain D^{-1}
+    sym_graph_laplacian = np.sqrt(degree_inv) @ (graph_laplacian @ np.sqrt(degree_inv))    # obtain L_A_{sym}
+    
+    # compute random walk normalized Laplacian
+    random_walk_lap =  degree_inv @ graph_laplacian
+
+
+    # compute unnormalized signless laplacian of null model 
+    signless_laplacian_null_model = degree_diag + null_model  # Q_P = D + P(null model)
+    
+    del null_model
+
+    # compute symmetric normalized signless laplacian
+    signless_degree_inv = degree_inv
+    sym_signless_laplacian = np.sqrt(signless_degree_inv) @ (signless_laplacian_null_model @ np.sqrt(signless_degree_inv))
+    rw_signless_lapclacian =  signless_degree_inv @ signless_laplacian_null_model
+
+    return num_nodes, degree, sym_graph_laplacian,random_walk_lap, sym_signless_laplacian, rw_signless_lapclacian
     
 
 
@@ -137,6 +188,57 @@ def adj_to_modularity_mat(adj_matrix):
     random_walk_signless_lap_negative =  degree_inv_negative @ signless_graph_laplacian_neg
 
     return num_nodes, degree, sym_graph_laplacian_positive, random_walk_nor_lap_positive, sym_signless_laplacian_negative, random_walk_signless_lap_negative
+
+
+
+
+def adj_to_modularity_mat_ER(adj_matrix):
+    
+    # Compute the degree of adjacency matrix
+    degree = np.array(np.sum(adj_matrix, axis=1)).flatten()
+
+
+    # Compute the number of nodes
+    num_nodes = len(degree)
+
+    ## Construct ER model
+    null_model = np.ones((len(degree), len(degree)))
+    total_degree = np.sum(adj_matrix)
+    #total_degree_int = total_degree.astype(int)
+    nodes_square = num_nodes * (num_nodes-1)
+    weights_ER = total_degree /nodes_square
+    null_model = weights_ER * null_model
+
+
+    # Compute the modularity matrix: B = W - P  
+    modularity_mat = adj_matrix - null_model   
+
+    # Compute the unnormalized laplacian of B^+
+    modularity_mat_positive = np.where(modularity_mat > 0, modularity_mat, 0)       # B^+
+    degree_modularity_mat_positive = np.array(np.sum(modularity_mat_positive, axis=1)).flatten()
+    degree_diag_positive = np.diag(degree_modularity_mat_positive)
+    graph_laplacian_positive = degree_diag_positive - modularity_mat_positive      # L_B^+ = D^+ - B^+ 
+    
+    # Compute symmetric normalized laplacian & random walk normalized Laplacian of B^+
+    degree_inv_positive = np.diag((1.0 /degree_modularity_mat_positive))
+    sym_graph_laplacian_positive = np.sqrt(degree_inv_positive) @ (graph_laplacian_positive @ np.sqrt(degree_inv_positive))    # obtain L_A_{sym}
+    random_walk_nor_lap_positive =  degree_inv_positive @ graph_laplacian_positive
+
+
+    # Compute the unnormalized laplacian of B^-
+    modularity_mat_negative = -np.where(modularity_mat < 0, modularity_mat, 0)      # B^-
+    degree_modularity_mat_negative = np.array(np.sum(modularity_mat_negative, axis=1)).flatten()
+    degree_diag_negative = np.diag(degree_modularity_mat_negative)
+    signless_graph_laplacian_neg = degree_diag_negative + modularity_mat_negative     # Q_B^- = D^- + B^-
+        
+    # compute symmetric normalized laplacian & random walk normalized Laplacian of B^-
+    degree_inv_negative = np.diag((1.0 / degree_modularity_mat_negative))
+    sym_signless_laplacian_negative = np.sqrt(degree_inv_negative) @ (signless_graph_laplacian_neg @ np.sqrt(degree_inv_negative))    
+    random_walk_signless_lap_negative =  degree_inv_negative @ signless_graph_laplacian_neg
+
+    return num_nodes, degree, sym_graph_laplacian_positive, random_walk_nor_lap_positive, sym_signless_laplacian_negative, random_walk_signless_lap_negative
+
+
 
 
 
@@ -319,7 +421,7 @@ def HU_mmbo_method(num_nodes, degree, eig_val, eig_vec, tol, N_t, u_init, adj_ma
     dthigh = np.log(np.linalg.norm(u_init)/eps)/ eig_val[1]
     dti = np.sqrt(dtlow*dthigh) 
     #print('dt--HU: ', dti)
-    #dti = 0.1
+
 
     # Perform MBO scheme
     #start_time_MBO_iteration = time.time()
@@ -332,9 +434,12 @@ def HU_mmbo_method(num_nodes, degree, eig_val, eig_vec, tol, N_t, u_init, adj_ma
         # Diffusion step
         #start_time_diffusion = time.time()
         for j in range(N_t):
-            mean_f = np.dot(degree.reshape(1, len(degree)), vv) / np.sum(degree)
-            ww += 2 * gamma * dti * degree_diag @ (vv - mean_f)
+            deg_reshape = degree.reshape(1, len(degree))
+            mean_f = np.dot(deg_reshape, vv) / np.sum(degree)
+            v_1 = degree_diag * (vv - mean_f)
+            ww += 2 * gamma * dti * v_1
             vv = _diffusion_step_eig(ww,eig_vec,eig_val,dti)
+
         #print("compute MBO diffusion step:-- %.3f seconds --" % (time.time() - start_time_diffusion))
         
         

@@ -13,7 +13,7 @@ import sknetwork as skn
 import cdlib
 from cdlib import evaluation, NodeClustering
 from cdlib.algorithms import louvain
-from MMBO_and_HU import MMBO_using_projection, MMBO_using_finite_differendce, adj_to_laplacian_signless_laplacian,HU_mmbo_method, adj_to_modularity_mat
+from MMBO_and_HU import MMBO_using_projection, MMBO_using_finite_differendce, adj_to_laplacian_signless_laplacian,HU_mmbo_method, adj_to_laplacian_signless_laplacian_ER, adj_to_modularity_mat, adj_to_modularity_mat_ER
 from utils import vector_to_labels, labels_to_vector, label_to_dict, dict_to_list_set, purity_score, inverse_purity_score, generate_initial_value_multiclass, get_modularity_ER
 
 
@@ -39,8 +39,8 @@ for i in range(num_communities):
 
 all_one_matrix = np.ones((len(sizes),len(sizes)))
 diag_matrix = np.diag(np.full(len(sizes),1))
-#probs = 0.01 * all_one_matrix + 0.94 * diag_matrix       # Strong community struture
-probs = 0.1 * all_one_matrix + 0.2 * diag_matrix        # Weak community struture
+probs = 0.01 * all_one_matrix + 0.94 * diag_matrix       # Strong community struture
+#probs = 0.1 * all_one_matrix + 0.2 * diag_matrix        # Weak community struture
 print(probs)
 
 G = nx.stochastic_block_model(sizes, probs, seed=0)
@@ -59,12 +59,12 @@ adj_mat_nparray = nx.convert_matrix.to_numpy_array(G)
 
 ## Choose adjacency matrices F and H
 # Using F = W, H = P
-num_nodes, degree, sym_graph_laplacian,random_walk_lap, sym_signless_laplacian, rw_signless_lapclacian = adj_to_laplacian_signless_laplacian(adj_mat_nparray)
+num_nodes, degree, sym_graph_laplacian,random_walk_lap, sym_signless_laplacian, rw_signless_lapclacian = adj_to_laplacian_signless_laplacian_ER(adj_mat_nparray)
 L_mix_sym = sym_graph_laplacian + sym_signless_laplacian
 L_mix_rw = random_walk_lap + rw_signless_lapclacian
 
 # Using F = B^+, H =B^-
-num_nodes, degree, sym_lap_positive_B, rw_lap_positive_B, sym_signless_lap_negative_B, rw_signless_lap_negative_B = adj_to_modularity_mat(adj_mat_nparray)
+num_nodes, degree, sym_lap_positive_B, rw_lap_positive_B, sym_signless_lap_negative_B, rw_signless_lap_negative_B = adj_to_modularity_mat_ER(adj_mat_nparray)
 L_B_sym = sym_lap_positive_B + sym_signless_lap_negative_B
 L_B_rw = rw_lap_positive_B + rw_signless_lap_negative_B
 
