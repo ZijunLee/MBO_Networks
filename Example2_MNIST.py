@@ -53,7 +53,7 @@ sum_louvain_cluster =0
 
 G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 
-for _ in range(20):
+for _ in range(10):
     start_time_louvain = time.time()
     partition_Louvain = community_louvain.best_partition(G, resolution=gamma, randomize=True)
     time_louvain = time.time() - start_time_louvain
@@ -80,12 +80,12 @@ for _ in range(20):
     sum_inverse_purity_louvain += inverse_purify_louvain
     sum_NMI_louvain += NMI_louvain
 
-average_louvain_cluster = sum_louvain_cluster / 20
-average_time_louvain = sum_time_louvain / 20
-average_modularity_louvain = sum_modularity_louvain / 20
-average_ARI_louvain = sum_ARI_louvain / 20
-average_purify_louvain = sum_purity_louvain / 20
-average_inverse_purify_louvain = sum_inverse_purity_louvain / 20
+average_louvain_cluster = sum_louvain_cluster / 10
+average_time_louvain = sum_time_louvain / 10
+average_modularity_louvain = sum_modularity_louvain / 10
+average_ARI_louvain = sum_ARI_louvain / 10
+average_purify_louvain = sum_purity_louvain / 10
+average_inverse_purify_louvain = sum_inverse_purity_louvain / 10
 average_NMI_louvain = sum_NMI_louvain / 20
 
 print('average_time_louvain: ', average_time_louvain)
@@ -245,10 +245,14 @@ for _ in range(20):
     # 10% supervised
     print('10% supervised')
     expand_zero_columns = np.zeros((num_nodes, num_communities - 10))
+    print('expand_zero_columns', expand_zero_columns.shape)
+
     gt_vec = np.append(gt_vec, expand_zero_columns, axis=1)
+    print('gt_vec', gt_vec.shape)
 
     u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
-
+    print('u_init', u_init.shape)
+    
     row_numbers = range(0, len(gt_labels))
     Rs = random.sample(row_numbers, 7000)
     u_init[[Rs],:] = gt_vec[[Rs],:]

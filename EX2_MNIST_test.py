@@ -271,9 +271,11 @@ for _ in range(20):
     # 10% supervised
     print('10% supervised')
     expand_zero_columns = np.zeros((num_nodes, num_communities - 10))
+    print('expand_zero_columns', expand_zero_columns.shape)
     gt_vec = np.append(gt_vec, expand_zero_columns, axis=1)
-
+    print('gt_vec', gt_vec.shape)
     u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
+    print('u_init', u_init.shape)
 
     row_numbers = range(0, len(gt_labels))
     Rs = random.sample(row_numbers, 7000)
