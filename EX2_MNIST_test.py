@@ -258,10 +258,13 @@ sum_purify_mmbo_inner_B_rw =0
 sum_inverse_purify_mmbo_inner_B_rw =0
 sum_NMI_mmbo_inner_B_rw =0
 
+gt_vec_new = gt_vec.copy()
 
 
 # run the script 20 times using the modularity − related stopping condition
 for _ in range(20):
+    
+    gt_vec_old = gt_vec_new.copy()
 
     start_time_initialize = time.time()
     # Unsupervised
@@ -272,14 +275,16 @@ for _ in range(20):
     print('10% supervised')
     expand_zero_columns = np.zeros((num_nodes, num_communities - 10))
     print('expand_zero_columns', expand_zero_columns.shape)
-    gt_vec = np.append(gt_vec, expand_zero_columns, axis=1)
-    print('gt_vec', gt_vec.shape)
+
+    gt_vec_new = np.append(gt_vec_old, expand_zero_columns, axis=1)
+    print('gt_vec_new', gt_vec_new.shape)
+    
     u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
     print('u_init', u_init.shape)
 
     row_numbers = range(0, len(gt_labels))
     Rs = random.sample(row_numbers, 7000)
-    u_init[[Rs],:] = gt_vec[[Rs],:]
+    u_init[[Rs],:] = gt_vec_new[[Rs],:]
 
 
     time_initialize_u = time.time() - start_time_initialize
