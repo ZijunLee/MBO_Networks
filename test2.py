@@ -94,6 +94,8 @@ u_MMBO_projection_l_sym_label = vector_to_labels(u_MMBO_projection_l_sym)
 u_MMBO_projection_l_sym_dict = label_to_dict(u_MMBO_projection_l_sym_label)
 u_MMBO_projection_l_sym_list = dict_to_list_set(u_MMBO_projection_l_sym_dict)
 u_MMBO_projection_l_sym_coms = NodeClustering(u_MMBO_projection_l_sym_list, graph=None)
+u_MMBO_projection_cluster = len(np.unique(u_MMBO_projection_l_sym_label))
+print('u_MMBO_projection_cluster', u_MMBO_projection_cluster)
 
 ER_modularity_MMBO_projection_l_sym = evaluation.erdos_renyi_modularity(G,u_MMBO_projection_l_sym_coms)[2]
 #modularity_MMBO_projection_l_sym = evaluation.newman_girvan_modularity(G,u_MMBO_projection_l_sym_coms)[2]
@@ -126,6 +128,8 @@ u_MMBO_projection_l_sym_label = vector_to_labels(u_MMBO_projection_l_sym)
 u_MMBO_projection_l_sym_dict = label_to_dict(u_MMBO_projection_l_sym_label)
 u_MMBO_projection_l_sym_list = dict_to_list_set(u_MMBO_projection_l_sym_dict)
 u_MMBO_projection_l_sym_coms = NodeClustering(u_MMBO_projection_l_sym_list, graph=None)
+u_MMBO_projection_cluster = len(np.unique(u_MMBO_projection_l_sym_label))
+print('u_MMBO_projection_cluster', u_MMBO_projection_cluster)
 
 ER_modularity_MMBO_projection_l_sym = evaluation.erdos_renyi_modularity(G,u_MMBO_projection_l_sym_coms)[2]
 #modularity_MMBO_projection_l_sym = evaluation.newman_girvan_modularity(G,u_MMBO_projection_l_sym_coms)[2]
