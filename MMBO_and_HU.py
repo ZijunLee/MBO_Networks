@@ -271,7 +271,13 @@ def MMBO_using_projection(m, degree, eig_val, eig_vec, tol, u_init, adj_mat,
     #print("compute time step selection:-- %.3f seconds --" % (time.time() - start_time_timestep_selection))
     #dti = dt
 
-    demon = sp.sparse.spdiags([np.exp(- 0.5 * eig_val * dti)],[0],m,m).dot(eig_vec.transpose()) 
+    #demon = sp.sparse.spdiags([np.exp(- 0.5 * eig_val * dti)],[0],m,m).dot(eig_vec.transpose())
+    
+    diag_mat = sp.sparse.spdiags([np.exp(- 0.5 * eig_val * dti)],[0],m,m)
+    eig_vec_T = eig_vec.transpose()
+    print('diag_mat', diag_mat.shape)
+    print('eig_vec_T',eig_vec_T.shape)
+    demon = diag_mat.dot(eig_vec_T) 
 
     # Perform MBO scheme
     n = 0

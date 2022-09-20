@@ -30,6 +30,7 @@ N_t = 5
 gamma = 0.5
 tau = 0.02
 num_nodes = 70000
+#num_communities = 120
 
 # Load MNIST data, ground truth, and build 10-nearest neighbor weight matrix
 data, gt_labels = gl.datasets.load('mnist')
@@ -53,7 +54,7 @@ sum_louvain_cluster =0
 
 G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 
-for _ in range(10):
+for _ in range(1):
     start_time_louvain = time.time()
     partition_Louvain = community_louvain.best_partition(G, resolution=gamma, randomize=True)
     time_louvain = time.time() - start_time_louvain
@@ -80,13 +81,13 @@ for _ in range(10):
     sum_inverse_purity_louvain += inverse_purify_louvain
     sum_NMI_louvain += NMI_louvain
 
-average_louvain_cluster = sum_louvain_cluster / 10
-average_time_louvain = sum_time_louvain / 10
-average_modularity_louvain = sum_modularity_louvain / 10
-average_ARI_louvain = sum_ARI_louvain / 10
-average_purify_louvain = sum_purity_louvain / 10
-average_inverse_purify_louvain = sum_inverse_purity_louvain / 10
-average_NMI_louvain = sum_NMI_louvain / 10
+average_louvain_cluster = sum_louvain_cluster / 1
+average_time_louvain = sum_time_louvain / 1
+average_modularity_louvain = sum_modularity_louvain / 1
+average_ARI_louvain = sum_ARI_louvain / 1
+average_purify_louvain = sum_purity_louvain / 1
+average_inverse_purify_louvain = sum_inverse_purity_louvain / 1
+average_NMI_louvain = sum_NMI_louvain / 1
 
 print('average_time_louvain: ', average_time_louvain)
 print('average_modularity_louvain: ', average_modularity_louvain)
