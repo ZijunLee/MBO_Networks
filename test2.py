@@ -26,14 +26,16 @@ from MMBO_and_HU import MMBO_using_projection, MMBO_using_finite_differendce, ad
 from utils import vector_to_labels, labels_to_vector, purity_score, inverse_purity_score, generate_initial_value_multiclass, label_to_dict, get_modularity_ER, dict_to_list_set
 from community import community_louvain
 from Nystrom_QR_test import nystrom_QR_l_mix_sym_rw_ER_null
+from Nystrom_extension_QR import nystrom_QR_l_sym, nystrom_QR_l_mix_sym_rw, nystrom_QR_l_mix_B_sym_rw
 
 tol = 1e-5
 modularity_tol = 1e-4
 N_t = 3
-gamma = 1
+gamma = 0.5
 tau = 0.02
 num_nodes = 70000
 num_communities = 120
+#num_communities = 10
 m = num_communities
 
 data, gt_labels = gl.datasets.load('mnist')
@@ -54,7 +56,7 @@ gt_label_dict = dict(zip(len_gt_label, gt_labels_list))
 pca = PCA(n_components = 50)
 Z_training = pca.fit_transform(data)
 W = gl.weightmatrix.knn(Z_training, 10, symmetrize=True)
-G = nx.convert_matrix.from_scipy_sparse_matrix(W)
+#G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 
 
 eig_val_MMBO_sym, eig_vec_MMBO_sym, eig_val_MMBO_rw, eig_vec_MMBO_rw, order_raw_data_MMBO, index_MMBO, time_eig_l_mix_sym, time_eig_l_mix_rw = nystrom_QR_l_mix_sym_rw_ER_null(Z_training, num_nystrom=500, tau = tau)
@@ -69,6 +71,19 @@ degree_W_MMBO = np.array(np.sum(W_MMBO, axis=-1)).flatten()
 
 u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
 
+
+#expand_zero_columns = np.zeros((num_nodes, num_communities - 10))
+#print('expand_zero_columns', expand_zero_columns.shape)
+
+#gt_vec_new = np.append(gt_vec, expand_zero_columns, axis=1)
+#print('gt_vec_new', gt_vec_new.shape)
+
+#u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=10)
+#print('u_init', u_init.shape)
+
+
+
+
 u_MMBO_projection_l_sym, num_iteration_MMBO_projection_l_sym, MMBO_projection_sym_modularity_list = MMBO_using_projection(m, degree_W_MMBO,  
                                             E_mmbo_sym, V_mmbo_sym, modularity_tol, u_init, W_MMBO, gamma=gamma, stopping_condition='modularity') 
 #time_MMBO_projection_sym = time.time() - start_time_MMBO_projection_l_sym
@@ -78,17 +93,50 @@ u_MMBO_projection_l_sym, num_iteration_MMBO_projection_l_sym, MMBO_projection_sy
 u_MMBO_projection_l_sym_label = vector_to_labels(u_MMBO_projection_l_sym)
 u_MMBO_projection_l_sym_dict = label_to_dict(u_MMBO_projection_l_sym_label)
 u_MMBO_projection_l_sym_list = dict_to_list_set(u_MMBO_projection_l_sym_dict)
-u_MMBO_projection_l_sym_coms = NodeClustering(u_MMBO_projection_l_sym_list, graph=None)
+#u_MMBO_projection_l_sym_coms = NodeClustering(u_MMBO_projection_l_sym_list, graph=None)
 
-ER_modularity_MMBO_projection_l_sym = evaluation.erdos_renyi_modularity(G,u_MMBO_projection_l_sym_coms)[2]
-modularity_MMBO_projection_l_sym = evaluation.newman_girvan_modularity(G,u_MMBO_projection_l_sym_coms)[2]
-#modularity_MMBO_projection_l_sym = skn.clustering.modularity(W_MMBO ,u_MMBO_projection_l_sym_label,resolution=gamma)
+#ER_modularity_MMBO_projection_l_sym = evaluation.erdos_renyi_modularity(G,u_MMBO_projection_l_sym_coms)[2]
+#modularity_MMBO_projection_l_sym = evaluation.newman_girvan_modularity(G,u_MMBO_projection_l_sym_coms)[2]
+modularity_MMBO_projection_l_sym = skn.clustering.modularity(W_MMBO ,u_MMBO_projection_l_sym_label,resolution=gamma)
 ARI_MMBO_projection_l_sym = adjusted_rand_score(u_MMBO_projection_l_sym_label, gt_labels_MMBO)
 purify_MMBO_projection_l_sym = purity_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
 inverse_purify_MMBO_projection_l_sym = inverse_purity_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
 NMI_MMBO_projection_l_sym = normalized_mutual_info_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
 
-print('ER modularity for MMBO using projection with L_W&P: ', ER_modularity_MMBO_projection_l_sym)
+#print('ER modularity for MMBO using projection with L_W&P: ', ER_modularity_MMBO_projection_l_sym)
+print('modularity for MMBO using projection with L_W&P: ', modularity_MMBO_projection_l_sym)
+print('ARI for MMBO using projection with L_W&P: ', ARI_MMBO_projection_l_sym)
+print('purify for MMBO using projection with L_W&P: ', purify_MMBO_projection_l_sym)
+print('inverse purify for MMBO using projection with L_W&P: ', inverse_purify_MMBO_projection_l_sym)
+print('NMI for MMBO using projection with L_W&P: ', NMI_MMBO_projection_l_sym)
+
+
+u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=10)
+row_numbers = range(0, len(gt_labels))
+Rs = random.sample(row_numbers, 7000)
+u_init[[Rs],:] = gt_vec[[Rs],:]
+
+u_MMBO_projection_l_sym, num_iteration_MMBO_projection_l_sym, MMBO_projection_sym_modularity_list = MMBO_using_projection(m, degree_W_MMBO,  
+                                            E_mmbo_sym, V_mmbo_sym, modularity_tol, u_init, W_MMBO, gamma=gamma, stopping_condition='modularity') 
+#time_MMBO_projection_sym = time.time() - start_time_MMBO_projection_l_sym
+#time_MMBO_projection_sym = time_eig_l_mix_sym + time_initialize_u + time_MMBO_projection_sym
+#print('the number of MBO iteration for MMBO using projection with L_W&P: ', num_iteration_MMBO_projection_l_sym)
+
+u_MMBO_projection_l_sym_label = vector_to_labels(u_MMBO_projection_l_sym)
+u_MMBO_projection_l_sym_dict = label_to_dict(u_MMBO_projection_l_sym_label)
+u_MMBO_projection_l_sym_list = dict_to_list_set(u_MMBO_projection_l_sym_dict)
+#u_MMBO_projection_l_sym_coms = NodeClustering(u_MMBO_projection_l_sym_list, graph=None)
+
+#ER_modularity_MMBO_projection_l_sym = evaluation.erdos_renyi_modularity(G,u_MMBO_projection_l_sym_coms)[2]
+#modularity_MMBO_projection_l_sym = evaluation.newman_girvan_modularity(G,u_MMBO_projection_l_sym_coms)[2]
+modularity_MMBO_projection_l_sym = skn.clustering.modularity(W_MMBO ,u_MMBO_projection_l_sym_label,resolution=gamma)
+ARI_MMBO_projection_l_sym = adjusted_rand_score(u_MMBO_projection_l_sym_label, gt_labels_MMBO)
+purify_MMBO_projection_l_sym = purity_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
+inverse_purify_MMBO_projection_l_sym = inverse_purity_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
+NMI_MMBO_projection_l_sym = normalized_mutual_info_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
+
+print('NG -- 10%, K=10')
+#print('ER modularity for MMBO using projection with L_W&P: ', ER_modularity_MMBO_projection_l_sym)
 print('modularity for MMBO using projection with L_W&P: ', modularity_MMBO_projection_l_sym)
 print('ARI for MMBO using projection with L_W&P: ', ARI_MMBO_projection_l_sym)
 print('purify for MMBO using projection with L_W&P: ', purify_MMBO_projection_l_sym)
