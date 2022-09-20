@@ -54,7 +54,7 @@ gt_label_dict = dict(zip(len_gt_label, gt_labels_list))
 pca = PCA(n_components = 50)
 Z_training = pca.fit_transform(data)
 W = gl.weightmatrix.knn(Z_training, 10, symmetrize=True)
-#G = nx.convert_matrix.from_scipy_sparse_matrix(W)
+G = nx.convert_matrix.from_scipy_sparse_matrix(W)
 
 
 eig_val_MMBO_sym, eig_vec_MMBO_sym, eig_val_MMBO_rw, eig_vec_MMBO_rw, order_raw_data_MMBO, index_MMBO, time_eig_l_mix_sym, time_eig_l_mix_rw = nystrom_QR_l_mix_sym_rw_ER_null(Z_training, num_nystrom=500, tau = tau)
@@ -88,7 +88,7 @@ purify_MMBO_projection_l_sym = purity_score(gt_labels_MMBO, u_MMBO_projection_l_
 inverse_purify_MMBO_projection_l_sym = inverse_purity_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
 NMI_MMBO_projection_l_sym = normalized_mutual_info_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
 
-#print('ER modularity for MMBO using projection with L_W&P: ', ER_modularity_MMBO_projection_l_sym)
+print('ER modularity for MMBO using projection with L_W&P: ', ER_modularity_MMBO_projection_l_sym)
 print('modularity for MMBO using projection with L_W&P: ', modularity_MMBO_projection_l_sym)
 print('ARI for MMBO using projection with L_W&P: ', ARI_MMBO_projection_l_sym)
 print('purify for MMBO using projection with L_W&P: ', purify_MMBO_projection_l_sym)
