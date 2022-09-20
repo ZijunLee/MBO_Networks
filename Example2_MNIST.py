@@ -247,14 +247,14 @@ for _ in range(10):
     #u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
 
     # 10% supervised
-    print('NG modularity -- 10% supervised')
-    expand_zero_columns = np.zeros((num_nodes, num_communities - 10))
+    print('NG modularity -- 10% supervised, K=10')
+    #expand_zero_columns = np.zeros((num_nodes, num_communities - 10))
     #print('expand_zero_columns', expand_zero_columns.shape)
 
-    gt_vec_new = np.append(gt_vec_old, expand_zero_columns, axis=1)
+    #gt_vec_new = np.append(gt_vec_old, expand_zero_columns, axis=1)
     #print('gt_vec_new', gt_vec_new.shape)
     
-    u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
+    u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=10)
     #print('u_init', u_init.shape)
 
     row_numbers = range(0, len(gt_labels))
