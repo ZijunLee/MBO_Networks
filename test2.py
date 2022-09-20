@@ -99,12 +99,15 @@ print('u_MMBO_projection_cluster', u_MMBO_projection_cluster)
 
 ER_modularity_MMBO_projection_l_sym = evaluation.erdos_renyi_modularity(G,u_MMBO_projection_l_sym_coms)[2]
 #modularity_MMBO_projection_l_sym = evaluation.newman_girvan_modularity(G,u_MMBO_projection_l_sym_coms)[2]
+ER_modularity_MMBO_projection_l_sym_1 = get_modularity_ER(W_MMBO, u_MMBO_projection_l_sym_dict, gamma=gamma)
+
 modularity_MMBO_projection_l_sym = skn.clustering.modularity(W_MMBO ,u_MMBO_projection_l_sym_label,resolution=gamma)
 ARI_MMBO_projection_l_sym = adjusted_rand_score(u_MMBO_projection_l_sym_label, gt_labels_MMBO)
 purify_MMBO_projection_l_sym = purity_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
 inverse_purify_MMBO_projection_l_sym = inverse_purity_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
 NMI_MMBO_projection_l_sym = normalized_mutual_info_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
 
+print('ER_modularity_MMBO_projection_l_sym_1', ER_modularity_MMBO_projection_l_sym_1)
 print('ER modularity for MMBO using projection with L_W&P: ', ER_modularity_MMBO_projection_l_sym)
 print('modularity for MMBO using projection with L_W&P: ', modularity_MMBO_projection_l_sym)
 print('ARI for MMBO using projection with L_W&P: ', ARI_MMBO_projection_l_sym)
@@ -133,6 +136,8 @@ print('u_MMBO_projection_cluster', u_MMBO_projection_cluster)
 
 ER_modularity_MMBO_projection_l_sym = evaluation.erdos_renyi_modularity(G,u_MMBO_projection_l_sym_coms)[2]
 #modularity_MMBO_projection_l_sym = evaluation.newman_girvan_modularity(G,u_MMBO_projection_l_sym_coms)[2]
+ER_modularity_MMBO_projection_l_sym_1 = get_modularity_ER(W_MMBO, u_MMBO_projection_l_sym_dict, gamma=gamma)
+
 modularity_MMBO_projection_l_sym = skn.clustering.modularity(W_MMBO ,u_MMBO_projection_l_sym_label,resolution=gamma)
 ARI_MMBO_projection_l_sym = adjusted_rand_score(u_MMBO_projection_l_sym_label, gt_labels_MMBO)
 purify_MMBO_projection_l_sym = purity_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
@@ -140,6 +145,7 @@ inverse_purify_MMBO_projection_l_sym = inverse_purity_score(gt_labels_MMBO, u_MM
 NMI_MMBO_projection_l_sym = normalized_mutual_info_score(gt_labels_MMBO, u_MMBO_projection_l_sym_label)
 
 print('NG -- 10%, K=10')
+print('ER_modularity_MMBO_projection_l_sym_1', ER_modularity_MMBO_projection_l_sym_1)
 print('ER modularity for MMBO using projection with L_W&P: ', ER_modularity_MMBO_projection_l_sym)
 print('modularity for MMBO using projection with L_W&P: ', modularity_MMBO_projection_l_sym)
 print('ARI for MMBO using projection with L_W&P: ', ARI_MMBO_projection_l_sym)
