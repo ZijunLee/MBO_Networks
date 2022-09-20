@@ -239,27 +239,27 @@ gt_vec_old = gt_vec_new.copy()
 
 
 # run the script 20 times using the modularity − related stopping condition
-for _ in range(20):
+for _ in range(10):
 
     start_time_initialize = time.time()
     # Unsupervised
-    print('Unsupervised')
-    u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
+    #print('Unsupervised')
+    #u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
 
     # 10% supervised
-    #print('10% supervised')
-    #expand_zero_columns = np.zeros((num_nodes, num_communities - 10))
+    print('NG modularity -- 10% supervised')
+    expand_zero_columns = np.zeros((num_nodes, num_communities - 10))
     #print('expand_zero_columns', expand_zero_columns.shape)
 
-    #gt_vec_new = np.append(gt_vec_old, expand_zero_columns, axis=1)
+    gt_vec_new = np.append(gt_vec_old, expand_zero_columns, axis=1)
     #print('gt_vec_new', gt_vec_new.shape)
     
-    #u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
+    u_init = generate_initial_value_multiclass('rd_equal', n_samples=num_nodes, n_class=num_communities)
     #print('u_init', u_init.shape)
 
-    #row_numbers = range(0, len(gt_labels))
-    #Rs = random.sample(row_numbers, 7000)
-    #u_init[[Rs],:] = gt_vec_new[[Rs],:]
+    row_numbers = range(0, len(gt_labels))
+    Rs = random.sample(row_numbers, 7000)
+    u_init[[Rs],:] = gt_vec_new[[Rs],:]
 
     time_initialize_u = time.time() - start_time_initialize
 
@@ -541,13 +541,13 @@ for _ in range(20):
 
 
 print('MMBO using projection L_sym')
-average_time_MMBO_projection_sym = sum_time_MMBO_projection_sym / 20
-average_num_iter_MMBO_projection_sym = sum_num_iteration_MMBO_projection_l_sym / 20
-average_modularity_MMBO_projection_sym = sum_modularity_MMBO_projection_l_sym / 20
-average_ARI_MMBO_projection_sym = sum_ARI_MMBO_projection_l_sym / 20
-average_purify_MMBO_projection_sym = sum_purify_MMBO_projection_l_sym / 20
-average_inverse_purify_MMBO_projection_sym = sum_inverse_purify_MMBO_projection_l_sym / 20
-average_NMI_MMBO_projection_sym = sum_NMI_MMBO_projection_l_sym / 20
+average_time_MMBO_projection_sym = sum_time_MMBO_projection_sym / 10
+average_num_iter_MMBO_projection_sym = sum_num_iteration_MMBO_projection_l_sym / 10
+average_modularity_MMBO_projection_sym = sum_modularity_MMBO_projection_l_sym / 10
+average_ARI_MMBO_projection_sym = sum_ARI_MMBO_projection_l_sym / 10
+average_purify_MMBO_projection_sym = sum_purify_MMBO_projection_l_sym / 10
+average_inverse_purify_MMBO_projection_sym = sum_inverse_purify_MMBO_projection_l_sym / 10
+average_NMI_MMBO_projection_sym = sum_NMI_MMBO_projection_l_sym / 10
 
 
 print('average_time_MMBO_projection_sym: ', average_time_MMBO_projection_sym)
@@ -560,13 +560,13 @@ print('average_NMI_MMBO_projection_sym: ', average_NMI_MMBO_projection_sym)
 
 
 print('MMBO using projection L_rw')
-average_time_MMBO_projection_rw = sum_time_MMBO_projection_rw / 20
-average_num_iteration_MMBO_projection_rw = sum_num_iteration_MMBO_projection_l_rw / 20
-average_modularity_MMBO_projection_rw = sum_modularity_MMBO_projection_l_rw / 20
-average_ARI_MMBO_projection_rw = sum_ARI_MMBO_projection_l_rw / 20
-average_purify_MMBO_projection_rw = sum_purify_MMBO_projection_l_rw / 20
-average_inverse_purify_MMBO_projection_rw = sum_inverse_purify_MMBO_projection_l_rw / 20
-average_NMI_MMBO_projection_rw = sum_NMI_MMBO_projection_l_rw / 20
+average_time_MMBO_projection_rw = sum_time_MMBO_projection_rw / 10
+average_num_iteration_MMBO_projection_rw = sum_num_iteration_MMBO_projection_l_rw / 10
+average_modularity_MMBO_projection_rw = sum_modularity_MMBO_projection_l_rw / 10
+average_ARI_MMBO_projection_rw = sum_ARI_MMBO_projection_l_rw / 10
+average_purify_MMBO_projection_rw = sum_purify_MMBO_projection_l_rw / 10
+average_inverse_purify_MMBO_projection_rw = sum_inverse_purify_MMBO_projection_l_rw / 10
+average_NMI_MMBO_projection_rw = sum_NMI_MMBO_projection_l_rw / 10
 
 
 print('average_time_MMBO_projection_rw: ', average_time_MMBO_projection_rw)
@@ -579,13 +579,13 @@ print('average_NMI_MMBO_projection_sym: ', average_NMI_MMBO_projection_rw)
 
 
 print('MMBO using projection B_sym')
-average_time_MMBO_projection_B_sym = sum_time_MMBO_projection_B_sym / 20
-average_num_iter_MMBO_projection_B_sym = sum_num_repeat_mmbo_proj_B_sym / 20
-average_modularity_MMBO_projection_B_sym = sum_modularity_mmbo_proj_B_sym / 20
-average_ARI_MMBO_projection_B_sym = sum_ARI_mmbo_proj_B_sym / 20
-average_purify_MMBO_projection_B_sym = sum_purify_mmbo_proj_B_sym / 20
-average_inverse_purify_MMBO_projection_B_sym = sum_inverse_purify_mmbo_proj_B_sym / 20
-average_NMI_MMBO_projection_B_sym = sum_NMI_mmbo_proj_B_sym / 20
+average_time_MMBO_projection_B_sym = sum_time_MMBO_projection_B_sym / 10
+average_num_iter_MMBO_projection_B_sym = sum_num_repeat_mmbo_proj_B_sym / 10
+average_modularity_MMBO_projection_B_sym = sum_modularity_mmbo_proj_B_sym / 10
+average_ARI_MMBO_projection_B_sym = sum_ARI_mmbo_proj_B_sym / 10
+average_purify_MMBO_projection_B_sym = sum_purify_mmbo_proj_B_sym / 10
+average_inverse_purify_MMBO_projection_B_sym = sum_inverse_purify_mmbo_proj_B_sym / 10
+average_NMI_MMBO_projection_B_sym = sum_NMI_mmbo_proj_B_sym / 10
 
 
 print('average_time_MMBO_projection_B_sym: ', average_time_MMBO_projection_B_sym)
@@ -598,13 +598,13 @@ print('average_NMI_MMBO_projection_B_sym: ', average_NMI_MMBO_projection_B_sym)
 
 
 print('MMBO using projection B_rw')
-average_time_MMBO_projection_B_rw = sum_time_MMBO_projection_B_rw / 20
-average_num_iter_MMBO_projection_B_rw = sum_num_iteration_mmbo_proj_B_rw / 20
-average_modularity_MMBO_projection_B_rw = sum_modularity_mmbo_proj_B_rw / 20
-average_ARI_MMBO_projection_B_rw = sum_ARI_mmbo_proj_B_rw / 20
-average_purify_MMBO_projection_B_rw = sum_purify_mmbo_proj_B_rw / 20
-average_inverse_purify_MMBO_projection_B_rw = sum_inverse_purify_mmbo_proj_B_rw / 20
-average_NMI_MMBO_projection_B_rw = sum_NMI_mmbo_proj_B_rw / 20
+average_time_MMBO_projection_B_rw = sum_time_MMBO_projection_B_rw / 10
+average_num_iter_MMBO_projection_B_rw = sum_num_iteration_mmbo_proj_B_rw / 10
+average_modularity_MMBO_projection_B_rw = sum_modularity_mmbo_proj_B_rw / 10
+average_ARI_MMBO_projection_B_rw = sum_ARI_mmbo_proj_B_rw / 10
+average_purify_MMBO_projection_B_rw = sum_purify_mmbo_proj_B_rw / 10
+average_inverse_purify_MMBO_projection_B_rw = sum_inverse_purify_mmbo_proj_B_rw / 10
+average_NMI_MMBO_projection_B_rw = sum_NMI_mmbo_proj_B_rw / 10
 
 
 print('average_time_MMBO_projection_B_rw: ', average_time_MMBO_projection_B_rw)
@@ -617,13 +617,13 @@ print('average_NMI_MMBO_projection_B_rw: ', average_NMI_MMBO_projection_B_rw)
 
 
 print('MMBO using finite difference L_sym')
-average_time_MMBO_inner_step = sum_time_MMBO_using_finite_difference_sym / 20
-average_num_iter_MMBO_inner_step = sum_num_iteration_MMBO_using_finite_difference_sym / 20
-average_modularity_MMBO_inner_step = sum_modularity_MMBO_using_finite_difference_sym / 20
-average_ARI_MMBO_inner_step = sum_ARI_MMBO_using_finite_difference_sym / 20
-average_purify_MMBO_inner_step = sum_purify_MMBO_using_finite_difference_sym / 20
-average_inverse_purify_MMBO_inner_step = sum_inverse_purify_MMBO_using_finite_difference_sym / 20
-average_NMI_MMBO_inner_step = sum_NMI_MMBO_using_finite_difference_sym / 20
+average_time_MMBO_inner_step = sum_time_MMBO_using_finite_difference_sym / 10
+average_num_iter_MMBO_inner_step = sum_num_iteration_MMBO_using_finite_difference_sym / 10
+average_modularity_MMBO_inner_step = sum_modularity_MMBO_using_finite_difference_sym / 10
+average_ARI_MMBO_inner_step = sum_ARI_MMBO_using_finite_difference_sym / 10
+average_purify_MMBO_inner_step = sum_purify_MMBO_using_finite_difference_sym / 10
+average_inverse_purify_MMBO_inner_step = sum_inverse_purify_MMBO_using_finite_difference_sym / 10
+average_NMI_MMBO_inner_step = sum_NMI_MMBO_using_finite_difference_sym / 10
 
 
 print('average_time_MMBO_using_finite_difference_sym: ', average_time_MMBO_inner_step)
@@ -636,13 +636,13 @@ print('average_NMI_MMBO_using_finite_difference_sym: ', average_NMI_MMBO_inner_s
 
 
 print('MMBO using finite difference L_rw')
-average_time_MMBO_using_finite_difference_rw = sum_time_MMBO_using_finite_difference_rw / 20
-average_num_iter_MMBO_inner_step_rw = sum_num_iteration_MMBO_using_finite_difference_rw / 20
-average_modularity_MMBO_inner_step_rw = sum_modularity_MMBO_using_finite_difference_rw / 20
-average_ARI_MMBO_inner_step_rw = sum_ARI_MMBO_using_finite_difference_rw / 20
-average_purify_MMBO_inner_step_rw = sum_purify_MMBO_using_finite_difference_rw / 20
-average_inverse_purify_MMBO_inner_step_rw = sum_inverse_purify_MMBO_using_finite_difference_rw / 20
-average_NMI_MMBO_inner_step_rw = sum_NMI_MMBO_using_finite_difference_rw / 20
+average_time_MMBO_using_finite_difference_rw = sum_time_MMBO_using_finite_difference_rw / 10
+average_num_iter_MMBO_inner_step_rw = sum_num_iteration_MMBO_using_finite_difference_rw / 10
+average_modularity_MMBO_inner_step_rw = sum_modularity_MMBO_using_finite_difference_rw / 10
+average_ARI_MMBO_inner_step_rw = sum_ARI_MMBO_using_finite_difference_rw / 10
+average_purify_MMBO_inner_step_rw = sum_purify_MMBO_using_finite_difference_rw / 10
+average_inverse_purify_MMBO_inner_step_rw = sum_inverse_purify_MMBO_using_finite_difference_rw / 10
+average_NMI_MMBO_inner_step_rw = sum_NMI_MMBO_using_finite_difference_rw / 10
 
 print('average_time_MMBO_using_finite_difference_rw: ', average_time_MMBO_using_finite_difference_rw)
 print('average_num_iter_MMBO_using_finite_difference_rw: ', average_num_iter_MMBO_inner_step_rw)
@@ -654,13 +654,13 @@ print('average_NMI_MMBO_using_finite_difference_rw: ', average_NMI_MMBO_inner_st
 
 
 print('MMBO using finite difference B_sym')
-average_time_MMBO_using_finite_difference_B_sym = sum_MMBO_using_finite_difference_B_sym / 20
-average_num_iter_MMBO_inner_step_B_sym = sum_num_repeat_inner_nor_B_sym / 20
-average_modularity_MMBO_inner_step_B_sym = sum_modularity_mmbo_inner_B_sym / 20
-average_ARI_MMBO_inner_step_B_sym = sum_ARI_mmbo_inner_B_sym / 20
-average_purify_MMBO_inner_step_B_sym = sum_purify_mmbo_inner_B_sym / 20
-average_inverse_purify_MMBO_inner_step_B_sym = sum_inverse_purify_mmbo_inner_B_sym / 20
-average_NMI_MMBO_inner_step_B_sym = sum_NMI_mmbo_inner_B_sym / 20
+average_time_MMBO_using_finite_difference_B_sym = sum_MMBO_using_finite_difference_B_sym / 10
+average_num_iter_MMBO_inner_step_B_sym = sum_num_repeat_inner_nor_B_sym / 10
+average_modularity_MMBO_inner_step_B_sym = sum_modularity_mmbo_inner_B_sym / 10
+average_ARI_MMBO_inner_step_B_sym = sum_ARI_mmbo_inner_B_sym / 10
+average_purify_MMBO_inner_step_B_sym = sum_purify_mmbo_inner_B_sym / 10
+average_inverse_purify_MMBO_inner_step_B_sym = sum_inverse_purify_mmbo_inner_B_sym / 10
+average_NMI_MMBO_inner_step_B_sym = sum_NMI_mmbo_inner_B_sym / 10
 
 print('average_time_MMBO_using_finite_difference_B_sym: ',average_time_MMBO_using_finite_difference_B_sym)
 print('average_num_iteration_MMBO_using_finite_difference_B_sym: ', average_num_iter_MMBO_inner_step_B_sym)
@@ -672,13 +672,13 @@ print('average_NMI_MMBO_using_finite_difference_B_sym: ', average_NMI_MMBO_inner
 
 
 print('MMBO using finite difference B_rw')
-average_time_MMBO_using_finite_difference_B_rw = sum_time_MMBO_using_finite_difference_B_rw /20
-average_num_iter_MMBO_inner_step_B_rw = sum_num_iertation_MMBO_using_finite_difference_B_rw / 20
-average_modularity_MMBO_inner_step_B_rw = sum_modularity_mmbo_inner_B_rw / 20
-average_ARI_MMBO_inner_step_B_rw = sum_ARI_mmbo_inner_B_rw / 20
-average_purify_MMBO_inner_step_B_rw = sum_purify_mmbo_inner_B_rw / 20
-average_inverse_purify_MMBO_inner_step_B_rw = sum_inverse_purify_mmbo_inner_B_rw / 20
-average_NMI_MMBO_inner_step_B_rw = sum_NMI_mmbo_inner_B_rw / 20
+average_time_MMBO_using_finite_difference_B_rw = sum_time_MMBO_using_finite_difference_B_rw / 10
+average_num_iter_MMBO_inner_step_B_rw = sum_num_iertation_MMBO_using_finite_difference_B_rw / 10
+average_modularity_MMBO_inner_step_B_rw = sum_modularity_mmbo_inner_B_rw / 10
+average_ARI_MMBO_inner_step_B_rw = sum_ARI_mmbo_inner_B_rw / 10
+average_purify_MMBO_inner_step_B_rw = sum_purify_mmbo_inner_B_rw / 10
+average_inverse_purify_MMBO_inner_step_B_rw = sum_inverse_purify_mmbo_inner_B_rw / 10
+average_NMI_MMBO_inner_step_B_rw = sum_NMI_mmbo_inner_B_rw / 10
 
 print('average_time_MMBO_using_finite_difference_B_rw: ',average_time_MMBO_using_finite_difference_B_rw)
 print('average_num_ieration_MMBO_using_finite_difference_B_rw: ', average_num_iter_MMBO_inner_step_B_rw)
@@ -691,13 +691,13 @@ print('average_NMI_MMBO_using_finite_difference_B_rw: ', average_NMI_MMBO_inner_
 
 
 print('HU method L_sym')
-average_time_hu_mbo = sum_time_hu_sym / 20
-average_num_iter_HU_sym = sum_num_iteration_HU_sym / 20
-average_modularity_hu_sym = sum_modularity_hu_sym / 20
-average_ARI_hu_original_sym = sum_ARI_hu_original_sym / 20
-average_purify_hu_original_sym = sum_purify_hu_original_sym / 20
-average_inverse_purify_hu_original_sym = sum_inverse_purify_hu_original_sym / 20
-average_NMI_hu_original_sym = sum_NMI_hu_original_sym / 20
+average_time_hu_mbo = sum_time_hu_sym / 10
+average_num_iter_HU_sym = sum_num_iteration_HU_sym / 10
+average_modularity_hu_sym = sum_modularity_hu_sym / 10
+average_ARI_hu_original_sym = sum_ARI_hu_original_sym / 10
+average_purify_hu_original_sym = sum_purify_hu_original_sym / 10
+average_inverse_purify_hu_original_sym = sum_inverse_purify_hu_original_sym / 10
+average_NMI_hu_original_sym = sum_NMI_hu_original_sym / 10
 
 
 print('average_time_HU_sym: ', average_time_hu_mbo)
@@ -710,13 +710,13 @@ print('average_NMI_HU_sym: ', average_NMI_hu_original_sym)
 
 
 print('HU method L_rw')
-average_time_hu_mbo = sum_time_hu_rw / 20
-average_num_iter_HU_rw = sum_num_iter_HU_rw / 20
-average_modularity_hu_rw = sum_modularity_hu_rw / 20
-average_ARI_hu_original_rw = sum_ARI_hu_original_rw / 20
-average_purify_hu_original_rw = sum_purify_hu_original_rw / 20
-average_inverse_purify_hu_original_rw = sum_inverse_purify_hu_original_rw / 20
-average_NMI_hu_original_rw = sum_NMI_hu_original_rw / 20
+average_time_hu_mbo = sum_time_hu_rw / 10
+average_num_iter_HU_rw = sum_num_iter_HU_rw / 10
+average_modularity_hu_rw = sum_modularity_hu_rw / 10
+average_ARI_hu_original_rw = sum_ARI_hu_original_rw / 10
+average_purify_hu_original_rw = sum_purify_hu_original_rw / 10
+average_inverse_purify_hu_original_rw = sum_inverse_purify_hu_original_rw / 10
+average_NMI_hu_original_rw = sum_NMI_hu_original_rw / 10
 
 
 print('average_time_HU_rw: ', average_time_hu_mbo)

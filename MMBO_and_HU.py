@@ -275,8 +275,8 @@ def MMBO_using_projection(m, degree, eig_val, eig_vec, tol, u_init, adj_mat,
     
     diag_mat = sp.sparse.spdiags([np.exp(- 0.5 * eig_val * dti)],[0],m,m)
     eig_vec_T = eig_vec.transpose()
-    print('diag_mat', diag_mat.shape)
-    print('eig_vec_T',eig_vec_T.shape)
+    #print('diag_mat', diag_mat.shape)
+    #print('eig_vec_T',eig_vec_T.shape)
     demon = diag_mat.dot(eig_vec_T) 
 
     # Perform MBO scheme
