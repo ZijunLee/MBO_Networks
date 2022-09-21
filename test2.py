@@ -96,7 +96,8 @@ print('average_purify_louvain: ', average_purify_louvain)
 print('average_inverse_purify_louvain: ', average_inverse_purify_louvain)
 print('average_NMI_louvain: ', average_NMI_louvain)
 
-num_communities  = round(average_louvain_cluster)
+#num_communities  = round(average_louvain_cluster)
+num_communities = 120
 m = num_communities
 
 
