@@ -94,7 +94,9 @@ def _diffusion_step_eig(v,V,E,dt):
     """diffusion on graphs
     """
     if len(v.shape) > 1:
-        return np.dot(V,np.divide(np.dot(V.T,v),(1+dt*E)))
+        #return np.dot(V,np.divide(np.dot(V.T,v),(1+dt*E)))
+        interval = np.divide(np.dot(V.T,v),(1+dt*E))
+        return np.dot(V, interval)
         #value_plus = 1+dt*E
         #value_plus = np.expand_dims(value_plus, axis=-1)  # Add an extra dimension in the last axis.
         #return np.dot(V,np.divide(np.dot(V.T,v),value_plus))

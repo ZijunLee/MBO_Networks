@@ -308,7 +308,8 @@ def MMBO_using_projection(m, degree, eig_val, eig_vec, tol, u_init, adj_mat,
         # Stop criterion
         if stopping_condition == 'standard':
             # using standard stopping condition (w.r.t norm)
-            stop_criterion = sp.linalg.norm(u_new-u_old) / sp.linalg.norm(u_new)
+            stop_criterion = (np.abs(u_new - u_old)).sum()
+            #stop_criterion = sp.linalg.norm(u_new-u_old) / sp.linalg.norm(u_new)
         else:
             # using modularity-related stopping condition
             u_new_label = vector_to_labels(u_new)
@@ -386,7 +387,8 @@ def MMBO_using_finite_differendce(m, degree, eig_val, eig_vec, tol, N_t, u_init,
         # Stop criterion
         if stopping_condition == 'standard':
             # using standard stopping condition (w.r.t norm)
-            stop_criterion = sp.linalg.norm(u_new-u_old) / sp.linalg.norm(u_new)
+            stop_criterion = (np.abs(u_new - u_old)).sum()
+            #stop_criterion = sp.linalg.norm(u_new-u_old) / sp.linalg.norm(u_new)
         else:
             # using modularity-related stopping condition
             u_new_label = vector_to_labels(u_new)
@@ -409,6 +411,9 @@ def HU_mmbo_method(num_nodes, degree, eig_val, eig_vec, tol, N_t, u_init, adj_ma
                     gamma=0.5, eps=1, max_iter=10000, stopping_condition='standard'): 
 
     degree_diag = sp.sparse.spdiags([degree], [0], num_nodes, num_nodes)
+    
+    if len(eig_val.shape) == 1:
+        eig_val = np.expand_dims(eig_val, axis=-1)
 
     #start_time_eigendecomposition = time.time()
     #eig_val_hu_sym, eig_vec_hu_sym = eigsh(sym_graph_laplacian + ((2*gamma/np.sum(degree)) * degree @ degree.T), k=m, which='SA')
@@ -462,7 +467,8 @@ def HU_mmbo_method(num_nodes, degree, eig_val, eig_vec, tol, N_t, u_init, adj_ma
         # Stop criterion
         if stopping_condition == 'standard':
             # using standard stopping condition (w.r.t norm)
-            stop_criterion = sp.linalg.norm(u_new-u_old) / sp.linalg.norm(u_new)
+            stop_criterion = (np.abs(u_new - u_old)).sum()
+            #stop_criterion = sp.linalg.norm(u_new-u_old) / sp.linalg.norm(u_new)
         else:
             # using modularity-related stopping condition
             u_new_label = vector_to_labels(u_new)

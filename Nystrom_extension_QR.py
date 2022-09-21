@@ -1,5 +1,4 @@
-from cgi import print_arguments
-from joblib import PrintTime
+
 import scipy as sp
 import scipy.sparse as spa
 import numpy as np
@@ -36,7 +35,7 @@ E : eigenvalues
 
 
 def nystrom_QR_l_sym(raw_data, num_nystrom  = 300, tau = None): # basic implementation
-
+    print('raw_data',raw_data.shape)
     print('Start Nystrom extension using QR decomposition for L_sym / L_rw')    
 
     if tau is None:
@@ -55,25 +54,33 @@ def nystrom_QR_l_sym(raw_data, num_nystrom  = 300, tau = None): # basic implemen
     # calculating the first k--th column of W
     start_time_calculating_the_first_k_columns_W = time.time()
     first_k_columns_W = rbf_kernel(order_raw_data, sample_data, gamma=tau)
+    #distb = cdist(order_raw_data,sample_data,'sqeuclidean')
+    #first_k_columns_W = np.exp(-distb/tau).astype(np.float32) 
 
     # calculating W_11
     start_time_calculating_W_11 = time.time()
     A = rbf_kernel(sample_data, sample_data, gamma=tau)
+    #dista = cdist(sample_data,sample_data,'sqeuclidean')
+    #A = np.exp(-dista/tau).astype(np.float32)
     #print("calculating W_11:-- %.3f seconds --" % (time.time() - start_time_calculating_W_11))
 
     # computing the approximation of W_11 & W_21
     start_time_approximation_W21 = time.time()
     pinv_A = pinv(A)
+    #print('pinv_A', pinv_A)
+
     first_k_columns_W_T = first_k_columns_W.transpose()
     d_c = np.dot(first_k_columns_W, np.dot(pinv_A, np.sum(first_k_columns_W_T,axis = 1)))
     d_inverse = np.sqrt(1./d_c)
+    d_inverse = np.nan_to_num(d_inverse)
     d_inverse = np.expand_dims(d_inverse, axis=-1)
     first_k_columns_W = first_k_columns_W * d_inverse
     #print("computing the approximation of W_21:-- %.3f seconds --" % (time.time() - start_time_approximation_W21))
     
     # QR decomposition for the approximation of W_21
     start_time_QR_decomposition_approximation_W21 = time.time()
-    Q, R = np.linalg.qr(first_k_columns_W, mode='reduced')
+    Q, R = np.linalg.qr(first_k_columns_W)
+    #print('R', R)
     #print("QR decomposition for the approximation of W_21:-- %.3f seconds --" % (time.time() - start_time_QR_decomposition_approximation_W21))
     
     # construct S
@@ -455,3 +462,87 @@ def nystrom_QR_l_mix_B_sym_rw(raw_data, num_nystrom  = 300, tau = None): # basic
     return E_sym, V_sym, E_rw, V_rw, order_raw_data, index, time_eig_B_sym, time_eig_B_rw
 
 
+
+
+def nystrom_original(raw_data, num_nystrom  = 300, tau = None): # basic implementation
+    """ Nystrom Extension
+
+
+    Parameters
+    -----------
+    raw_data : ndarray, shape (n_samples, n_features)
+        Raw input data.
+
+    sigma : width of the rbf kernel
+
+    num_nystrom : int, 
+            number of sample points 
+
+    Return 
+    ----------
+    V : eigenvectors
+    E : eigenvalues    
+    """
+
+    #format data to right dimensions
+    # width = int((np.sqrt(raw_data.shape[1]/n_channels)-1)/2)
+    # if kernel_flag: # spatial kernel involved   # depreciated. Put spatial mask in the image patch extraction process
+    #     kernel = make_kernel(width = width, n_channels = n_channels)
+    #     scale_sqrt = np.sqrt(kernel).reshape(1,len(kernel))
+    if tau is None:
+        print("graph kernel width not specified, using default value 1")
+        tau = 1
+
+    num_rows = raw_data.shape[0]
+    index = permutation(num_rows)
+    if num_nystrom == None:
+        raise ValueError("Please Provide the number of sample points in num_nystrom")
+    sample_data = raw_data[index[:num_nystrom]]
+    other_data = raw_data[index[num_nystrom:]]
+    order_raw_data = raw_data[index]
+
+
+    # calculating B
+    other_points = num_rows - num_nystrom
+    distb = cdist(sample_data,other_data,'sqeuclidean')
+    B = np.exp(-distb/tau).astype(np.float32)    
+
+    # calculating A
+    dista = cdist(sample_data,sample_data,'sqeuclidean')
+    A = np.exp(-dista/tau).astype(np.float32)
+        #A.flat[::A.shape[0]+1] = 0
+
+    # normalize A and B
+    pinv_A = pinv(A)
+    B_T = B.transpose()
+    d1 = np.sum(A,axis = 1) + np.sum(B,axis = 1)
+    d2 = np.sum(B_T,axis = 1) + np.dot(B_T, np.dot(pinv_A, np.sum(B,axis = 1)))
+    d_c = np.concatenate((d1,d2),axis = 0)
+    d_inverse = 1./d_c
+    d_inverse = np.nan_to_num(d_inverse)
+    dhat = np.sqrt(d_inverse)
+    #dhat = np.nan_to_num(dhat)
+    A = A*(np.dot(dhat[0:num_nystrom,np.newaxis],dhat[0:num_nystrom,np.newaxis].transpose()))
+    B1 = np.dot(dhat[0:num_nystrom,np.newaxis], dhat[num_nystrom:num_nystrom+other_points,np.newaxis].transpose())
+    B = B*B1
+
+    # do orthogonalization and eigen-decomposition
+    B_T = B.transpose()
+    Asi = sqrtm(pinv(A))
+    BBT = np.dot(B,B_T)
+    W = np.concatenate((A,B_T), axis = 0)
+    R = A+ np.dot(np.dot(Asi,BBT),Asi)
+    R = (R+R.transpose())/2.
+    E, U = eigh(R)
+    E = np.real(E)
+    ind = np.argsort(E)[::-1]
+    U = U[:,ind]
+    E = E[ind]
+    W = np.dot(W,Asi)
+    V = np.dot(W, U)
+    V = V / np.linalg.norm(V, axis = 0)
+    V[index,:] = V.copy()
+    V = np.real(V)
+    E = 1-E
+    E = E[:,np.newaxis]
+    return E,V, order_raw_data
