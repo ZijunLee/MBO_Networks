@@ -558,13 +558,13 @@ for _ in range(1):
 
 
 print('MMBO using projection L_sym')
-average_time_MMBO_projection_sym = sum_time_MMBO_projection_sym / 10
-average_num_iter_MMBO_projection_sym = sum_num_iteration_MMBO_projection_l_sym / 10
-average_modularity_MMBO_projection_sym = sum_modularity_MMBO_projection_l_sym / 10
-average_ARI_MMBO_projection_sym = sum_ARI_MMBO_projection_l_sym / 10
-average_purify_MMBO_projection_sym = sum_purify_MMBO_projection_l_sym / 10
-average_inverse_purify_MMBO_projection_sym = sum_inverse_purify_MMBO_projection_l_sym / 10
-average_NMI_MMBO_projection_sym = sum_NMI_MMBO_projection_l_sym / 10
+average_time_MMBO_projection_sym = sum_time_MMBO_projection_sym / 1
+average_num_iter_MMBO_projection_sym = sum_num_iteration_MMBO_projection_l_sym / 1
+average_modularity_MMBO_projection_sym = sum_modularity_MMBO_projection_l_sym / 1
+average_ARI_MMBO_projection_sym = sum_ARI_MMBO_projection_l_sym / 1
+average_purify_MMBO_projection_sym = sum_purify_MMBO_projection_l_sym / 1
+average_inverse_purify_MMBO_projection_sym = sum_inverse_purify_MMBO_projection_l_sym / 1
+average_NMI_MMBO_projection_sym = sum_NMI_MMBO_projection_l_sym / 1
 
 
 print('average_time_MMBO_projection_sym: ', average_time_MMBO_projection_sym)
@@ -615,13 +615,13 @@ print('average_NMI_MMBO_projection_B_sym: ', average_NMI_MMBO_projection_B_sym)
 
 
 print('MMBO using projection B_rw')
-average_time_MMBO_projection_B_rw = sum_time_MMBO_projection_B_rw / 10
-average_num_iter_MMBO_projection_B_rw = sum_num_iteration_mmbo_proj_B_rw / 10
-average_modularity_MMBO_projection_B_rw = sum_modularity_mmbo_proj_B_rw / 10
-average_ARI_MMBO_projection_B_rw = sum_ARI_mmbo_proj_B_rw / 10
-average_purify_MMBO_projection_B_rw = sum_purify_mmbo_proj_B_rw / 10
-average_inverse_purify_MMBO_projection_B_rw = sum_inverse_purify_mmbo_proj_B_rw / 10
-average_NMI_MMBO_projection_B_rw = sum_NMI_mmbo_proj_B_rw / 10
+average_time_MMBO_projection_B_rw = sum_time_MMBO_projection_B_rw / 1
+average_num_iter_MMBO_projection_B_rw = sum_num_iteration_mmbo_proj_B_rw / 1
+average_modularity_MMBO_projection_B_rw = sum_modularity_mmbo_proj_B_rw / 1
+average_ARI_MMBO_projection_B_rw = sum_ARI_mmbo_proj_B_rw / 1
+average_purify_MMBO_projection_B_rw = sum_purify_mmbo_proj_B_rw / 1
+average_inverse_purify_MMBO_projection_B_rw = sum_inverse_purify_mmbo_proj_B_rw / 1
+average_NMI_MMBO_projection_B_rw = sum_NMI_mmbo_proj_B_rw / 1
 
 
 print('average_time_MMBO_projection_B_rw: ', average_time_MMBO_projection_B_rw)
