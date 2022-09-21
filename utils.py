@@ -94,9 +94,10 @@ def _diffusion_step_eig(v,V,E,dt):
     """diffusion on graphs
     """
     if len(v.shape) > 1:
-        value_plus = 1+dt*E
-        value_plus = np.expand_dims(value_plus, axis=-1)  # Add an extra dimension in the last axis.
-        return np.dot(V,np.divide(np.dot(V.T,v),value_plus))
+        return np.dot(V,np.divide(np.dot(V.T,v),(1+dt*E)))
+        #value_plus = 1+dt*E
+        #value_plus = np.expand_dims(value_plus, axis=-1)  # Add an extra dimension in the last axis.
+        #return np.dot(V,np.divide(np.dot(V.T,v),value_plus))
     else:
         u_new = np.dot(V,np.divide(np.dot(V.T,v[:,np.newaxis]),(1+dt*E)))
         return u_new.ravel()
@@ -126,7 +127,7 @@ def inverse_purity_score(y_true, y_pred):
 
 
 
-def get_modularity_ER(adjacency_mat, community_dict):
+def get_modularity_ER(adjacency_mat, community_dict, gamma=1):
 #    '''
 #    Calculate the modularity. 
 #    .. math:: Q = \frac{1}{2m}\sum_{i,j} \(A_ij - \frac{2m}{N(N-1)}\) * \detal_(c_i, c_j)
@@ -151,7 +152,7 @@ def get_modularity_ER(adjacency_mat, community_dict):
     total_degree = np.sum(adjacency_mat)  
     N_square = num_nodes * (num_nodes -1)
 
-    Q = np.sum([adjacency_mat[i,j] - total_degree *\
+    Q = np.sum([adjacency_mat[i,j] - gamma * total_degree *\
                          1/N_square\
                  for i, j in product(range(len(list_node)),\
                                      range(len(list_node))) \
@@ -197,3 +198,77 @@ def list_set_to_dict(list_set):
     dict = dict(zip(partition_expand, num_cluster))
 
     return dict
+
+
+
+def to_standard_labels(labels):
+    """  convert any numeric labeling, i.e., labels that are numbers, to
+    standard form, 0,1,2,...
+
+    Parameters
+    -----------
+    labels : ndarray, (n_labels, )
+
+    Return 
+    -----------
+    out_labels : ndarray, (n_labels, )
+    """    
+    tags = np.unique(labels)
+    out_labels = np.zeros(labels.shape)
+    for i, tag in enumerate(tags):
+        out_labels[labels == tag] = i
+    return out_labels.astype(int)
+
+
+
+def standard_to_binary_labels(labels):
+    """ convert standard labeling 0,1 to binary labeling -1, 1
+    """
+    out_labels = np.zeros(labels.shape)
+    foo = np.unique(labels)
+    out_labels[labels == foo[0]] = -1
+    out_labels[labels == foo[1]] = 1 
+    return out_labels
+
+
+
+def to_binary_labels(labels):
+    temp = to_standard_labels(labels)
+    return standard_to_binary_labels(temp)
+
+
+def generate_initial_value_binary(opt = 'rd_equal', V = None, n_samples = None):
+    """  generate initial value for binary classification. 
+    individual values are -1, 1 valued. 
+
+    Parameters
+    -----------
+    opt: string :{'rd_equal','rd','eig'}
+        options for generating values
+    V: ndarray (n_samples, Neig)
+        Eigenvector to generate initial condition. 
+    n_samples : int
+        number of nodes in the graph
+
+    """    
+    res = None
+    if opt == 'rd_equal':
+        ind = permutation(n_samples)
+        u_init = np.zeros(n_samples)
+        mid = n_samples/2
+        u_init[ind[:mid]] = 1
+        u_init[ind[mid:]] = -1
+        res =  u_init
+    elif opt == 'rd':
+        u_init = np.random.uniform(low = -1, high = 1, size = n_samples)
+        res = u_init
+    elif opt == 'eig':
+        res =  V[:,1].copy()
+    return res
+
+
+def threshold(u, thre_val = 0):
+    w = u.copy()
+    w[w<thre_val] = 0
+    w[w>thre_val] = 1
+    return w
