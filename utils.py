@@ -274,3 +274,15 @@ def threshold(u, thre_val = 0):
     w[w<thre_val] = 0
     w[w>thre_val] = 1
     return w
+
+
+def num_element_in_cluster(label_array):
+    quantity_list = []
+    clusters = np.unique(label_array)
+    for i in clusters:
+        quantity = list(label_array).count(i)
+        quantity_list.append(quantity)
+        print("The cluster %s has %s quantity" % (i, quantity))
+
+    print('max cluster contains', np.max(quantity_list))
+    print('min cluster contains', np.min(quantity_list))
