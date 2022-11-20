@@ -14,7 +14,7 @@ from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.neighbors import kneighbors_graph
 import networkx as nx
 
-""" Nystrom Extension with QR decomposition
+""" Nystrom Extension with QR decomposition using ER null model
 
 
 Parameters
