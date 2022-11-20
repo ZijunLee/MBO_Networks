@@ -1,7 +1,12 @@
 import numpy as np
+import graphlearning as gl
+import utils
 from numpy.random import permutation
 from sklearn import metrics
 from itertools import product
+from scipy.spatial.distance import cdist
+from sklearn.neighbors import kneighbors_graph
+
 
 
 def labels_to_vector(labels,vec_dim = None):
@@ -286,3 +291,128 @@ def num_element_in_cluster(label_array):
 
     print('max cluster contains', np.max(quantity_list))
     print('min cluster contains', np.min(quantity_list))
+    quantity_array = np.array(quantity_list)
+
+    return quantity_array
+
+
+
+def build_affinity_matrix(raw_data, affinity='rbf', gamma=0.5, n_neighbors=10):
+    """ Build affinity matrix. Wrappers using sklearn modules
+    Parameters
+    -----------
+    raw_data : ndarray, shape (n_samples, n_features)
+        Raw input data.
+    graph_params : Parameters with fields below:
+
+        affinity : string
+            'rbf' : use rbf kernel  exp(|x-y|^2/gamma)
+                specify gamma, neighbor_type = 'full', or 'knearest' with n_neighbors
+            'z-p' : adaptive kernel 
+                specify n_neighbors
+            '0-1' : return an unweighted graph 
+                specify n_neighbors
+        gamma : double
+            width of the rbf kernel
+        n_neighbors : integer
+            Number of neighbors to use when constructing the affinity matrix using
+            the nearest neighbors method. 
+        neighbor_type : string. 
+            'full' 'knearest'
+        Laplacian_type : 'n', normalized, 'u', unnormalized
+    Return 
+    ----------
+    affinity_matrix_ : array-like, shape (n_samples, n_samples)
+        affinity matrix
+
+    """ 
+
+    # compute the distance matrix
+    if affinity == 'z-p': #Z-P distance, adaptive RBF kernel, currently slow!!
+        if n_neighbors is None:
+            raise ValueError("Please Specify number nearest points in n_neighbors")
+        k = n_neighbors
+        dist_matrix = cdist(raw_data,raw_data,'sqeuclidean')
+        tau = np.ones([raw_data.shape[0],1])
+        for i, row in enumerate(dist_matrix):
+            tau[i] = np.partition(row,k)[k]
+        scale = np.dot(tau, tau.T)
+        temp = np.exp(-dist_matrix/np.sqrt(scale))
+        for i,row in enumerate(temp):
+            foo = np.partition(row,row.shape[0]-k-1)[row.shape[0]-k-1]
+            row[row<foo] =0
+        affinity_matrix_ = np.maximum(temp, temp.T)
+    else:
+        # neighbor_type == 'knearest'
+        distance_matrix = kneighbors_graph(raw_data, n_neighbors=n_neighbors, include_self=True, mode = 'distance')
+        distance_matrix = distance_matrix*distance_matrix # square the distance
+        dist_matrix = 0.5 * (distance_matrix + distance_matrix.T)
+        dist_matrix = np.array(dist_matrix.todense())
+
+        if gamma is None:
+            print("graph kernel width gamma not specified, using default value 1")
+            gamma = 1
+        else : 
+            gamma = gamma
+        affinity_matrix_ = np.exp(-gamma*dist_matrix)
+
+    affinity_matrix_[affinity_matrix_ == 1.] = 0. 
+    d_mean = np.mean(np.sum(affinity_matrix_,axis = 0))
+    affinity_matrix_ = affinity_matrix_/d_mean
+    return affinity_matrix_
+
+
+
+def initialization(num_nodes, num_communities, gt_labels, num_per_class=1):
+
+    indices = gl.trainsets.generate(gt_labels, rate=num_per_class)
+    train_labels = gt_labels[indices]
+    num_true_clusters = len(np.unique(train_labels))
+    train_onehot = utils.labels_to_onehot(train_labels)
+
+    expand_zero_columns = np.zeros((len(indices), num_communities - num_true_clusters))
+    train_onehot_new = np.append(train_onehot, expand_zero_columns, axis=1)
+
+    u_init = np.zeros((num_nodes,num_communities))
+    u_init[indices,:] = train_onehot_new
+    
+    return u_init, indices, train_onehot_new
+
+
+
+def labels_to_onehot(labels, standardize=False):
+    """Onehot labels
+    ======
+
+    Converts numerical labels to one hot vectors.
+
+    Parameters
+    ----------
+    labels : numpy array, int
+        Labels as integers.
+    standardize : bool (optional), default=False
+        Whether to map labels to 0,1,...,k-1 first, before encoding.
+
+    Returns
+    -------
+    onehot_labels : (n,k) numpy array, float
+        One hot representation of labels.
+    """
+
+    n = labels.shape[0]
+
+    if standardize:
+        #First convert to standard 0,1,...,k-1
+        unique_labels = np.unique(labels)
+        k = len(unique_labels)
+        for i in range(k):
+            labels[labels==unique_labels[i]] = i
+    else:
+        k = int(np.max(labels))+1
+
+    #Now convert to onehot
+    labels = labels.astype(int)
+    onehot_labels = np.zeros((n,k))
+    onehot_labels[range(n),labels] = 1
+
+    return onehot_labels
