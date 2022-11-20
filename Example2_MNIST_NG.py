@@ -13,7 +13,7 @@ from Nystrom_extension_QR import nystrom_QR_l_sym, nystrom_QR_l_mix_sym_rw, nyst
 from sklearn.cluster import SpectralClustering
 import networkx.algorithms.community as nx_comm
 import graphlearning as gl
-from MMBO_and_HU import MMBO_using_projection, MMBO_using_finite_differendce,HU_mmbo_method, boyd_mbo_method
+from MMBO_HU_Boyd import MMBO_using_projection, MMBO_using_finite_differendce,HU_mmbo_method, boyd_mbo_method
 from utils import vector_to_labels, labels_to_vector, purity_score, inverse_purity_score, generate_initial_value_multiclass
 
 

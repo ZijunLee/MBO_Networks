@@ -11,7 +11,7 @@ import time
 import graphlearning as gl
 import utils
 import sknetwork as skn
-from MMBO_and_HU import MMBO_using_projection, MMBO_using_finite_differendce, adj_to_laplacian_signless_laplacian,HU_mmbo_method, adj_to_modularity_mat, boyd_mbo_method
+from MMBO_HU_Boyd import MMBO_using_projection, MMBO_using_finite_differendce, adj_to_laplacian_signless_laplacian,HU_mmbo_method, adj_to_modularity_mat, boyd_mbo_method
 from utils import vector_to_labels, labels_to_vector, purity_score, inverse_purity_score, generate_initial_value_multiclass
 from community import community_louvain
 

@@ -15,7 +15,7 @@ import graphlearning as gl
 import utils
 from cdlib.algorithms import louvain
 from cdlib import evaluation, NodeClustering
-from MMBO_and_HU import MMBO_using_projection, MMBO_using_finite_differendce,HU_mmbo_method, boyd_mbo_method
+from MMBO_HU_Boyd import MMBO_using_projection, MMBO_using_finite_differendce,HU_mmbo_method, boyd_mbo_method
 from utils import vector_to_labels, labels_to_vector, label_to_dict, dict_to_list_set, purity_score, inverse_purity_score, generate_initial_value_multiclass
 from Nystrom_QR_test import nystrom_QR_l_mix_sym_rw_ER_null, nystrom_QR_l_mix_B_sym_rw_ER_null
 
